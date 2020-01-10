@@ -4,7 +4,7 @@ email: litsun1016@163.com
 description: > # this means to ignore newlines until "show_excerpts:"
   Share various technologies about CG~
 
-show_excerpts: false # set to true to show excerpts on the homepage
+show_excerpts: true # set to true to show excerpts on the homepage
 
 # Minima date format
 # refer to https://shopify.github.io/liquid/filters/date/ if you want to customize this
@@ -19,9 +19,9 @@ minima:
     # dribbble: jekyll
     # facebook: jekyll
     # flickr:   jekyll
-    # instagram: jekyll
+    instagram: wingstone1
     # linkedin: jekyll
-    # pinterest: jekyll
+    pinterest: litsun1016
     # youtube: jekyll
     # youtube_channel: UC8CXR0-3I70i1tfPg1PAE1g
     # youtube_channel_name: CloudCannon
@@ -39,8 +39,8 @@ minima:
 
 # If you want to link only specific pages in your header, uncomment
 # this and add the path to the pages in order as they should show up
-#header_pages:
-# - about.md
+header_pages:
+- about.md
 
 # Build settings
 theme: minima
