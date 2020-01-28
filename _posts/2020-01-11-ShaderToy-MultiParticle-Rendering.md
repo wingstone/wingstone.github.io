@@ -30,5 +30,5 @@ ShaderToy中开发着色器完全是在fragment shader中执行的，所以我�
 
 移动整体的UV会导致粒子的运动过于单一，可改进的方法为使用多层粒子叠加，这样不同层的移动效果不一样，倒是会增加一点真实感~
 
-shader范例：[winter~](https://www.shadertoy.com/view/WtK3D1)
-
+shader范例：
+<iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/WtK3D1?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>

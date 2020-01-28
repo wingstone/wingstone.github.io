@@ -1,1 +1,1 @@
-## this is wingstone's CG black magical blog~
+## This is wingstone's CG black magical blog~
