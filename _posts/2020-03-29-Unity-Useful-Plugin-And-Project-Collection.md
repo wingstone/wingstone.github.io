@@ -28,7 +28,13 @@ author: wingstone
 
 10. [XLua](https://github.com/Tencent/xLua)，腾讯提供的Lua方案，可在unity中使用Lua；
 
-11. 待续
+11. [AssetBundles-Browser](https://github.com/Unity-Technologies/AssetBundles-Browser)，Unity提供的AssetBundle的查看与Debug工具；
+
+12. [2D Game Kit](https://assetstore.unity.com/packages/essentials/tutorial-projects/2d-game-kit-107098),Unity官方提供的2D游戏开发包，里面介绍了很多2D组件的使用；
+
+13. [unity-text-typer](https://github.com/redbluegames/unity-text-typer)，一个TextTyper，用来逐字打印字体，并且提供了多种字体动画；在很多红白机游戏、ACG Game、以及UI字体的显示都会用到这种功能；
+
+14. 待续
 
 ## Package List
 
