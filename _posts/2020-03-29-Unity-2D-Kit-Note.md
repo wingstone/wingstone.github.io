@@ -4,6 +4,8 @@ title: Unity 2D Kit Note
 author: wingstone
 ---
 
+介绍unity 2D Kit包中所用的一些组件；
+
 ## Sorting Group组件
 
 Sorting Group组件可以改变Sprite Renderers的渲染顺序，Sorting Group作为Sprite Renderers的覆盖层，用于区分Group之间的渲染顺序；
