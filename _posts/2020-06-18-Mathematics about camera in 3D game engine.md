@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 关于3D引擎中相机所包含的数学
+title: Mathematics about camera in 3D game engine
 author: wingstone
 ---
 
@@ -15,7 +15,7 @@ author: wingstone
 由于矩阵相乘的顺序影响最后的结果，由于旋转矩阵是相对原点进行旋转的，所以自然而然，我们应该先将相机移至原点（平移矩阵）再进行转向（旋转矩阵）；
 
 在OpenGl中，假设相机坐标为cameraPos，朝向分别为Front，Up，Right，坐标为列向量，则相应的矩阵为：
-![view矩阵](../assets/img/matrix.gif)
+![view矩阵](/assets/img/matrix.gif)
 
 ## 投影矩阵
 
@@ -26,17 +26,17 @@ author: wingstone
 设非线性深度值0-1为depth，线性深度值0-1为lineardepth，Zn表示-1到1的NDC深度，Ze表示观察空间下的深度，n表示近裁剪面，f表示远裁剪面；
 则几者之间的关系为：
 
-![depth与NDC](../assets/img/d_zn.gif)
+![depth与NDC](/assets/img/d_zn.gif)
 
-![lineardepth与view](../assets/img/ld_ze.gif)
+![lineardepth与view](/assets/img/ld_ze.gif)
 
-![NDC与view](../assets/img/zn_ze.gif)
+![NDC与view](/assets/img/zn_ze.gif)
 
 **其中由公式2可以看出，线性的0-1范围并不是指近裁剪面对应0、远裁剪面对应1，而是相机位置对应0，远裁剪面对应1；**
 
 其中公式3可以在上面投影矩阵那篇文章中看到，跟进上面三式，可以得到depth与lineardepth的关系为：
 
-![lineardepth与depth](../assets/img/ld_d.gif)
+![lineardepth与depth](/assets/img/ld_d.gif)
 
 ## 第一人称视角相机的实现
 
@@ -156,5 +156,7 @@ void ProcessMouseMovement(float xOffset, float yOffset, float focusDistance = 5.
 ## 参考文章
 
 [learnopengl-cn](https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/)
+
 [Unity Shader入门精要](https://book.douban.com/subject/26821639/)
+
 [OpenGL Projection Matrix](http://www.songho.ca/opengl/gl_projectionmatrix.html)
