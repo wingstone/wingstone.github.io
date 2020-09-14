@@ -1,258 +1,104 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://wingstone.github.io</id>
-    <title>CG黑魔法作坊</title>
-    <updated>2020-09-14T06:45:20.228Z</updated>
-    <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://wingstone.github.io"/>
-    <link rel="self" href="https://wingstone.github.io/atom.xml"/>
-    <subtitle>分享与记录关于CG技术的一切</subtitle>
-    <logo>https://wingstone.github.io/images/avatar.png</logo>
-    <icon>https://wingstone.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2020, CG黑魔法作坊</rights>
-    <entry>
-        <title type="html"><![CDATA[Opengl Vertex Interpolation]]></title>
-        <id>https://wingstone.github.io/post/opengl-vertex-interpolation/</id>
-        <link href="https://wingstone.github.io/post/opengl-vertex-interpolation/">
-        </link>
-        <updated>2020-09-10T06:39:18.000Z</updated>
-        <content type="html"><![CDATA[<p>OpenGL中关于插值问题</p>
-<h2 id="opengl中关于插值问题">OpenGL中关于插值问题</h2>
-<p>在GPU的光栅化阶段，会针对每个片段进行插值计算；需要注意的是，这个时候进行的插值不能是简单的screen space线性插值，而应该是透视空间矫正的view space线性插值；</p>
-<p>OpenGL中默认的是透视插值，也就是在view space空间中的线性插值，可以给变量加no perspective in/out使其插值时不做透视矫正，也就不线性了。如果要自定义插值方式，只能自己把相关参数都传到片元shader里计算了。</p>
-<blockquote>
-<p>注意：透视矫正插值仍是线性的，只不过是screen space下等距的线性插值，转换为view space下的非等距的线性插值，也是view space空间上的线性插值；</p>
-</blockquote>
-<h2 id="透视插值的公式推导">透视插值的公式推导</h2>
-<p>参考《3D游戏与计算机图形学中的数学方法》4.4节</p>
-<p>简单概括就是：</p>
-<p>对于深度插值：由相似三角形变换可以得到，Z的倒数在光栅化时，恰好是按照线性进行插值的；</p>
-<p>对于顶点属性插值：也能推导出：</p>
-<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mn>3</mn></msub><mo>=</mo><mfrac><mrow><mfrac><msub><mi>b</mi><mn>1</mn></msub><msub><mi>z</mi><mn>1</mn></msub></mfrac><mo>(</mo><mn>1</mn><mo>−</mo><mi>t</mi><mo>)</mo><mo>+</mo><mfrac><msub><mi>b</mi><mn>2</mn></msub><msub><mi>z</mi><mn>2</mn></msub></mfrac><mi>t</mi></mrow><mrow><mfrac><mn>1</mn><msub><mi>z</mi><mn>1</mn></msub></mfrac><mo>(</mo><mn>1</mn><mo>−</mo><mi>t</mi><mo>)</mo><mo>+</mo><mfrac><mn>1</mn><msub><mi>z</mi><mn>2</mn></msub></mfrac><mi>t</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">b_3 = \frac{\frac{b_1}{z_1}(1-t)+\frac{b_2}{z_2}t}{\frac{1}{z_1}(1-t)+\frac{1}{z_2}t}
-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.9115159999999998em;vertical-align:-1.180208em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7313079999999998em;"><span style="top:-2.264892em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44509999999999994em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44509999999999994em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathdefault">t</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.8351em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8962079999999999em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4101em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44509999999999994em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8962079999999999em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4101em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44509999999999994em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathdefault">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.180208em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
-<p>也就是说，顶点属性的插值为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>b</mi><mi mathvariant="normal">/</mi><mi>z</mi></mrow><annotation encoding="application/x-tex">b/z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">b</span><span class="mord">/</span><span class="mord mathdefault" style="margin-right:0.04398em;">z</span></span></span></span>的线性插值再除以<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mi>z</mi></mrow><annotation encoding="application/x-tex">1/z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mord">/</span><span class="mord mathdefault" style="margin-right:0.04398em;">z</span></span></span></span>的线性插值；</p>
-<h2 id="为什么像素插值光照要优于顶点插值光照">为什么像素插值光照要优于顶点插值光照</h2>
-<p>是因为顶点插值光照是线性插值（当然指透视矫正后）的，但是对于向量只是进行线性插值是不够的，还应该有个归一化阶段；</p>
-<p>像素插值光照可以在PS中进行向量的归一化（特别是法向量），如此就纠正了向量插值的错误问题，然后可进行正确的光照；</p>
-<p>其次光照计算过程并不是一个线性的过程；对计算结果进行线性插值，当然就不可能得到正确的光照效果；</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[ECS Architecture]]></title>
-        <id>https://wingstone.github.io/post/ecs-architecture/</id>
-        <link href="https://wingstone.github.io/post/ecs-architecture/">
-        </link>
-        <updated>2020-09-10T06:38:33.000Z</updated>
-        <content type="html"><![CDATA[<p>ECS架构介绍</p>
-<h2 id="ecs架构介绍">ECS架构介绍</h2>
-<p><strong>ECS</strong> ，即 <strong>Entity-Component-System（实体-组件-系统）</strong> 的缩写，其模式遵循 <strong>组合优于继承</strong> 原则，游戏内的每一个基本单元都是一个 <strong>实体</strong> ，每个 <strong>实体</strong> 又由一个或多个 <strong>组件</strong> 构成，每个 <strong>组件</strong> 仅仅包含代表其特性的 <strong>数据（即在组件中没有任何方法）</strong> ，<strong>系统</strong> 便是来处理拥有一个或多个相同组件的实体集合的工具，其只拥有 <strong>行为（即在系统中没有任何数据）</strong> 。</p>
-<p><strong>实体与组件是一个一对多的关系</strong> ，实体拥有怎样的能力，完全是取决于其拥有哪些组件，通过动态添加或删除组件，可以在（游戏）运行时改变实体的行为。</p>
-<h2 id="ecs详解">ECS详解</h2>
-<h3 id="实体">实体</h3>
-<p>实体是游戏中的一个独特物体，使用一个ID进行表示和标记；</p>
-<h3 id="组件">组件</h3>
-<p>一个组件是一个数据的集合，不存在任何方法；一个经典的实现是使用 <strong>继承（或实现）同一个基类（或接口）</strong> ，这样就可以在运行时动态的添加和移除；</p>
-<p>根据设计需求，有时在全局上下文中只有一个特殊的组件，这种组件一般称之为 <strong>Singleton Component（单例组件）</strong> ；</p>
-<h3 id="系统">系统</h3>
-<p>系统便是ECS架构中用来 <strong>处理游戏逻辑</strong> 的部分。一个系统就是对拥有一个或多个相同组件的实体集合进行操作的工具，它只有行为，没有状态，即不存放任何数据。OW差不多拥有上百个系统；</p>
-<p>由于代码逻辑分布于各个系统中，各个系统之间为了解耦又不能互相访问，那么如果有多个系统希望运行同样的逻辑，该如何解决，总不能把代码复制 N 份，放到各个系统之中。 <strong>UtilityFunction（实用函数）</strong> 便是用来解决这一问题的，它将被多个系统调用的方法单独提取出来，放到统一的地方，同系统一样， <strong>UtilityFunction</strong> 中不能存放状态，它应该是拥有各个方法的纯净集合。</p>
-<h2 id="ecs架构优点">ECS架构优点</h2>
-<ol>
-<li>性能优势：ECS带来的两大性能优势，就是cache友好，以及易于做多线程并行。</li>
-<li>数据与行为分离：修改方便，逻辑清晰；</li>
-</ol>
-<h2 id="oop面向对象架构">OOP（面向对象）架构</h2>
-<p>传统的很多游戏引擎是基于 <strong>面向对象</strong> 来设计的，游戏中的东西都是对象，每个对象有一个叫做 <strong>Update</strong> 的方法，框架 <strong>遍历所有的对象</strong> ，依次调用其 <strong>Update</strong> 方法。有些引擎甚至定义了多种 <strong>Update</strong> 方法，在同一帧的不同时机去调用。</p>
-<h2 id="unity引擎的架构">Unity引擎的架构</h2>
-<p>Unity的设计思想为 <strong>基于组件</strong> 的对象模型；<strong>基于组件</strong> 的对象模型就是把所有需要提供给游戏对象的基础功能都独立成单独的 <strong>组件模块(Component)</strong> ，一个具体的游戏对象可以将它需要的功能模块组合到一起使用。所有 <strong>功能</strong> 不再是父类中的接口，而变成子对象实例，为游戏对象提供服务。</p>
-<p>在Unity中， <strong>GameObject</strong> 除了作为 <strong>Component</strong> 的容器之外，基本上没有其他功能。所有需要的功能都要通过 <strong>组合Component</strong> 来实现。虽然这些 <strong>Component</strong> 在物理上是完全并列的关系，但是他们之间还是会有一定的层次关系的。在设计一个游戏对象的具体功能时，组件一般会被分为三个层次。</p>
-<ol>
-<li><strong>引擎的基础组件</strong>：Unity本身提供的各种内部功能组件。比如渲染组件，物理组件，声音组件等等。</li>
-<li><strong>模块功能脚本组件</strong>：通过脚本实现的一些相对独立的通用模块功能的组件。这类组件的设计是脚本可重用的关键，需要仔细分析游戏对象中哪些功能可以被独立出来成为一个可重用的功能模块组件，并且在实现上应该尽量降低与其他组件的耦合性。</li>
-<li><strong>高层的胶水代码脚本</strong>：这些脚本用来真正将引擎基础组件和模块功能组件组合到一起实现最终游戏对象逻辑。用“胶水代码”来形容这些脚本非常的贴切，就是把所有这些子功能“粘”在一起。</li>
-</ol>
-<h3 id="unity的架构与ecs架构的区别">Unity的架构与ECS架构的区别</h3>
-<p>可以看出Unity的架构与ECS架构并不一样，虽然在组件-实体这一部分有很大的相似性；</p>
-<ol>
-<li>Unity的每个组件含有相应的方法，数据与行为并没有实现完全的解耦；</li>
-<li>Unity没有那么多系统（毕竟Unity只提供最基本的功能而已），系统也并不是只提供行为而已；</li>
-</ol>
-<h3 id="unity所带的ecs插件包">Unity所带的ECS插件包</h3>
-<ol>
-<li><a href="https://github.com/sschmid/Entitas-CSharp">Entitas插件系统</a></li>
-<li>UnityPackages Managers下的Entities插件包</li>
-</ol>
-<blockquote>
-<p>注意：实际上，使用哪种架构模式还是得根据具体情况；ECS并不是万能的，局限性<a href="https://www.zhihu.com/question/286963885/answer/456710929">参考这里</a></p>
-</blockquote>
-<h2 id="reference">Reference</h2>
-<ol>
-<li>
-<p><a href="https://www.gdcvault.com/play/1024001/-Overwatch-Gameplay-Architecture-and">守望先锋GDC源视频分享连接</a>（视频）</p>
-</li>
-<li>
-<p><a href="https://gameinstitute.qq.com/community/detail/114516">守望先锋GDC源视频中文翻译</a>（文章）</p>
-</li>
-<li>
-<p><a href="https://zhuanlan.zhihu.com/p/30538626">一个ECS系统的介绍及简易实现</a>（文章）</p>
-</li>
-<li>
-<p><a href="https://blog.codingnow.com/2017/06/overwatch_ecs.html">一个关于ECS系统的深入理解</a>（文章）</p>
-</li>
-<li>
-<p><a href="https://www.cnblogs.com/zhibolife/p/3620440.html">Unity3D引擎架构设计</a>（文章）</p>
-</li>
-</ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[C++ Static Usage]]></title>
-        <id>https://wingstone.github.io/post/c-static-usage/</id>
-        <link href="https://wingstone.github.io/post/c-static-usage/">
-        </link>
-        <updated>2020-09-07T06:37:51.000Z</updated>
-        <content type="html"><![CDATA[<p>C++中的一些细节问题</p>
-<h2 id="c语言中的static关键字">C语言中的static关键字</h2>
-<h3 id="修饰全局变量全局函数">修饰全局变量，全局函数</h3>
-<p>将限制该变量及函数的作用域为本文，不能实现连接时的跨文本使用；</p>
-<pre><code class="language-C++">//file1.c
-static int a = 10;      //变量作用范围限制在本文本作用域中
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
 
-//file2.c
-#include &lt;iostream&gt;
+<title>Monte Carlo Integration | CG黑魔法作坊</title>
 
-using namespace std;
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-extern int a;   //无法使用file1.c中的a变量
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600065901645">
+<link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
 
-int main()
-{
-    cout &lt;&lt; &quot;a = &quot; &lt;&lt; a &lt;&lt;endl;
 
-    return 0;
-}
 
-</code></pre>
-<h3 id="修饰局部变量">修饰局部变量</h3>
-<p>在用static修饰局部变量后，该变量只在初次运行时进行初始化工作，且只进行一次；且该变量便存放在静态数据区，其生命周期一直持续到整个程序执行结束。</p>
-<pre><code class="language-c++">#include&lt;stdio.h&gt;
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
-void fun()
-{
-    static int a=1;
-    a++;
-}
 
-int main(void)
-{
-    fun();  //这里运行时，a会进行初始化，随后a++
-    fun();  //这里运行时，只会运行a++
-    return 0;
-}
-</code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[排列与组合]]></title>
-        <id>https://wingstone.github.io/post/pai-lie-yu-zu-he/</id>
-        <link href="https://wingstone.github.io/post/pai-lie-yu-zu-he/">
-        </link>
-        <updated>2020-09-07T06:37:00.000Z</updated>
-        <content type="html"><![CDATA[<p>关于排列与组合的算法问题</p>
-<h2 id="排列与组合的区别">排列与组合的区别</h2>
-<p>实际上，排列意味着数据一样，数据出现的顺序不一样；<br>
-组合意味着，数据不一样，与数据的顺序无关；</p>
-<h2 id="排列的算法框架">排列的算法框架</h2>
-<p>如果数据没有重复，直接套用回溯算法框架即可；</p>
-<pre><code class="language-C++">
-class Solution {
-public:
 
-    void Help(vector&lt;vector&lt;int&gt;&gt;&amp; results, vector&lt;int&gt;&amp; result, vector&lt;int&gt;&amp; num, vector&lt;int&gt;&amp; flags)
-    {
-        if (result.size() == num.size())
-        {
-            results.push_back(result);
-            return;
-        }
+    <meta name="description" content="蒙特卡洛积分的简短介绍，以及PBRT中常用的函数分布；
+概率部分定义
+期望定义
+Ep[f(x)]=∫Df(x)p(x) dx.E_p[f(x)] = \int_D {f(x)p(x)} \,{\rm d}x.
+Ep​[f(x)]=∫D​f(..." />
+    <meta name="keywords" content="蒙特卡洛积分,图形学" />
+  </head>
+  <body>
+    <div id="app" class="main">
 
-        for (int i = 0; i &lt; flags.size(); i++)
-        {
-            if (flags[i] == 0)  //跳过已经取过的数
-                continue;
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://wingstone.github.io">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1600065901645" class="site-logo">
+        <h1 class="site-title">CG黑魔法作坊</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      分享与记录关于CG技术的一切
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/wingstone/wingstone.github.io" target="_blank">wingstone</a> | <a class="rss" href="https://wingstone.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
 
-            result.push_back(num[i]);
-            flags[i] = 0;
-            Help(results, result, num, flags);
-            flags[i] = 1;
-            result.pop_back();
-        }
-    }
 
-    vector&lt;vector&lt;int&gt;&gt; permute(vector&lt;int&gt;&amp; nums) {
-        vector&lt;vector&lt;int&gt;&gt; results;
-        vector&lt;int&gt; result;
-        vector&lt;int&gt; flags(nums.size(), 1);;
-        Help(results, result, nums, flags);
-
-        return results;
-    }
-};
-</code></pre>
-<p>对于特殊情况，比如数据中有重复的数据，需要考虑重复的情况；为了方便识别重复的情况，需要对数据源进行排序，这样在计算过程中，对于重复的情况，只需要向前单向查找是否重复即可；</p>
-<h2 id="组合的算法框架">组合的算法框架</h2>
-<p>如果直接套用回溯框架，就会导致重复问题，因为组合与顺序无关，先选跟后选可能会产生同一组数据；</p>
-<p>解决办法：在回溯的过程中，只向后查找，而不向当前节点的前面查找，这样就不会产生重复的组合；</p>
-<pre><code class="language-c++">class Solution {
-public:
-
-    void FindAll(vector&lt;int&gt;&amp; candidates, vector&lt;vector&lt;int&gt;&gt;&amp; results, vector&lt;int&gt; &amp;result, int &amp;current, int &amp;target, int id)
-    {
-        if (current == target)
-        {
-            results.push_back(result);
-            return;
-        }
-
-        for (int i = id; i &lt; candidates.size(); i++)
-        {
-            if (candidates[i]  &lt;= target - current )
-            {
-                result.push_back(candidates[i]);
-                current += candidates[i];
-                FindAll(candidates, results, result, current, target, i);
-                current -= candidates[i];
-                result.pop_back();
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-    vector&lt;vector&lt;int&gt;&gt; combinationSum(vector&lt;int&gt;&amp; candidates, int target) {
-
-        vector&lt;vector&lt;int&gt;&gt; results;
-        vector&lt;int&gt; result;
-        int current = 0;
-
-        FindAll(candidates, results, result, current, target, 0);
-
-        return results;
-    }
-};
-</code></pre>
-<p>同样对于数据中有重复的数据，需要考虑重复的情况；需要对数据源进行排序，在计算过程中，对于重复的情况，只需要向前单向查找是否重复即可；</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Monte Carlo Integration]]></title>
-        <id>https://wingstone.github.io/post/monte-carlo-integration/</id>
-        <link href="https://wingstone.github.io/post/monte-carlo-integration/">
-        </link>
-        <updated>2020-09-06T06:35:52.000Z</updated>
-        <content type="html"><![CDATA[<p>蒙特卡洛积分的简短介绍，以及PBRT中常用的函数分布；</p>
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Monte Carlo Integration</h2>
+            <div class="post-date">2020-09-06</div>
+            
+            <div class="post-content" v-pre>
+              <p>蒙特卡洛积分的简短介绍，以及PBRT中常用的函数分布；</p>
 <h2 id="概率部分定义">概率部分定义</h2>
 <h3 id="期望定义">期望定义</h3>
 <p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>E</mi><mi>p</mi></msub><mo>[</mo><mi>f</mi><mo>(</mo><mi>x</mi><mo>)</mo><mo>]</mo><mo>=</mo><msub><mo>∫</mo><mi>D</mi></msub><mrow><mi>f</mi><mo>(</mo><mi>x</mi><mo>)</mo><mi>p</mi><mo>(</mo><mi>x</mi><mo>)</mo></mrow><mtext> </mtext><mi mathvariant="normal">d</mi><mi>x</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">E_p[f(x)] = \int_D {f(x)p(x)} \,{\rm d}x.
@@ -447,293 +293,58 @@ c, &amp;{otherwise} \end{cases}
 <p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>F</mi><mo>=</mo><msub><mi>F</mi><mn>1</mn></msub><mo>+</mo><msub><mi>F</mi><mn>2</mn></msub><mo>+</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo>+</mo><msub><mi>F</mi><mi>N</mi></msub></mrow><annotation encoding="application/x-tex">F = F_1+F_2+...+F_N
 </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord">.</span><span class="mord">.</span><span class="mord">.</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">F</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.10903em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></p>
 <p>比如，将光的反射划分为直接光照以及间接光照；通过对每一项积分，来获取最终的结果；</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Mathematics about camera in 3D game engine]]></title>
-        <id>https://wingstone.github.io/post/mathematics-about-camera-in-3d-game-engine/</id>
-        <link href="https://wingstone.github.io/post/mathematics-about-camera-in-3d-game-engine/">
-        </link>
-        <updated>2020-06-18T06:34:51.000Z</updated>
-        <content type="html"><![CDATA[<p>以OpenGL中的右手坐标系为例，介绍引擎中和各种应用中跟相机有关的数学；</p>
-<h2 id="观察矩阵">观察矩阵</h2>
-<p>首先理解观察矩阵的作用，观察矩阵是为了将相机位置和转向不同的情况进行统一，最合适的统一方式就是将相机移动到坐标原点，然后将相机朝向变为-Z轴，这样所有的世界在相机看来就是一致的，便于后续的处理；</p>
-<p>实际就是将以(0, 0, 0)为原点的世界坐标系转变为以(cameraPos.x, cameraPos.y, cameraPos.z)为原点的坐标系，当然，这里不能少了旋转；</p>
-<p>由于矩阵相乘的顺序影响最后的结果，由于旋转矩阵是相对原点进行旋转的，所以自然而然，我们应该先将相机移至原点（平移矩阵）再进行转向（旋转矩阵）；</p>
-<p>在OpenGl中，假设相机坐标为cameraPos，朝向分别为Front，Up，Right，坐标为列向量，则相应的矩阵为：<br>
-<img src="/assets/img/matrix.gif" alt="view矩阵" loading="lazy"></p>
-<h2 id="投影矩阵">投影矩阵</h2>
-<p>关于投影矩阵的推导，看<a href="http://www.songho.ca/opengl/gl_projectionmatrix.html">这里</a>;</p>
-<h2 id="相机中非线性0-1的深度转为线性0-1深度">相机中非线性0-1的深度转为线性0-1深度</h2>
-<p>设非线性深度值0-1为depth，线性深度值0-1为lineardepth，Zn表示-1到1的NDC深度，Ze表示观察空间下的深度，n表示近裁剪面，f表示远裁剪面；<br>
-则几者之间的关系为：</p>
-<figure data-type="image" tabindex="1"><img src="/assets/img/d_zn.gif" alt="depth与NDC" loading="lazy"></figure>
-<figure data-type="image" tabindex="2"><img src="/assets/img/ld_ze.gif" alt="lineardepth与view" loading="lazy"></figure>
-<figure data-type="image" tabindex="3"><img src="/assets/img/zn_ze.gif" alt="NDC与view" loading="lazy"></figure>
-<p><strong>其中由公式2可以看出，线性的0-1范围并不是指近裁剪面对应0、远裁剪面对应1，而是相机位置对应0，远裁剪面对应1；</strong></p>
-<p>其中公式3可以在上面投影矩阵那篇文章中看到，跟进上面三式，可以得到depth与lineardepth的关系为：</p>
-<figure data-type="image" tabindex="4"><img src="/assets/img/ld_d.gif" alt="lineardepth与depth" loading="lazy"></figure>
-<h2 id="第一人称视角相机的实现">第一人称视角相机的实现</h2>
-<p>第一人称视角相机，其实就是FPS类游戏中常用的相机，即相机所看的就是游戏中的人眼所看到的，可以自由的前后左右移动，以及左右上下旋转视角；</p>
-<p>第一人称视角相机需要存储一些额外的变量，一个是移动的速度MovementSpeed，二是Pitch，Yaw角度，Pitch表示俯仰角，Yaw表示偏航角；</p>
-<p>相机自带的变量为Front，Up，Right，cameraPos，worldUp，worldUp表示世界的正上方向；</p>
-<h3 id="相机的移动实现">相机的移动实现</h3>
-<pre><code class="language-c++">void ProcessKeyBoard(CEMERA_MOVEMENT direction, float deltaTime)
-{
-    float offset = MovementSpeed * deltaTime;
-    switch (direction)
-    {
-    case FORWARD:
-        Position += Front * offset;
-        break;
-    case BACKWARD:
-        Position -= Front * offset;
-        break;
-    case LEFT:
-        Position -= Right * offset;
-        break;
-    case RIGHT:
-        Position += Right * offset;
-        break;
-    default:
-        break;
-    }
-}
 
-</code></pre>
-<h3 id="相机的旋转实现">相机的旋转实现</h3>
-<pre><code class="language-c++">void ProcessMouseMovement(float xOffset, float yOffset, bool focusCenter = true, GLboolean constrainPitch = true)
-{
-    xOffset *= MouseSensitivity;
-    yOffset *= MouseSensitivity;
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://wingstone.github.io/tag/RavdFsiaX/" class="tag">
+                    蒙特卡洛积分
+                  </a>
+                
+                  <a href="https://wingstone.github.io/tag/KFv9_-Z2a/" class="tag">
+                    图形学
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://wingstone.github.io/post/mathematics-about-camera-in-3d-game-engine/">
+                  <h3 class="post-title">
+                    Mathematics about camera in 3D game engine
+                  </h3>
+                </a>
+              </div>
+            
 
-    Yaw += xOffset;
-    Pitch += yOffset;
+            
 
-    if (constrainPitch)
-    {
-        if (Pitch &gt; 89.0f)
-        {
-            Pitch = 89.0f;
-        }
-        if (Pitch &lt; -89.0f)
-        {
-            Pitch = -89.0f;
-        }
-    }
+          </div>
 
-    {
-        glm::vec3 front;
-        front.x = sin(glm::radians(Yaw))*cos(glm::radians(Pitch));
-        front.y = sin(glm::radians(Pitch));
-        front.z = -cos(glm::radians(Yaw))*cos(glm::radians(Pitch));
-        Front = glm::normalize(front);
+        </div>
+      </div>
+    </div>
 
-        Right = glm::normalize(glm::cross(Front, WorldUp));
-        Up = glm::normalize(glm::cross(Right, Front));
-    }
-}
-</code></pre>
-<h2 id="绕固定物体的第三人称相机的实现">绕固定物体的第三人称相机的实现</h2>
-<p>绕固定物体旋转相机，有点类似于unity或maya中，Alt+左键移动移动镜头的那种实现，只不过镜头是绕着所看到的物体旋转的，不是自由旋转的，所以相机要跟根据旋转角度计算相机方向同时计算相机位置；</p>
-<p>实际上第三人称相机就是这样实现的，只不过此时固定物体是角色而已；</p>
-<h3 id="绕固定物体相机的旋转实现">绕固定物体相机的旋转实现</h3>
-<pre><code class="language-c++">void ProcessMouseMovement(float xOffset, float yOffset, glm::vec3 focusPosition = glm::vec3(0.0f), float focusDistance = 5.0f, GLboolean constrainPitch = true)
-{
-    xOffset *= MouseSensitivity;
-    yOffset *= MouseSensitivity;
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
 
-    Yaw += xOffset;
-    Pitch += yOffset;
+AOS.init();
 
-    if (constrainPitch)
-    {
-        if (Pitch &gt; 89.0f)
-        {
-            Pitch = 89.0f;
-        }
-        if (Pitch &lt; -89.0f)
-        {
-            Pitch = -89.0f;
-        }
-    }
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
 
-    {
-        glm::vec3 front;
-        front.x = sin(glm::radians(Yaw))*cos(glm::radians(Pitch));
-        front.y = sin(glm::radians(Pitch));
-        front.z = -cos(glm::radians(Yaw))*cos(glm::radians(Pitch));
-        Front = glm::normalize(front);
+</script>
 
-        Right = glm::normalize(glm::cross(Front, WorldUp));
-        Up = glm::normalize(glm::cross(Right, Front));
-    }
 
-    Position = focusPosition - Front * focusDistance;            //区别在在这里
-}
-</code></pre>
-<h2 id="参考文章">参考文章</h2>
-<p><a href="https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/">learnopengl-cn</a></p>
-<p><a href="https://book.douban.com/subject/26821639/">Unity Shader入门精要</a></p>
-<p><a href="http://www.songho.ca/opengl/gl_projectionmatrix.html">OpenGL Projection Matrix</a></p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Unity Custom UI Mesh]]></title>
-        <id>https://wingstone.github.io/post/unity-custom-ui-mesh/</id>
-        <link href="https://wingstone.github.io/post/unity-custom-ui-mesh/">
-        </link>
-        <updated>2020-05-11T06:34:08.000Z</updated>
-        <content type="html"><![CDATA[<p>介绍在unity中实现自定义ui的形状；</p>
-<h2 id="unity-custom-ui-mesh">Unity Custom UI Mesh</h2>
-<p>unity中继承Graphic类或者MaskableGraphic可以实现自定义UI组件，并且在<code>protected override void OnPopulateMesh(UI.VertexHelper vh);</code>函数中可以操作或自定义网格，用于实现各种各样的UI形状；</p>
-<p>这篇<a href="https://www.hallgrimgames.com/blog/2018/11/25/custom-unity-ui-meshes">文章</a>介绍了在unity中实现自定义ui的过程；</p>
-<p>我在我的个人项目中<a href="https://github.com/wingstone/UnityScriptTools">UnityScriptTools</a>添加了圆形、矩形、圆角矩形的ui实现；</p>
-<p>在实际过程中，可能大部分情况是使用透明的贴图来实现相应形状的ui，但是一些情况使用自定义ui形状更合适，有些情况甚至必须使用自定义ui才能做；</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Unity Useful Plugins And Projects]]></title>
-        <id>https://wingstone.github.io/post/unity-useful-plugins-and-projects/</id>
-        <link href="https://wingstone.github.io/post/unity-useful-plugins-and-projects/">
-        </link>
-        <updated>2020-03-29T06:33:26.000Z</updated>
-        <content type="html"><![CDATA[<p>这是一个插件集合的列表，主要用来存储我在学习unity过程中使用到的非常好用的插件，或者一些不错的工程；本着通用和好用的要求，这里的插件都是一些基本功能的整合；</p>
-<h2 id="link-list">Link List</h2>
-<ol>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/debug-drawing-extension-11396">Debug Drawing Extension</a>插件，该插件扩展了unity内部的Gizmos功能，可以绘制出更复杂更有用的Gizmos几何体；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/level-design/bezier-solution-113074">Bezier Solution</a>插件，该插件集合了Bezier曲线功能，可以用来编辑Bezier曲线，并提供了一下基于Bezier曲线的效果；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/utilities/bonetool-bone-visualizer-99464">BoneTool - Bone Visualizer</a>插件，用于transform层级的可视化，可用于角色骨骼的可视化；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/utilities/transform-reset-31313">Transform Reset</a>插件，扩充了Transform的界面UI，可以一键恢复Transform为默认变换；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/particles-effects/volumetric-lines-29160">Volumetric Lines</a>插件，一个简单渲染体积线的插件，效果很棒；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/templates/tutorials/3d-game-kit-115747">3D Game Kit</a>，Unity官方提供的3D游戏开发包，里面含有很多开发3D游戏用到的基础功能，包括Instance painter等很多工具；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/animation/dynamic-bone-16743">Dynamic Bone</a>插件，用于骨骼的物理摆动，非常好用！</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/essentials/default-playables-95266">Default Playables</a>插件，Unity提供的Timeline功能的扩展包；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/essentials/tutorial-projects/unity-particle-pack-127325">Unity Particle Pack</a>，Unity提供的免费粒子效果包；</p>
-</li>
-<li>
-<p><a href="https://github.com/Tencent/xLua">XLua</a>，腾讯提供的Lua方案，可在unity中使用Lua；</p>
-</li>
-<li>
-<p><a href="https://github.com/Unity-Technologies/AssetBundles-Browser">AssetBundles-Browser</a>，Unity提供的AssetBundle的查看与Debug工具；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/essentials/tutorial-projects/2d-game-kit-107098">2D Game Kit</a>,Unity官方提供的2D游戏开发包，里面介绍了很多2D组件的使用；</p>
-</li>
-<li>
-<p><a href="https://github.com/redbluegames/unity-text-typer">unity-text-typer</a>，一个TextTyper，用来逐字打印字体，并且提供了多种字体动画；在很多红白机游戏、ACG Game、以及UI字体的显示都会用到这种功能，需要先安装Text Mesh Pro；</p>
-</li>
-<li>
-<p>待续</p>
-</li>
-</ol>
-<h2 id="package-list">Package List</h2>
-<p>unity很多插件已经从原来的Asset store转移到Package Manager，因此这里提供一些在Package Manager中非常好用的插件（只写我用过的）；</p>
-<ol>
-<li>
-<p>ProBuilder，用于快速游戏原型的搭建；</p>
-</li>
-<li>
-<p>Cinemachine，用于相机的智能控制；</p>
-</li>
-<li>
-<p>Text Mesh Pro，使用SDF提供的高级字体方案；</p>
-</li>
-<li>
-<p>Post Processing，集合了很多后期处理效果的插件；</p>
-</li>
-<li>
-<p>待续</p>
-</li>
-</ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[ Unity 2D Kit Note]]></title>
-        <id>https://wingstone.github.io/post/unity-2d-kit-note/</id>
-        <link href="https://wingstone.github.io/post/unity-2d-kit-note/">
-        </link>
-        <updated>2020-03-29T06:32:39.000Z</updated>
-        <content type="html"><![CDATA[<p>介绍unity 2D Kit包中所用的一些组件；</p>
-<h2 id="sorting-group组件">Sorting Group组件</h2>
-<p>Sorting Group组件可以改变Sprite Renderers的渲染顺序，Sorting Group作为Sprite Renderers的覆盖层，用于区分Group之间的渲染顺序；</p>
-<ol>
-<li>Sorting Layer可以改变物体以及子物体的排列层，不同的排列层之间有渲染顺序区分；</li>
-<li>Order In Layer可以改变物体及子物体在排列层内的渲染顺序；</li>
-</ol>
-<h2 id="sprite-renderer组件">Sprite Renderer组件</h2>
-<p>渲染sprite时，使用的mesh不一定是一个四边形，其形状以能拟合Sprite的大致形状为准；</p>
-<ol>
-<li>
-<p>Flip可以控制X或Y方向的翻转</p>
-</li>
-<li>
-<p>Draw Mode控制Sprite Renderer尺寸修改情况下的绘制方式；</p>
-</li>
-<li>
-<p>Mask Interaction控制Sprite Mask存在时，Sprite Render与mask之间的显示方式；</p>
-</li>
-<li>
-<p>Sprite Sort Point用来控制sprite Render绘制顺序的控制点，来计算其到相机的距离，优先级低于Sorting Layer、Order In Layer；</p>
-</li>
-</ol>
-<h2 id="startscreenspriteoffsetter组件">StartScreenSpriteOffsetter组件</h2>
-<p>用于图片随鼠标偏移，可改进为随重力偏移</p>
-<h2 id="normalmappedtileanimated材质">NormalMappedTileAnimated材质</h2>
-<p>使用SineApproximation来模拟sin函数的顶点动画surface shader，没想到其着色方式竟然是完整的PBR==</p>
-<h2 id="scene-controller组件">Scene Controller组件</h2>
-<p>场景控制的单例模式脚本，用来控制场景的切换</p>
-<h2 id="backgroundmusicplayer组件">BackgroundMusicPlayer组件</h2>
-<p>背景音乐控制的单例脚本，用于播放背景音乐的控制</p>
-<h2 id="screenfader组件">ScreenFader组件</h2>
-<p>控制屏幕渐变的单例组件，用于全屏渐变效果</p>
-<h2 id="platform-effector-2d组件">Platform Effector 2D组件</h2>
-<p>用来做横版2D游戏从下往上跳而不被阻挡的那种跳跃平台用的。<a href="https://www.cnblogs.com/weiqiangwaideshijie/p/7007256.html">还是中文读起来舒服</a>;</p>
-<h2 id="tilemap组件">TileMap组件</h2>
-<p>搭建2D场景用的网格用组件</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[ShaderToy MultiParticle Rendering]]></title>
-        <id>https://wingstone.github.io/post/shadertoy-multiparticle-rendering/</id>
-        <link href="https://wingstone.github.io/post/shadertoy-multiparticle-rendering/">
-        </link>
-        <updated>2020-01-11T06:31:41.000Z</updated>
-        <content type="html"><![CDATA[<p>在ShaderToy开发过程中，使用粒子可以极高的提升粒子效果，绘制粒子可以分为<strong>粒子着色</strong>以及<strong>粒子范围的确定</strong>，这篇文章主要讨论<strong>粒子范围的确定</strong>。</p>
-<h2 id="粒子范围的确定">粒子范围的确定</h2>
-<p>假如有40个粒子，最简单方法就是循环遍历四十个粒子的位置及半径，每遍历一个粒子就对一个粒子着色，这样就能绘制出一个简单的粒子系统，iq所写的<a href="https://www.shadertoy.com/view/4dl3zn">Bubble</a>就是遍历40个粒子，来模拟大量泡泡的上升效果;<br>
-其中位置及范围确定的伪代码为：</p>
-<pre><code class="language-c++">for( int i = 0; i++; i &lt; 40 )
-{
-    bool inCircle = distance(curPos, particlePos[i]) &lt; particleRedius[i];
-}
-</code></pre>
-<h2 id="循环的优化">循环的优化</h2>
-<p>ShaderToy中开发着色器完全是在fragment shader中执行的，所以我们写的程序是在每个像素中执行一次，如何让程序在一个像素中执行时间变短是我们优化的目标；在此例子中，只要我们降低了计算的循环次数就能优化效率；</p>
-<p>在<a href="https://zhuanlan.zhihu.com/p/94632440">worley noise的实现</a>中，有一个很好的思想就是限制控制点在栅格内，这样计算最近距离时，只需要计算最近的9个栅格即可；</p>
-<p>将方法映射到粒子的计算，我们可以将粒子中心限制到一个栅格，半径不超过一个栅格的边长，这样我们只需要计算最近的9个栅格就能完成粒子的绘制；</p>
-<p>这样会限制粒子的覆盖范围，因此我们可以将栅格的边长划分的大一些，或者遍历25个栅格，而扩大粒子的覆盖范围；</p>
-<p>但是这种方法只是扩大了粒子的覆盖范围，对于粒子的运动范围，粒子的中心点必须在中心的栅格内运动才不会出现割裂的效果，因此唯一的运动方法就是移动整体的UV；</p>
-<p>移动整体的UV会导致粒子的运动过于单一，可改进的方法为使用多层粒子叠加，这样不同层的移动效果不一样，倒是会增加一点真实感~</p>
-<p>shader范例：</p>
-<iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/WtK3D1?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
-]]></content>
-    </entry>
-</feed>
+
+
+
+
+  </body>
+</html>

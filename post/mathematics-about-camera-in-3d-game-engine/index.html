@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Mathematics about camera in 3D game engine | CG黑魔法作坊</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600065901645">
+<link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="以OpenGL中的右手坐标系为例，介绍引擎中和各种应用中跟相机有关的数学；
+观察矩阵
+首先理解观察矩阵的作用，观察矩阵是为了将相机位置和转向不同的情况进行统一，最合适的统一方式就是将相机移动到坐标原点，然后将相机朝向变为-Z轴，这样所有的世..." />
+    <meta name="keywords" content="图形学,engine" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://wingstone.github.io">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1600065901645" class="site-logo">
+        <h1 class="site-title">CG黑魔法作坊</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      分享与记录关于CG技术的一切
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/wingstone/wingstone.github.io" target="_blank">wingstone</a> | <a class="rss" href="https://wingstone.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Mathematics about camera in 3D game engine</h2>
+            <div class="post-date">2020-06-18</div>
+            
+            <div class="post-content" v-pre>
+              <p>以OpenGL中的右手坐标系为例，介绍引擎中和各种应用中跟相机有关的数学；</p>
+<h2 id="观察矩阵">观察矩阵</h2>
+<p>首先理解观察矩阵的作用，观察矩阵是为了将相机位置和转向不同的情况进行统一，最合适的统一方式就是将相机移动到坐标原点，然后将相机朝向变为-Z轴，这样所有的世界在相机看来就是一致的，便于后续的处理；</p>
+<p>实际就是将以(0, 0, 0)为原点的世界坐标系转变为以(cameraPos.x, cameraPos.y, cameraPos.z)为原点的坐标系，当然，这里不能少了旋转；</p>
+<p>由于矩阵相乘的顺序影响最后的结果，由于旋转矩阵是相对原点进行旋转的，所以自然而然，我们应该先将相机移至原点（平移矩阵）再进行转向（旋转矩阵）；</p>
+<p>在OpenGl中，假设相机坐标为cameraPos，朝向分别为Front，Up，Right，坐标为列向量，则相应的矩阵为：<br>
+<img src="/assets/img/matrix.gif" alt="view矩阵" loading="lazy"></p>
+<h2 id="投影矩阵">投影矩阵</h2>
+<p>关于投影矩阵的推导，看<a href="http://www.songho.ca/opengl/gl_projectionmatrix.html">这里</a>;</p>
+<h2 id="相机中非线性0-1的深度转为线性0-1深度">相机中非线性0-1的深度转为线性0-1深度</h2>
+<p>设非线性深度值0-1为depth，线性深度值0-1为lineardepth，Zn表示-1到1的NDC深度，Ze表示观察空间下的深度，n表示近裁剪面，f表示远裁剪面；<br>
+则几者之间的关系为：</p>
+<figure data-type="image" tabindex="1"><img src="/assets/img/d_zn.gif" alt="depth与NDC" loading="lazy"></figure>
+<figure data-type="image" tabindex="2"><img src="/assets/img/ld_ze.gif" alt="lineardepth与view" loading="lazy"></figure>
+<figure data-type="image" tabindex="3"><img src="/assets/img/zn_ze.gif" alt="NDC与view" loading="lazy"></figure>
+<p><strong>其中由公式2可以看出，线性的0-1范围并不是指近裁剪面对应0、远裁剪面对应1，而是相机位置对应0，远裁剪面对应1；</strong></p>
+<p>其中公式3可以在上面投影矩阵那篇文章中看到，跟进上面三式，可以得到depth与lineardepth的关系为：</p>
+<figure data-type="image" tabindex="4"><img src="/assets/img/ld_d.gif" alt="lineardepth与depth" loading="lazy"></figure>
+<h2 id="第一人称视角相机的实现">第一人称视角相机的实现</h2>
+<p>第一人称视角相机，其实就是FPS类游戏中常用的相机，即相机所看的就是游戏中的人眼所看到的，可以自由的前后左右移动，以及左右上下旋转视角；</p>
+<p>第一人称视角相机需要存储一些额外的变量，一个是移动的速度MovementSpeed，二是Pitch，Yaw角度，Pitch表示俯仰角，Yaw表示偏航角；</p>
+<p>相机自带的变量为Front，Up，Right，cameraPos，worldUp，worldUp表示世界的正上方向；</p>
+<h3 id="相机的移动实现">相机的移动实现</h3>
+<pre><code class="language-c++">void ProcessKeyBoard(CEMERA_MOVEMENT direction, float deltaTime)
+{
+    float offset = MovementSpeed * deltaTime;
+    switch (direction)
+    {
+    case FORWARD:
+        Position += Front * offset;
+        break;
+    case BACKWARD:
+        Position -= Front * offset;
+        break;
+    case LEFT:
+        Position -= Right * offset;
+        break;
+    case RIGHT:
+        Position += Right * offset;
+        break;
+    default:
+        break;
+    }
+}
+
+</code></pre>
+<h3 id="相机的旋转实现">相机的旋转实现</h3>
+<pre><code class="language-c++">void ProcessMouseMovement(float xOffset, float yOffset, bool focusCenter = true, GLboolean constrainPitch = true)
+{
+    xOffset *= MouseSensitivity;
+    yOffset *= MouseSensitivity;
+
+    Yaw += xOffset;
+    Pitch += yOffset;
+
+    if (constrainPitch)
+    {
+        if (Pitch &gt; 89.0f)
+        {
+            Pitch = 89.0f;
+        }
+        if (Pitch &lt; -89.0f)
+        {
+            Pitch = -89.0f;
+        }
+    }
+
+    {
+        glm::vec3 front;
+        front.x = sin(glm::radians(Yaw))*cos(glm::radians(Pitch));
+        front.y = sin(glm::radians(Pitch));
+        front.z = -cos(glm::radians(Yaw))*cos(glm::radians(Pitch));
+        Front = glm::normalize(front);
+
+        Right = glm::normalize(glm::cross(Front, WorldUp));
+        Up = glm::normalize(glm::cross(Right, Front));
+    }
+}
+</code></pre>
+<h2 id="绕固定物体的第三人称相机的实现">绕固定物体的第三人称相机的实现</h2>
+<p>绕固定物体旋转相机，有点类似于unity或maya中，Alt+左键移动移动镜头的那种实现，只不过镜头是绕着所看到的物体旋转的，不是自由旋转的，所以相机要跟根据旋转角度计算相机方向同时计算相机位置；</p>
+<p>实际上第三人称相机就是这样实现的，只不过此时固定物体是角色而已；</p>
+<h3 id="绕固定物体相机的旋转实现">绕固定物体相机的旋转实现</h3>
+<pre><code class="language-c++">void ProcessMouseMovement(float xOffset, float yOffset, glm::vec3 focusPosition = glm::vec3(0.0f), float focusDistance = 5.0f, GLboolean constrainPitch = true)
+{
+    xOffset *= MouseSensitivity;
+    yOffset *= MouseSensitivity;
+
+    Yaw += xOffset;
+    Pitch += yOffset;
+
+    if (constrainPitch)
+    {
+        if (Pitch &gt; 89.0f)
+        {
+            Pitch = 89.0f;
+        }
+        if (Pitch &lt; -89.0f)
+        {
+            Pitch = -89.0f;
+        }
+    }
+
+    {
+        glm::vec3 front;
+        front.x = sin(glm::radians(Yaw))*cos(glm::radians(Pitch));
+        front.y = sin(glm::radians(Pitch));
+        front.z = -cos(glm::radians(Yaw))*cos(glm::radians(Pitch));
+        Front = glm::normalize(front);
+
+        Right = glm::normalize(glm::cross(Front, WorldUp));
+        Up = glm::normalize(glm::cross(Right, Front));
+    }
+
+    Position = focusPosition - Front * focusDistance;            //区别在在这里
+}
+</code></pre>
+<h2 id="参考文章">参考文章</h2>
+<p><a href="https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/">learnopengl-cn</a></p>
+<p><a href="https://book.douban.com/subject/26821639/">Unity Shader入门精要</a></p>
+<p><a href="http://www.songho.ca/opengl/gl_projectionmatrix.html">OpenGL Projection Matrix</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://wingstone.github.io/tag/KFv9_-Z2a/" class="tag">
+                    图形学
+                  </a>
+                
+                  <a href="https://wingstone.github.io/tag/SJbHb1VWvw/" class="tag">
+                    engine
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://wingstone.github.io/post/unity-custom-ui-mesh/">
+                  <h3 class="post-title">
+                    Unity Custom UI Mesh
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>

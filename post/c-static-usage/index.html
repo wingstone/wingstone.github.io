@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>关于 | CG黑魔法作坊</title>
+<title>C++ Static Usage | CG黑魔法作坊</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -18,15 +18,13 @@
 
 
 
-    <meta name="description" content="
-欢迎来到我的小站呀，很高兴遇见你！🤝
-
-🏠 关于本站
-👨‍💻 博主是谁
-⛹ 兴趣爱好
-📬 联系我呀
-..." />
-    <meta name="keywords" content="" />
+    <meta name="description" content="C++中的一些细节问题
+C语言中的static关键字
+修饰全局变量，全局函数
+将限制该变量及函数的作用域为本文，不能实现连接时的跨文本使用；
+//file1.c
+static int a = 10;      //变量作用范围限制在本文本作..." />
+    <meta name="keywords" content="C++" />
   </head>
   <body>
     <div id="app" class="main">
@@ -97,20 +95,69 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">关于</h2>
-            <div class="post-date">2019-01-25</div>
+            <h2 class="post-title">C++ Static Usage</h2>
+            <div class="post-date">2020-09-07</div>
             
             <div class="post-content" v-pre>
-              <blockquote>
-<p>欢迎来到我的小站呀，很高兴遇见你！🤝</p>
-</blockquote>
-<h2 id="关于本站">🏠 关于本站</h2>
-<h2 id="博主是谁">👨‍💻 博主是谁</h2>
-<h2 id="兴趣爱好">⛹ 兴趣爱好</h2>
-<h2 id="联系我呀">📬 联系我呀</h2>
+              <p>C++中的一些细节问题</p>
+<h2 id="c语言中的static关键字">C语言中的static关键字</h2>
+<h3 id="修饰全局变量全局函数">修饰全局变量，全局函数</h3>
+<p>将限制该变量及函数的作用域为本文，不能实现连接时的跨文本使用；</p>
+<pre><code class="language-C++">//file1.c
+static int a = 10;      //变量作用范围限制在本文本作用域中
+
+//file2.c
+#include &lt;iostream&gt;
+
+using namespace std;
+
+extern int a;   //无法使用file1.c中的a变量
+
+int main()
+{
+    cout &lt;&lt; &quot;a = &quot; &lt;&lt; a &lt;&lt;endl;
+
+    return 0;
+}
+
+</code></pre>
+<h3 id="修饰局部变量">修饰局部变量</h3>
+<p>在用static修饰局部变量后，该变量只在初次运行时进行初始化工作，且只进行一次；且该变量便存放在静态数据区，其生命周期一直持续到整个程序执行结束。</p>
+<pre><code class="language-c++">#include&lt;stdio.h&gt;
+
+void fun()
+{
+    static int a=1;
+    a++;
+}
+
+int main(void)
+{
+    fun();  //这里运行时，a会进行初始化，随后a++
+    fun();  //这里运行时，只会运行a++
+    return 0;
+}
+</code></pre>
 
             </div>
             
+              <div class="tag-container">
+                
+                  <a href="https://wingstone.github.io/tag/Usq3GsKwK/" class="tag">
+                    C++
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://wingstone.github.io/post/pai-lie-yu-zu-he/">
+                  <h3 class="post-title">
+                    排列与组合
+                  </h3>
+                </a>
+              </div>
             
 
             

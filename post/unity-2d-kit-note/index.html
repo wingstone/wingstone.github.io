@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title> Unity 2D Kit Note | CG黑魔法作坊</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600065901645">
+<link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="介绍unity 2D Kit包中所用的一些组件；
+Sorting Group组件
+Sorting Group组件可以改变Sprite Renderers的渲染顺序，Sorting Group作为Sprite Renderers的覆盖层，用于..." />
+    <meta name="keywords" content="unity" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://wingstone.github.io">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1600065901645" class="site-logo">
+        <h1 class="site-title">CG黑魔法作坊</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      分享与记录关于CG技术的一切
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/wingstone/wingstone.github.io" target="_blank">wingstone</a> | <a class="rss" href="https://wingstone.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title"> Unity 2D Kit Note</h2>
+            <div class="post-date">2020-03-29</div>
+            
+            <div class="post-content" v-pre>
+              <p>介绍unity 2D Kit包中所用的一些组件；</p>
+<h2 id="sorting-group组件">Sorting Group组件</h2>
+<p>Sorting Group组件可以改变Sprite Renderers的渲染顺序，Sorting Group作为Sprite Renderers的覆盖层，用于区分Group之间的渲染顺序；</p>
+<ol>
+<li>Sorting Layer可以改变物体以及子物体的排列层，不同的排列层之间有渲染顺序区分；</li>
+<li>Order In Layer可以改变物体及子物体在排列层内的渲染顺序；</li>
+</ol>
+<h2 id="sprite-renderer组件">Sprite Renderer组件</h2>
+<p>渲染sprite时，使用的mesh不一定是一个四边形，其形状以能拟合Sprite的大致形状为准；</p>
+<ol>
+<li>
+<p>Flip可以控制X或Y方向的翻转</p>
+</li>
+<li>
+<p>Draw Mode控制Sprite Renderer尺寸修改情况下的绘制方式；</p>
+</li>
+<li>
+<p>Mask Interaction控制Sprite Mask存在时，Sprite Render与mask之间的显示方式；</p>
+</li>
+<li>
+<p>Sprite Sort Point用来控制sprite Render绘制顺序的控制点，来计算其到相机的距离，优先级低于Sorting Layer、Order In Layer；</p>
+</li>
+</ol>
+<h2 id="startscreenspriteoffsetter组件">StartScreenSpriteOffsetter组件</h2>
+<p>用于图片随鼠标偏移，可改进为随重力偏移</p>
+<h2 id="normalmappedtileanimated材质">NormalMappedTileAnimated材质</h2>
+<p>使用SineApproximation来模拟sin函数的顶点动画surface shader，没想到其着色方式竟然是完整的PBR==</p>
+<h2 id="scene-controller组件">Scene Controller组件</h2>
+<p>场景控制的单例模式脚本，用来控制场景的切换</p>
+<h2 id="backgroundmusicplayer组件">BackgroundMusicPlayer组件</h2>
+<p>背景音乐控制的单例脚本，用于播放背景音乐的控制</p>
+<h2 id="screenfader组件">ScreenFader组件</h2>
+<p>控制屏幕渐变的单例组件，用于全屏渐变效果</p>
+<h2 id="platform-effector-2d组件">Platform Effector 2D组件</h2>
+<p>用来做横版2D游戏从下往上跳而不被阻挡的那种跳跃平台用的。<a href="https://www.cnblogs.com/weiqiangwaideshijie/p/7007256.html">还是中文读起来舒服</a>;</p>
+<h2 id="tilemap组件">TileMap组件</h2>
+<p>搭建2D场景用的网格用组件</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://wingstone.github.io/tag/POqKQGUuP/" class="tag">
+                    unity
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://wingstone.github.io/post/shadertoy-multiparticle-rendering/">
+                  <h3 class="post-title">
+                    ShaderToy MultiParticle Rendering
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
