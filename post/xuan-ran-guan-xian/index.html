@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" >
 
-<title>渲染管线 | CG黑魔法作坊</title>
+<title>GPU Graphic Pipeline与Render Path | CG黑魔法作坊</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600087881512">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600161191652">
 <link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
 
 
@@ -19,10 +19,8 @@
 
 
     <meta name="description" content="管线介绍
-所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程（Graphic Pipeline）；针对实际应用来说，渲染一帧画面也需要一个渲染流程（Render Path）；
-GPU Graphic Pipeline
-具体的..." />
-    <meta name="keywords" content="" />
+所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程（Graphic Pipeline）；针对实际应用来说，渲染一帧画面也需要一个渲染流程（Render Path）；Graphic Pipeline处于更加低级的渲染..." />
+    <meta name="keywords" content="pipeline,图形学" />
   </head>
   <body>
     <div id="app" class="main">
@@ -31,7 +29,7 @@ GPU Graphic Pipeline
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://wingstone.github.io">
-        <img src="https://wingstone.github.io/images/avatar.png?v=1600087881512" class="site-logo">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1600161191652" class="site-logo">
         <h1 class="site-title">CG黑魔法作坊</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -93,12 +91,12 @@ GPU Graphic Pipeline
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">渲染管线</h2>
+            <h2 class="post-title">GPU Graphic Pipeline与Render Path</h2>
             <div class="post-date">2020-09-14</div>
             
             <div class="post-content" v-pre>
               <h2 id="管线介绍">管线介绍</h2>
-<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程（Graphic Pipeline）；针对实际应用来说，渲染一帧画面也需要一个渲染流程（Render Path）；</p>
+<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程（<strong>Graphic Pipeline</strong>）；针对实际应用来说，渲染一帧画面也需要一个渲染流程（<strong>Render Path</strong>）；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
 <h2 id="gpu-graphic-pipeline">GPU Graphic Pipeline</h2>
 <p>具体的管线流程要看实际的硬件驱动，Direct3D每一个版本都有很大的改动，这里以Direct3D11为例进行介绍；具体的文章参考可以看这里：<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-graphics-pipeline">Direct3D 11 Graphics Pipeline</a>，<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/pipelines-and-shaders-with-directx-12">Direct3D 12 Graphics Pipeline</a>；</p>
 <h3 id="input-assembler-stage图元装配阶段">Input-Assembler Stage（图元装配阶段）</h3>
@@ -160,8 +158,24 @@ GPU Graphic Pipeline
 <p><strong>light culling</strong> 后的光照计算过程，针对每个tile里的物体，采用Forward rendering在一个shader中累加相应light list的光照即可；<strong>不考虑tile数量，复杂度为O(num(obj))</strong>；</p>
 <p>与普通的Forward Rendering相比，其大大减少了DC的数量（因为所有的light都合到一个pass中进行了计算）；</p>
 <p>另外，<strong>Z-Prepass</strong>对于Forward+来说是必须的，其大大减弱了Overdraw所带来的性能损耗；毕竟在Forward Rendering+流程中一个pass中进行了大量的light的运算；</p>
+<h3 id="clustered-shading">Clustered Shading</h3>
+<p>TBDR和Forward+使用平面上的tile进行light culling，每一个tile的深度为Z-Near（摄像机近平面）到Z-Far（摄像机远平面）；这样同样会产生问题，即物体对应的像素可能并不会被深度相差太远的光源给照到，因此针对深度上应该再进行一次light culling；</p>
+<p>clustered shading就此产生，其给light list的划分增加了一个维度，即depth，它根据view frustum的zmin，zmax把场景进一步根据depth划分成若干个slice（基于指数的划分，通常16个），然后在每个slice上对场景中的所有灯光进行light culling；</p>
+<p>在实际shading的时候，每个像素根据自己的depth和screen position，找到对应的depth slice，从3D Texture里拿到offset和num lights，再执行一个num lights次循环；</p>
 
             </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://wingstone.github.io/tag/I5G-0Bdx6/" class="tag">
+                    pipeline
+                  </a>
+                
+                  <a href="https://wingstone.github.io/tag/KFv9_-Z2a/" class="tag">
+                    图形学
+                  </a>
+                
+              </div>
             
             
               <div class="next-post">

@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://wingstone.github.io</id>
     <title>CG黑魔法作坊</title>
-    <updated>2020-09-14T12:51:28.584Z</updated>
+    <updated>2020-09-15T09:13:18.019Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://wingstone.github.io"/>
     <link rel="self" href="https://wingstone.github.io/atom.xml"/>
@@ -11,13 +11,30 @@
     <icon>https://wingstone.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, CG黑魔法作坊</rights>
     <entry>
-        <title type="html"><![CDATA[渲染管线]]></title>
+        <title type="html"><![CDATA[图形学资源推荐]]></title>
+        <id>https://wingstone.github.io/post/tu-xing-xue-zi-yuan-tui-jian/</id>
+        <link href="https://wingstone.github.io/post/tu-xing-xue-zi-yuan-tui-jian/">
+        </link>
+        <updated>2020-09-15T08:10:15.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="离线渲染">离线渲染</h2>
+<ol>
+<li><a href="https://www.pbrt.org/index.html">Physically Based Rendering:From Theory To Implementation</a>：大名鼎鼎的《基于物理的渲染：从理论到实现》，离线学习必看，包含了各种光线追踪中用到的技术！官网还提供了第三版书籍的<a href="http://www.pbr-book.org/">网页版</a>供免费看；</li>
+</ol>
+<h2 id="实时渲染">实时渲染</h2>
+<ol>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems/contributors">GPU Gems1-3部曲</a>：学习GPU编程必备系列，学习如何编写shader来实现各种实时渲染技术；</li>
+<li></li>
+</ol>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[GPU Graphic Pipeline与Render Path]]></title>
         <id>https://wingstone.github.io/post/xuan-ran-guan-xian/</id>
         <link href="https://wingstone.github.io/post/xuan-ran-guan-xian/">
         </link>
         <updated>2020-09-14T06:51:39.000Z</updated>
         <content type="html"><![CDATA[<h2 id="管线介绍">管线介绍</h2>
-<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程（Graphic Pipeline）；针对实际应用来说，渲染一帧画面也需要一个渲染流程（Render Path）；</p>
+<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程（<strong>Graphic Pipeline</strong>）；针对实际应用来说，渲染一帧画面也需要一个渲染流程（<strong>Render Path</strong>）；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
 <h2 id="gpu-graphic-pipeline">GPU Graphic Pipeline</h2>
 <p>具体的管线流程要看实际的硬件驱动，Direct3D每一个版本都有很大的改动，这里以Direct3D11为例进行介绍；具体的文章参考可以看这里：<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-graphics-pipeline">Direct3D 11 Graphics Pipeline</a>，<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/pipelines-and-shaders-with-directx-12">Direct3D 12 Graphics Pipeline</a>；</p>
 <h3 id="input-assembler-stage图元装配阶段">Input-Assembler Stage（图元装配阶段）</h3>
@@ -79,6 +96,10 @@
 <p><strong>light culling</strong> 后的光照计算过程，针对每个tile里的物体，采用Forward rendering在一个shader中累加相应light list的光照即可；<strong>不考虑tile数量，复杂度为O(num(obj))</strong>；</p>
 <p>与普通的Forward Rendering相比，其大大减少了DC的数量（因为所有的light都合到一个pass中进行了计算）；</p>
 <p>另外，<strong>Z-Prepass</strong>对于Forward+来说是必须的，其大大减弱了Overdraw所带来的性能损耗；毕竟在Forward Rendering+流程中一个pass中进行了大量的light的运算；</p>
+<h3 id="clustered-shading">Clustered Shading</h3>
+<p>TBDR和Forward+使用平面上的tile进行light culling，每一个tile的深度为Z-Near（摄像机近平面）到Z-Far（摄像机远平面）；这样同样会产生问题，即物体对应的像素可能并不会被深度相差太远的光源给照到，因此针对深度上应该再进行一次light culling；</p>
+<p>clustered shading就此产生，其给light list的划分增加了一个维度，即depth，它根据view frustum的zmin，zmax把场景进一步根据depth划分成若干个slice（基于指数的划分，通常16个），然后在每个slice上对场景中的所有灯光进行light culling；</p>
+<p>在实际shading的时候，每个像素根据自己的depth和screen position，找到对应的depth slice，从3D Texture里拿到offset和num lights，再执行一个num lights次循环；</p>
 ]]></content>
     </entry>
     <entry>
@@ -521,12 +542,13 @@ c, &amp;{otherwise} \end{cases}
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Mathematics about camera in 3D game engine]]></title>
+        <title type="html"><![CDATA[Mathematics about camera in graphics（图形学中关于相机的数学）]]></title>
         <id>https://wingstone.github.io/post/mathematics-about-camera-in-3d-game-engine/</id>
         <link href="https://wingstone.github.io/post/mathematics-about-camera-in-3d-game-engine/">
         </link>
         <updated>2020-06-18T06:34:51.000Z</updated>
         <content type="html"><![CDATA[<p>以OpenGL中的右手坐标系为例，介绍引擎中和各种应用中跟相机有关的数学；</p>
+<h1 id="实现渲染中的相机">实现渲染中的相机</h1>
 <h2 id="观察矩阵">观察矩阵</h2>
 <p>首先理解观察矩阵的作用，观察矩阵是为了将相机位置和转向不同的情况进行统一，最合适的统一方式就是将相机移动到坐标原点，然后将相机朝向变为-Z轴，这样所有的世界在相机看来就是一致的，便于后续的处理；</p>
 <p>实际就是将以(0, 0, 0)为原点的世界坐标系转变为以(cameraPos.x, cameraPos.y, cameraPos.z)为原点的坐标系，当然，这里不能少了旋转；</p>
@@ -643,6 +665,60 @@ c, &amp;{otherwise} \end{cases}
     Position = focusPosition - Front * focusDistance;            //区别在在这里
 }
 </code></pre>
+<h1 id="离线渲染中的相机">离线渲染中的相机</h1>
+<p>离线渲染中并不涉及到View矩阵与Project矩阵，主要涉及到如何使用相机参数生成相应的射线；关于射线的计算与具体的相机类型有关；</p>
+<h2 id="透视相机发射射线">透视相机发射射线</h2>
+<p>透视相机的射线，只需要将相机坐标作为起点，相机与屏幕像素的连线作为方向即可；考虑到抗拒齿问题，一般还需要在像素区域内进行随机采样；</p>
+<pre><code class="language-C++">//归一化屏幕坐标，范围：0~1
+Ray getRay(float screenX, float screenY, float randx, float randy)
+{
+    vector&lt;float&gt; dir = _up * std::tan(_fov / 2) *(screenY*2.0f-1.0f) + _right * std::tan(_fov / 2)*_aspect*(screenX*2.0f-1.0f) + _front;		//射线从origin发射
+    dir = Normalize(dir);
+    return Ray(_origin, dir);
+}
+</code></pre>
+<h2 id="正交相机发射射线">正交相机发射射线</h2>
+<p>正交相机的射线，只需要将相机坐标作为起点，起点的坐标沿屏幕像素进行偏移即可；考虑到抗拒齿问题，一般还需要在像素区域内进行随机采样；</p>
+<pre><code class="language-C++">//归一化屏幕坐标，范围：0~1
+Ray getRay(float screenX, float screenY, float randx, float randy)
+{
+    point origin = _origin + _right * (_aspect*(screenX*2.f - 1.f)) + _up * (screenY*2.f - 1.f);		//射线从像素发射
+    return Ray(origin, _front);
+}
+</code></pre>
+<h2 id="针孔相机">针孔相机</h2>
+<p>针孔相机最大的用途是，可以通过调节透镜的参数，可以产生景深的效果；</p>
+<pre><code class="language-C++">//透镜描述
+float _apertureRedius;	//光圈半径
+float _focusDistance;		//焦距
+float _imageDistance;		//像距
+
+//画布描述
+float _height;
+float _aspect;
+
+//针孔成像后为倒立图像，此处并没有对倒立过程进行纠正
+Ray getRay(float screenX, float screenY, float randx, float randy)
+{
+    point screenPoint = _origin + _right * (_aspect*(screenX*2.f - 1.f)*_height) + _up * ((screenY*2.f - 1.f)*_height);
+    point lensPoint = _origin + _front * _imageDistance;
+    point focusPoint = lensPoint + (lensPoint - screenPoint) * (_focusDistance / _imageDistance);
+
+    point origin = lensPoint + _right * (std::sqrt(randx) * std::cos(randy*2.f*PI)) + _up * (std::sqrt(randx) * std::sin(randy*2.f*PI)) *_apertureRedius;	//射线从透镜发射
+    vector&lt;float&gt; dir = Normalize(focusPoint - origin);
+    return Ray(origin, dir);
+}
+</code></pre>
+<h2 id="环境相机">环境相机</h2>
+<p>环境相机实际就是将像素的x、y坐标映射到体积角上，然后计算出相应体积角下的射线；整个像素映射下来刚好覆盖整个4pi体积角；</p>
+<pre><code class="language-C++">Ray getRay(float screenX, float screenY, float randx, float randy)
+{
+    float theta = PI*(1.f - screenY);
+    float phi = 2*PI * screenX;
+    vector&lt;float&gt; dir = _right * (std::sin(theta)*std::cos(phi)) + _front * (std::sin(theta)*std::sin(phi)) + _up * std::cos(theta);
+    return Ray(_origin, dir);
+}
+</code></pre>
 <h2 id="参考文章">参考文章</h2>
 <p><a href="https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/">learnopengl-cn</a></p>
 <p><a href="https://book.douban.com/subject/26821639/">Unity Shader入门精要</a></p>
@@ -734,51 +810,6 @@ c, &amp;{otherwise} \end{cases}
 <p>待续</p>
 </li>
 </ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[ Unity 2D Kit Note]]></title>
-        <id>https://wingstone.github.io/post/unity-2d-kit-note/</id>
-        <link href="https://wingstone.github.io/post/unity-2d-kit-note/">
-        </link>
-        <updated>2020-03-29T06:32:39.000Z</updated>
-        <content type="html"><![CDATA[<p>介绍unity 2D Kit包中所用的一些组件；</p>
-<h2 id="sorting-group组件">Sorting Group组件</h2>
-<p>Sorting Group组件可以改变Sprite Renderers的渲染顺序，Sorting Group作为Sprite Renderers的覆盖层，用于区分Group之间的渲染顺序；</p>
-<ol>
-<li>Sorting Layer可以改变物体以及子物体的排列层，不同的排列层之间有渲染顺序区分；</li>
-<li>Order In Layer可以改变物体及子物体在排列层内的渲染顺序；</li>
-</ol>
-<h2 id="sprite-renderer组件">Sprite Renderer组件</h2>
-<p>渲染sprite时，使用的mesh不一定是一个四边形，其形状以能拟合Sprite的大致形状为准；</p>
-<ol>
-<li>
-<p>Flip可以控制X或Y方向的翻转</p>
-</li>
-<li>
-<p>Draw Mode控制Sprite Renderer尺寸修改情况下的绘制方式；</p>
-</li>
-<li>
-<p>Mask Interaction控制Sprite Mask存在时，Sprite Render与mask之间的显示方式；</p>
-</li>
-<li>
-<p>Sprite Sort Point用来控制sprite Render绘制顺序的控制点，来计算其到相机的距离，优先级低于Sorting Layer、Order In Layer；</p>
-</li>
-</ol>
-<h2 id="startscreenspriteoffsetter组件">StartScreenSpriteOffsetter组件</h2>
-<p>用于图片随鼠标偏移，可改进为随重力偏移</p>
-<h2 id="normalmappedtileanimated材质">NormalMappedTileAnimated材质</h2>
-<p>使用SineApproximation来模拟sin函数的顶点动画surface shader，没想到其着色方式竟然是完整的PBR==</p>
-<h2 id="scene-controller组件">Scene Controller组件</h2>
-<p>场景控制的单例模式脚本，用来控制场景的切换</p>
-<h2 id="backgroundmusicplayer组件">BackgroundMusicPlayer组件</h2>
-<p>背景音乐控制的单例脚本，用于播放背景音乐的控制</p>
-<h2 id="screenfader组件">ScreenFader组件</h2>
-<p>控制屏幕渐变的单例组件，用于全屏渐变效果</p>
-<h2 id="platform-effector-2d组件">Platform Effector 2D组件</h2>
-<p>用来做横版2D游戏从下往上跳而不被阻挡的那种跳跃平台用的。<a href="https://www.cnblogs.com/weiqiangwaideshijie/p/7007256.html">还是中文读起来舒服</a>;</p>
-<h2 id="tilemap组件">TileMap组件</h2>
-<p>搭建2D场景用的网格用组件</p>
 ]]></content>
     </entry>
 </feed>
