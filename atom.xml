@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://wingstone.github.io</id>
     <title>CG黑魔法作坊</title>
-    <updated>2020-09-15T09:13:18.019Z</updated>
+    <updated>2020-09-16T03:01:03.237Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://wingstone.github.io"/>
     <link rel="self" href="https://wingstone.github.io/atom.xml"/>
@@ -28,13 +28,79 @@
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[GPU Graphic Pipeline与Render Path]]></title>
+        <title type="html"><![CDATA[Pipeline——Render Pipeline/Path（渲染管线/路径）]]></title>
         <id>https://wingstone.github.io/post/xuan-ran-guan-xian/</id>
         <link href="https://wingstone.github.io/post/xuan-ran-guan-xian/">
         </link>
         <updated>2020-09-14T06:51:39.000Z</updated>
+        <content type="html"><![CDATA[<p>Render Path称之为渲染路径更为合适，实际上指渲染一帧所要走的流程，这个流程主要用来处理光照，以及后处理等；常见的有Forward/Deferred Rendering；以及其改版Forward+、Tiled Based Deferred Rendering、Clustered Shading；以及更灵活的Frame Graph（寒霜引擎）、SRP（Unity引擎）；</p>
+<p>注意：在render之前，一般还会有一个Application stage，用以在CPU上运行一些必要的前置任务：如碰撞检测、全局加速算法（视锥剔除、遮挡剔除）、物理模拟、动画效果等等；处理完这些后，才能进行高效合理的渲染；</p>
+<h2 id="forward-rendering">Forward Rendering</h2>
+<p>总的来说，前向渲染绘制次数为光源个数乘以物体个数，通常在一个pass中处理一个光源；然后多个pass处理多个光源，并在pass中通过blend add相加得到总的光照效果；</p>
+<p><strong>DC复杂度为O(num(obj)*num(light))</strong>，通常会限制light的数量来减少DC；</p>
+<p>更甚者，会将限制光源数量（一般附加光源数量为4），并将所有的光照写进一个Uber Shader，通过传递光照参数来实现；</p>
+<h3 id="z-prepass避免overdraw问题">Z-Prepass避免overdraw问题</h3>
+<p>具体来说，在实际渲染之前，加入了一个称之为z prepass的流程，这个流程关闭了color buffer的写入，同时pixel shader极为简单或者索性为空，可以非常快速的执行完毕并且获得场景中的z buffer；紧接着，我们再关闭z buffer的写入，改depth test function为equal。这样就只绘制我们所能看到的像素了（当然只针对于不透明问题）；</p>
+<h2 id="deferred-rendering">Deferred Rendering</h2>
+<p>得益于MRT的支持，我们可以发展处延迟渲染，它的核心技术是 <strong>第一阶段</strong> 在绘制物体时将光照所需要的的basecolor、normal、smoothness等信息存储于G-buffer中，而不进行真正的光照；待物体绘制完后， <strong>第二阶段</strong> 再重新使用G-buffer进行光照的计算（及将光照的计算进行推迟）；</p>
+<p>传统的延迟渲染在G-Buffer生成之后，会根据光源的形状（light volume），对每个光源执行一次draw call，如果某个像素被light volume覆盖到了，我们就在该像素的位置执行一次当前光源的lighting计算。</p>
+<p>需要注意的是，为了防止同一像素被光源正反面计算两次，我们需要在绘制light volume的时候使用单面渲染，如果摄像机在光源内，则需要开启正面剔除，并且将depth test设置为farOrEqual，如果摄像机在光源之外，则开启背面剔除，并且将depth test设置为nearOrEqual。</p>
+<p><strong>DC的复杂度为O(num(obj)+num(light))</strong>；num(obj)为前期绘制物体的数量，num(light)为后期光照时光源的数量；在光照渲染时，同样通过blend add来实现多光源效果的叠加；</p>
+<p>一种简单但耗费资源的做法：可以直接将所有光源信息传至一个shader，在这一个shader中进行所有光源的计算与累积，由于是在整个屏幕中进行计算，也就导致会产生多余的光照计算（光源照不到区域也进行了计算）；优点是只有O(1)的复杂度进行光照计算；</p>
+<p>另外，G-Buffer除了用于直接照明外，还能够被用于一些间接照明的效果，比如SSAO，SSR；也正是G-Buffer概念的提出，使得近十年来越来越多的算法从world space向screen space的演进；</p>
+<h2 id="light-pre-pass">Light Pre-Pass</h2>
+<p>Light Pre-Pass是Deferred Rendering的一个变种，它将整个渲染流程分为<strong>三个阶段</strong>：</p>
+<ol>
+<li>只在G-Buffer中存储Z值和Normal值。对比Deferred Render，少了Diffuse Color， Specular Color以及对应位置的材质索引值。</li>
+<li>在FS阶段（对应于普通Deferred Rendering的light volume绘制阶段）利用上面的G-Buffer计算出所必须的light properties，比如Normal*LightDir,LightColor,Specular等light properties。将这些计算出的光照进行blend add并存入LightBuffer（就是用来存储light properties的buffer）。</li>
+<li>最后将结果送到forward rendering渲染方式计算最后的光照效果；采用Front to Back的绘制顺序，以及前面的LightBuffer进行光照计算；</li>
+</ol>
+<p>可以看到光照相关的light properties已经在第二阶段计算过了，第三阶段更多是光照成分的组合，因此又称之为Light Pre-Pass；总体的<strong>DC复杂度为O(num(obj)+num(light)+num(obj))</strong>，分别对应第一二三阶段；</p>
+<p>相对于传统的Deferred Render，Light Pre-Pass第三步使用的其实是forward rendering，所以可以对每个mesh设置其材质，这两者是相辅相成的，有利有弊。另一个Light Pre-Pass的优点是在使用MSAA上很有利。</p>
+<h2 id="tiled-based-deferred-rendering-forward">Tiled Based Deferred Rendering &amp; Forward+</h2>
+<p>实际上TBDR和Forward+是tiled based方法在forward和deferred上各自的体现，相较于过去的管线，TBDR和Forward+增加了一个 <strong>light culling</strong> 的流程，这个流程把整个屏幕分割成若干个tile（通常每个tile是16*16个pixel），每个tile各自计算出一个单独的<strong>light list</strong>，找出场景中那些对当前tile有贡献的光源。然后对每个tile中的pixel，只需要计算其对应的tile中light list内的光源对该像素的贡献。</p>
+<h3 id="tbdr">TBDR</h3>
+<p><strong>light culling</strong> 后的光照计算过程，是在一个Computer shader中进行计算，针对每个tile，采用Deferred rendering只需累加相应light list的光照即可；<strong>不考虑tile数量，DC复杂度为O(1)</strong>；</p>
+<p>由于只读取一次G-buffer，大大减少了带宽的影响；</p>
+<h3 id="forward">Forward+</h3>
+<p><strong>light culling</strong> 后的光照计算过程，针对每个tile里的物体，采用Forward rendering在一个shader中累加相应light list的光照即可；<strong>不考虑tile数量，复杂度为O(num(obj))</strong>；</p>
+<p>与普通的Forward Rendering相比，其大大减少了DC的数量（因为所有的light都合到一个pass中进行了计算）；</p>
+<p>另外，<strong>Z-Prepass</strong>对于Forward+来说是必须的，其大大减弱了Overdraw所带来的性能损耗；毕竟在Forward Rendering+流程中一个pass中进行了大量的light的运算；</p>
+<h2 id="clustered-shading">Clustered Shading</h2>
+<p>TBDR和Forward+使用平面上的tile进行light culling，每一个tile的深度为Z-Near（摄像机近平面）到Z-Far（摄像机远平面）；这样同样会产生问题，即物体对应的像素可能并不会被深度相差太远的光源给照到，因此针对深度上应该再进行一次light culling；</p>
+<p>clustered shading就此产生，其给light list的划分增加了一个维度，即depth，它根据view frustum的zmin，zmax把场景进一步根据depth划分成若干个slice（基于指数的划分，通常16个），然后在每个slice上对场景中的所有灯光进行light culling；</p>
+<p>在实际shading的时候，每个像素根据自己的depth和screen position，找到对应的depth slice，从3D Texture里拿到offset和num lights，再执行一个num lights次循环；</p>
+<h2 id="unity-scriptable-render-pipelinesrp可编程渲染管线">Unity Scriptable Render Pipeline（SRP可编程渲染管线）</h2>
+<p>Unity SRP实际上是对底层渲染API进行了封装，并且结合unity内部的渲染模块，提供了一个相对高级的可编程化的渲染管线；用户可以使用SRP编写适合自己产品的Render Pipeline；不过要想自定义SRP，必须要对已有的管线有深入了解，才能编写出高效的管线；</p>
+<p>在Unity SRP出现之前，Unity提供的是不可更改的standard built-in pipeline；Unity SRP出现后，Unity还提供了两个已经相对标准且开源的基于SRP的管线，<strong>URP与HDRP</strong>；URP主要侧重于通用平台下的渲染，支持多平台；HDRP主要侧重高端平台下的渲染（大量使用了Computer Shader），普通平台支持不了；</p>
+<h2 id="frame-graph">Frame Graph</h2>
+<p>随着时代的发展，内置固化的渲染管线架构已经越来越不能满足行业发展的需求，具体表现在以下几个方面：</p>
+<ol>
+<li>多样化的游戏画面表现需求：有的写实，有的卡通，有的更加风格化，这就要求引擎的渲染管线能具有相应的可调整的能力；</li>
+<li>不同平台的软硬件能力差异：比如 PC、主机硬件能力更强，需要有更高端的画面表现，试图通过一种渲染流程来充分发挥每个平台的优势以及消除劣势，是一件非常困难的事情；</li>
+<li>Rendering Path 的不断进化：即前面介绍的各种render path；</li>
+<li>新的渲染技术：近年来的 VR\AR\XR 渲染技术对渲染管线提出了特定的需求，一套管线已经很难做到完全兼容这些渲染机制。在 2018 年微软发布了革命性的 DirectX RayTracing，这更是完全不同Rendering\Computing 机制。</li>
+</ol>
+<p>通过上述几点，说明传统的固定功能的渲染管线架构已经不再适合未来游戏发展的需求，如果重新设计引擎的渲染管线，必须要考虑到渲染管线的可扩展性、可配置性、甚至是 Data-Driven 的。</p>
+<p><strong>Frostbite：Frame Graph（FG）<strong>就此产生，FG 由</strong> RenderPass</strong> 以及其依赖的 **Resource **组成。RenderPass 定义了一个完整的渲染操作，Resource 包括了 RenderPass 使用的 PSO、Texture、RenderTarget、ConstantBuffer、Shader 等资源。每个 RenderPass 都有 Input 和 Output 资源，这样 RenderPass 和 Resource 就形成了有向非循环图（DAG）结构，因为描述的是引擎在一帧内的渲染流程，所以称之为 Frame Graph。</p>
+<p>更详细的Frame Graph接受看<a href="https://www.cnblogs.com/username/p/8497150.html">这里</a>；</p>
+<p>在 RG 中，每个 RenderPass（RP） 包含三个重要阶段：</p>
+<ol>
+<li>Setup 阶段，主要用于定义输入和输出所使用的资源，比如 RenderTarget、Buffer 等。</li>
+<li>Compile 阶段，根据 Setup 所定义的资源，来决定真正需要执行的 RP 执行路径图，并且裁剪掉不需要执行的 RP 依赖资源。</li>
+<li>Execute 阶段，是真正执行 RP 渲染逻辑的阶段。在这个阶段可以直接调用渲染 API 将 Render Command 和 GPU 资源提交到渲染设备中，完成真正的渲染。</li>
+</ol>
+<p>Setup 一般只需要执行一次，Execute 每帧都需要执行，Compile 可根据情况执行多次，比如某个 RP 根据配置动态变化，这时需要重新 Compile，以获得变化后的 RP 执行路径图。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Pipeline——GPU Graphic Pipeline（图形管线）]]></title>
+        <id>https://wingstone.github.io/post/gpu-graphic-pipeline/</id>
+        <link href="https://wingstone.github.io/post/gpu-graphic-pipeline/">
+        </link>
+        <updated>2020-09-13T01:14:06.000Z</updated>
         <content type="html"><![CDATA[<h2 id="管线介绍">管线介绍</h2>
-<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程（<strong>Graphic Pipeline</strong>）；针对实际应用来说，渲染一帧画面也需要一个渲染流程（<strong>Render Path</strong>）；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
+<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程<strong>Graphic Pipeline（图形管线）</strong>；针对实际应用来说，渲染一帧画面也需要一个渲染流程<strong>Render Pipeline/Path（渲染管线/路径）</strong>；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
 <h2 id="gpu-graphic-pipeline">GPU Graphic Pipeline</h2>
 <p>具体的管线流程要看实际的硬件驱动，Direct3D每一个版本都有很大的改动，这里以Direct3D11为例进行介绍；具体的文章参考可以看这里：<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-graphics-pipeline">Direct3D 11 Graphics Pipeline</a>，<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/pipelines-and-shaders-with-directx-12">Direct3D 12 Graphics Pipeline</a>；</p>
 <h3 id="input-assembler-stage图元装配阶段">Input-Assembler Stage（图元装配阶段）</h3>
@@ -63,43 +129,6 @@
 <p><strong>一个可编程shader阶段</strong>，该阶段能够使用更加丰富的着色技术（每像素光照，后处理效果）；该阶段能够将常量，纹理数据，顶点差值数据以及其他数据进行计算，从而产生像素的输出；</p>
 <h3 id="output-merger-stage输出合并阶段">Output-Merger Stage（输出合并阶段）</h3>
 <p>该阶段生成最终的像素颜色，通过管线状态的整合，即：PS阶段生成的数据，如render target、depth/stencil buffer；OM阶段是用来决定可见颜色的最后一步，并且会Blend最终的像素颜色；</p>
-<h2 id="render-path">Render Path</h2>
-<p>Render Path称之为渲染路径更为合适，实际上指渲染一帧所要走的流程，这个流程主要用来处理光照，以及后处理等；常见的有Forward/Deferred Rendering；以及其改版Forward+、Tiled Based Deferred Rendering；以及更灵活的Frame Graph（寒霜引擎）、SRP（Unity引擎）；</p>
-<h3 id="forward-rendering">Forward Rendering</h3>
-<p>总的来说，前向渲染绘制次数为光源个数乘以物体个数，通常在一个pass中处理一个光源；然后多个pass处理多个光源，并在pass中通过blend add相加得到总的光照效果；</p>
-<p><strong>DC复杂度为O(num(obj)*num(light))</strong>，通常会限制light的数量来减少DC；</p>
-<p>更甚者，会将限制光源数量（一般附加光源数量为4），并将所有的光照写进一个Uber Shader，通过传递光照参数来实现；</p>
-<h4 id="z-prepass避免overdraw问题">Z-Prepass避免overdraw问题</h4>
-<p>具体来说，在实际渲染之前，加入了一个称之为z prepass的流程，这个流程关闭了color buffer的写入，同时pixel shader极为简单或者索性为空，可以非常快速的执行完毕并且获得场景中的z buffer；紧接着，我们再关闭z buffer的写入，改depth test function为equal。这样就只绘制我们所能看到的像素了（当然只针对于不透明问题）；</p>
-<h3 id="deferred-rendering">Deferred Rendering</h3>
-<p>得益于MRT的支持，我们可以发展处延迟渲染，它的核心技术是 <strong>第一阶段</strong> 在绘制物体时将光照所需要的的basecolor、normal、smoothness等信息存储于G-buffer中，而不进行真正的光照；待物体绘制完后， <strong>第二阶段</strong> 再重新使用G-buffer进行光照的计算（及将光照的计算进行推迟）；</p>
-<p>传统的延迟渲染在G-Buffer生成之后，会根据光源的形状（light volume），对每个光源执行一次draw call，如果某个像素被light volume覆盖到了，我们就在该像素的位置执行一次当前光源的lighting计算。</p>
-<p>需要注意的是，为了防止同一像素被光源正反面计算两次，我们需要在绘制light volume的时候使用单面渲染，如果摄像机在光源内，则需要开启正面剔除，并且将depth test设置为farOrEqual，如果摄像机在光源之外，则开启背面剔除，并且将depth test设置为nearOrEqual。</p>
-<p><strong>DC的复杂度为O(num(obj)+num(light))</strong>；num(obj)为前期绘制物体的数量，num(light)为后期光照时光源的数量；在光照渲染时，同样通过blend add来实现多光源效果的叠加；</p>
-<p>一种简单但耗费资源的做法：可以直接将所有光源信息传至一个shader，在这一个shader中进行所有光源的计算与累积，由于是在整个屏幕中进行计算，也就导致会产生多余的光照计算（光源照不到区域也进行了计算）；优点是只有O(1)的复杂度进行光照计算；</p>
-<p>另外，G-Buffer除了用于直接照明外，还能够被用于一些间接照明的效果，比如SSAO，SSR；也正是G-Buffer概念的提出，使得近十年来越来越多的算法从world space向screen space的演进；</p>
-<h3 id="light-pre-pass">Light Pre-Pass</h3>
-<p>Light Pre-Pass是Deferred Rendering的一个变种，它将整个渲染流程分为<strong>三个阶段</strong>：</p>
-<ol>
-<li>只在G-Buffer中存储Z值和Normal值。对比Deferred Render，少了Diffuse Color， Specular Color以及对应位置的材质索引值。</li>
-<li>在FS阶段（对应于普通Deferred Rendering的light volume绘制阶段）利用上面的G-Buffer计算出所必须的light properties，比如Normal*LightDir,LightColor,Specular等light properties。将这些计算出的光照进行blend add并存入LightBuffer（就是用来存储light properties的buffer）。</li>
-<li>最后将结果送到forward rendering渲染方式计算最后的光照效果；采用Front to Back的绘制顺序，以及前面的LightBuffer进行光照计算；</li>
-</ol>
-<p>可以看到光照相关的light properties已经在第二阶段计算过了，第三阶段更多是光照成分的组合，因此又称之为Light Pre-Pass；总体的<strong>DC复杂度为O(num(obj)+num(light)+num(obj))</strong>，分别对应第一二三阶段；</p>
-<p>相对于传统的Deferred Render，Light Pre-Pass第三步使用的其实是forward rendering，所以可以对每个mesh设置其材质，这两者是相辅相成的，有利有弊。另一个Light Pre-Pass的优点是在使用MSAA上很有利。</p>
-<h3 id="tiled-based-deferred-rendering-forward">Tiled Based Deferred Rendering &amp; Forward+</h3>
-<p>实际上TBDR和Forward+是tiled based方法在forward和deferred上各自的体现，相较于过去的管线，TBDR和Forward+增加了一个 <strong>light culling</strong> 的流程，这个流程把整个屏幕分割成若干个tile（通常每个tile是16*16个pixel），每个tile各自计算出一个单独的<strong>light list</strong>，找出场景中那些对当前tile有贡献的光源。然后对每个tile中的pixel，只需要计算其对应的tile中light list内的光源对该像素的贡献。</p>
-<h4 id="tbdr">TBDR</h4>
-<p><strong>light culling</strong> 后的光照计算过程，是在一个Computer shader中进行计算，针对每个tile，采用Deferred rendering只需累加相应light list的光照即可；<strong>不考虑tile数量，DC复杂度为O(1)</strong>；</p>
-<p>由于只读取一次G-buffer，大大减少了带宽的影响；</p>
-<h4 id="forward">Forward+</h4>
-<p><strong>light culling</strong> 后的光照计算过程，针对每个tile里的物体，采用Forward rendering在一个shader中累加相应light list的光照即可；<strong>不考虑tile数量，复杂度为O(num(obj))</strong>；</p>
-<p>与普通的Forward Rendering相比，其大大减少了DC的数量（因为所有的light都合到一个pass中进行了计算）；</p>
-<p>另外，<strong>Z-Prepass</strong>对于Forward+来说是必须的，其大大减弱了Overdraw所带来的性能损耗；毕竟在Forward Rendering+流程中一个pass中进行了大量的light的运算；</p>
-<h3 id="clustered-shading">Clustered Shading</h3>
-<p>TBDR和Forward+使用平面上的tile进行light culling，每一个tile的深度为Z-Near（摄像机近平面）到Z-Far（摄像机远平面）；这样同样会产生问题，即物体对应的像素可能并不会被深度相差太远的光源给照到，因此针对深度上应该再进行一次light culling；</p>
-<p>clustered shading就此产生，其给light list的划分增加了一个维度，即depth，它根据view frustum的zmin，zmax把场景进一步根据depth划分成若干个slice（基于指数的划分，通常16个），然后在每个slice上对场景中的所有灯光进行light culling；</p>
-<p>在实际shading的时候，每个像素根据自己的depth和screen position，找到对应的depth slice，从3D Texture里拿到offset和num lights，再执行一个num lights次循环；</p>
 ]]></content>
     </entry>
     <entry>
@@ -667,7 +696,8 @@ c, &amp;{otherwise} \end{cases}
 </code></pre>
 <h1 id="离线渲染中的相机">离线渲染中的相机</h1>
 <p>离线渲染中并不涉及到View矩阵与Project矩阵，主要涉及到如何使用相机参数生成相应的射线；关于射线的计算与具体的相机类型有关；</p>
-<h2 id="透视相机发射射线">透视相机发射射线</h2>
+<h2 id="透视相机针孔相机pin-hole">透视相机/针孔相机（Pin Hole）</h2>
+<p>针孔相机就是传统的透视相机，由于针孔无限小，这样从针孔投射的光线是唯一的，针对投影平面来说；投射光线的唯一也就导致无法多采样产生景深效果；</p>
 <p>透视相机的射线，只需要将相机坐标作为起点，相机与屏幕像素的连线作为方向即可；考虑到抗拒齿问题，一般还需要在像素区域内进行随机采样；</p>
 <pre><code class="language-C++">//归一化屏幕坐标，范围：0~1
 Ray getRay(float screenX, float screenY, float randx, float randy)
@@ -677,7 +707,7 @@ Ray getRay(float screenX, float screenY, float randx, float randy)
     return Ray(_origin, dir);
 }
 </code></pre>
-<h2 id="正交相机发射射线">正交相机发射射线</h2>
+<h2 id="正交相机">正交相机</h2>
 <p>正交相机的射线，只需要将相机坐标作为起点，起点的坐标沿屏幕像素进行偏移即可；考虑到抗拒齿问题，一般还需要在像素区域内进行随机采样；</p>
 <pre><code class="language-C++">//归一化屏幕坐标，范围：0~1
 Ray getRay(float screenX, float screenY, float randx, float randy)
@@ -686,8 +716,23 @@ Ray getRay(float screenX, float screenY, float randx, float randy)
     return Ray(origin, _front);
 }
 </code></pre>
-<h2 id="针孔相机">针孔相机</h2>
-<p>针孔相机最大的用途是，可以通过调节透镜的参数，可以产生景深的效果；</p>
+<h2 id="环境相机">环境相机</h2>
+<p>环境相机实际就是将像素的x、y坐标映射到体积角上，然后计算出相应体积角下的射线；整个像素映射下来刚好覆盖整个4pi体积角；</p>
+<pre><code class="language-C++">Ray getRay(float screenX, float screenY, float randx, float randy)
+{
+    float theta = PI*(1.f - screenY);
+    float phi = 2*PI * screenX;
+    vector&lt;float&gt; dir = _right * (std::sin(theta)*std::cos(phi)) + _front * (std::sin(theta)*std::sin(phi)) + _up * std::cos(theta);
+    return Ray(_origin, dir);
+}
+</code></pre>
+<h2 id="薄透镜相机thin-lens">薄透镜相机（Thin Lens）</h2>
+<p>薄透镜相机是对传统透镜的模拟，只不过忽略了透镜的实际厚度影响；为了模拟真实的相机，需要加入<strong>光圈</strong>、<strong>焦距</strong>、<strong>焦平面距透镜距离（像距）</strong>；整个相机的<a href="http://www.360doc.com/content/18/0104/17/50354283_719051589.shtml">示意图</a>，光圈所在位置实际就是透镜所在位置；关键的问题是如何根据相机模型，以及屏幕（像平面）上坐标获取所发射出来的射线；过程如下：</p>
+<ul>
+<li>在透镜（光圈）上均匀采样，作为光线的起点，来获取所有经过光圈的光线；</li>
+<li>为了模拟对焦，像平面上坐标点与透镜中心的连线，相交于焦平面一点；此点即为所有采样射线必须经过的焦点；</li>
+<li>前面两个步骤所获取的光圈采样点、焦平面焦点即可决定采样的光线；</li>
+</ul>
 <pre><code class="language-C++">//透镜描述
 float _apertureRedius;	//光圈半径
 float _focusDistance;		//焦距
@@ -709,20 +754,31 @@ Ray getRay(float screenX, float screenY, float randx, float randy)
     return Ray(origin, dir);
 }
 </code></pre>
-<h2 id="环境相机">环境相机</h2>
-<p>环境相机实际就是将像素的x、y坐标映射到体积角上，然后计算出相应体积角下的射线；整个像素映射下来刚好覆盖整个4pi体积角；</p>
-<pre><code class="language-C++">Ray getRay(float screenX, float screenY, float randx, float randy)
-{
-    float theta = PI*(1.f - screenY);
-    float phi = 2*PI * screenX;
-    vector&lt;float&gt; dir = _right * (std::sin(theta)*std::cos(phi)) + _front * (std::sin(theta)*std::sin(phi)) + _up * std::cos(theta);
-    return Ray(_origin, dir);
-}
-</code></pre>
+<h2 id="猫眼效应cats-eye-effect与暗角vignette">猫眼效应（Cat's Eye Effect）与暗角（vignette）</h2>
+<p>猫眼效应与暗角形成的原因，要从实际的相机模型来思考；实际的相机镜头是圆筒状的，这就导致光圈中心的光通量比较充足，而沿着光圈边缘的光线有很大概率会被镜筒遮挡住；从而导致屏幕边缘的亮度较弱，且会产生轻微畸变；</p>
+<p>知道原理后，模拟方法就比较简单了：</p>
+<ol>
+<li>我们先设定镜筒的长度（镜头头部距光圈的距离）、以及镜筒的半径，实际相机的长度不会很长，但可以设置很长来产生明显的效果；</li>
+<li>计算投射光线与镜头头部平面的交点，然后判断该交点是否在镜筒半径范围内，如果大于该范围，则舍弃该光线；</li>
+</ol>
+<h2 id="任意形状的虚化光斑">任意形状的虚化光斑</h2>
+<p>实际的相机是放置相应的透光图案至于镜头前产生该效果（及镜筒的头部）</p>
+<p>模拟方法一：我们只需要在光圈采样时，能在相应图案的范围内进行采样即可；<br>
+模拟方法二：根据实际产生的原理，去计算采样光线与镜头头部平面的交点，然后判断该交点是否在相应图案内，舍弃图案外的光线即可；</p>
+<h2 id="鱼眼镜头fisheye-lens">鱼眼镜头（Fisheye Lens）</h2>
+<p>一般的投射相机在广角很大时，会产生很大的透视畸变；采用鱼眼镜头可以处理超过后180度广角的情况，和一般的镜头不一样，鱼眼镜头拍摄的相片允许很重的Barrel Distortion，也就是说现实中的一条直线在相片中允许被扭曲成弯曲的形状。</p>
+<p>鱼眼镜头类似于环境相机，只不过同样是将像素坐标映射到球坐标系，两者的映射方法不同；环境相机是将像素坐标x、y作为球坐标系下的两个夹角维度；而鱼眼镜头的映射要看具体的模拟方法；</p>
+<p>鱼眼镜头的一种模拟方法叫做等立体角投影（Equisolid Angle Projection）；等立体角投影的定义是，图像上每个像素位置到图像中心位置的距离与此像素出射光线方向和相机方向间的夹角大小成正比。也就是说，每个像素所覆盖的立体角大小是相等的。</p>
+<p>模拟方法为：</p>
+<ol>
+<li>先根据与相机方向夹角随着到图像中心距离线性变换的定义，由像素到图像中心的距离计算出出射光线在球坐标系中的theta（0-pi）。</li>
+<li>接着再根据像素位置距离图像中心的水平距离和垂直距离求出出射光线在极坐标系中的phi（0-2pi）；</li>
+</ol>
 <h2 id="参考文章">参考文章</h2>
-<p><a href="https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/">learnopengl-cn</a></p>
-<p><a href="https://book.douban.com/subject/26821639/">Unity Shader入门精要</a></p>
-<p><a href="http://www.songho.ca/opengl/gl_projectionmatrix.html">OpenGL Projection Matrix</a></p>
+<p><a href="https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/">learnopengl-cn</a><br>
+<a href="https://book.douban.com/subject/26821639/">Unity Shader入门精要</a><br>
+<a href="http://www.songho.ca/opengl/gl_projectionmatrix.html">OpenGL Projection Matrix</a><br>
+<a href="https://zhuanlan.zhihu.com/behindthepixels">离线渲染中的相机</a>，</p>
 ]]></content>
     </entry>
     <entry>
@@ -737,79 +793,6 @@ Ray getRay(float screenX, float screenY, float randx, float randy)
 <p>这篇<a href="https://www.hallgrimgames.com/blog/2018/11/25/custom-unity-ui-meshes">文章</a>介绍了在unity中实现自定义ui的过程；</p>
 <p>我在我的个人项目中<a href="https://github.com/wingstone/UnityScriptTools">UnityScriptTools</a>添加了圆形、矩形、圆角矩形的ui实现；</p>
 <p>在实际过程中，可能大部分情况是使用透明的贴图来实现相应形状的ui，但是一些情况使用自定义ui形状更合适，有些情况甚至必须使用自定义ui才能做；</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Unity Useful Plugins And Projects]]></title>
-        <id>https://wingstone.github.io/post/unity-useful-plugins-and-projects/</id>
-        <link href="https://wingstone.github.io/post/unity-useful-plugins-and-projects/">
-        </link>
-        <updated>2020-03-29T06:33:26.000Z</updated>
-        <content type="html"><![CDATA[<p>这是一个插件集合的列表，主要用来存储我在学习unity过程中使用到的非常好用的插件，或者一些不错的工程；本着通用和好用的要求，这里的插件都是一些基本功能的整合；</p>
-<h2 id="link-list">Link List</h2>
-<ol>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/debug-drawing-extension-11396">Debug Drawing Extension</a>插件，该插件扩展了unity内部的Gizmos功能，可以绘制出更复杂更有用的Gizmos几何体；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/level-design/bezier-solution-113074">Bezier Solution</a>插件，该插件集合了Bezier曲线功能，可以用来编辑Bezier曲线，并提供了一下基于Bezier曲线的效果；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/utilities/bonetool-bone-visualizer-99464">BoneTool - Bone Visualizer</a>插件，用于transform层级的可视化，可用于角色骨骼的可视化；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/utilities/transform-reset-31313">Transform Reset</a>插件，扩充了Transform的界面UI，可以一键恢复Transform为默认变换；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/particles-effects/volumetric-lines-29160">Volumetric Lines</a>插件，一个简单渲染体积线的插件，效果很棒；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/templates/tutorials/3d-game-kit-115747">3D Game Kit</a>，Unity官方提供的3D游戏开发包，里面含有很多开发3D游戏用到的基础功能，包括Instance painter等很多工具；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/tools/animation/dynamic-bone-16743">Dynamic Bone</a>插件，用于骨骼的物理摆动，非常好用！</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/essentials/default-playables-95266">Default Playables</a>插件，Unity提供的Timeline功能的扩展包；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/essentials/tutorial-projects/unity-particle-pack-127325">Unity Particle Pack</a>，Unity提供的免费粒子效果包；</p>
-</li>
-<li>
-<p><a href="https://github.com/Tencent/xLua">XLua</a>，腾讯提供的Lua方案，可在unity中使用Lua；</p>
-</li>
-<li>
-<p><a href="https://github.com/Unity-Technologies/AssetBundles-Browser">AssetBundles-Browser</a>，Unity提供的AssetBundle的查看与Debug工具；</p>
-</li>
-<li>
-<p><a href="https://assetstore.unity.com/packages/essentials/tutorial-projects/2d-game-kit-107098">2D Game Kit</a>,Unity官方提供的2D游戏开发包，里面介绍了很多2D组件的使用；</p>
-</li>
-<li>
-<p><a href="https://github.com/redbluegames/unity-text-typer">unity-text-typer</a>，一个TextTyper，用来逐字打印字体，并且提供了多种字体动画；在很多红白机游戏、ACG Game、以及UI字体的显示都会用到这种功能，需要先安装Text Mesh Pro；</p>
-</li>
-<li>
-<p>待续</p>
-</li>
-</ol>
-<h2 id="package-list">Package List</h2>
-<p>unity很多插件已经从原来的Asset store转移到Package Manager，因此这里提供一些在Package Manager中非常好用的插件（只写我用过的）；</p>
-<ol>
-<li>
-<p>ProBuilder，用于快速游戏原型的搭建；</p>
-</li>
-<li>
-<p>Cinemachine，用于相机的智能控制；</p>
-</li>
-<li>
-<p>Text Mesh Pro，使用SDF提供的高级字体方案；</p>
-</li>
-<li>
-<p>Post Processing，集合了很多后期处理效果的插件；</p>
-</li>
-<li>
-<p>待续</p>
-</li>
-</ol>
 ]]></content>
     </entry>
 </feed>

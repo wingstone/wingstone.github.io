@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600161191652">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600224820401">
 <link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
 
 
@@ -31,7 +31,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://wingstone.github.io">
-        <img src="https://wingstone.github.io/images/avatar.png?v=1600161191652" class="site-logo">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1600224820401" class="site-logo">
         <h1 class="site-title">CG黑魔法作坊</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -217,7 +217,8 @@
 </code></pre>
 <h1 id="离线渲染中的相机">离线渲染中的相机</h1>
 <p>离线渲染中并不涉及到View矩阵与Project矩阵，主要涉及到如何使用相机参数生成相应的射线；关于射线的计算与具体的相机类型有关；</p>
-<h2 id="透视相机发射射线">透视相机发射射线</h2>
+<h2 id="透视相机针孔相机pin-hole">透视相机/针孔相机（Pin Hole）</h2>
+<p>针孔相机就是传统的透视相机，由于针孔无限小，这样从针孔投射的光线是唯一的，针对投影平面来说；投射光线的唯一也就导致无法多采样产生景深效果；</p>
 <p>透视相机的射线，只需要将相机坐标作为起点，相机与屏幕像素的连线作为方向即可；考虑到抗拒齿问题，一般还需要在像素区域内进行随机采样；</p>
 <pre><code class="language-C++">//归一化屏幕坐标，范围：0~1
 Ray getRay(float screenX, float screenY, float randx, float randy)
@@ -227,7 +228,7 @@ Ray getRay(float screenX, float screenY, float randx, float randy)
     return Ray(_origin, dir);
 }
 </code></pre>
-<h2 id="正交相机发射射线">正交相机发射射线</h2>
+<h2 id="正交相机">正交相机</h2>
 <p>正交相机的射线，只需要将相机坐标作为起点，起点的坐标沿屏幕像素进行偏移即可；考虑到抗拒齿问题，一般还需要在像素区域内进行随机采样；</p>
 <pre><code class="language-C++">//归一化屏幕坐标，范围：0~1
 Ray getRay(float screenX, float screenY, float randx, float randy)
@@ -236,8 +237,23 @@ Ray getRay(float screenX, float screenY, float randx, float randy)
     return Ray(origin, _front);
 }
 </code></pre>
-<h2 id="针孔相机">针孔相机</h2>
-<p>针孔相机最大的用途是，可以通过调节透镜的参数，可以产生景深的效果；</p>
+<h2 id="环境相机">环境相机</h2>
+<p>环境相机实际就是将像素的x、y坐标映射到体积角上，然后计算出相应体积角下的射线；整个像素映射下来刚好覆盖整个4pi体积角；</p>
+<pre><code class="language-C++">Ray getRay(float screenX, float screenY, float randx, float randy)
+{
+    float theta = PI*(1.f - screenY);
+    float phi = 2*PI * screenX;
+    vector&lt;float&gt; dir = _right * (std::sin(theta)*std::cos(phi)) + _front * (std::sin(theta)*std::sin(phi)) + _up * std::cos(theta);
+    return Ray(_origin, dir);
+}
+</code></pre>
+<h2 id="薄透镜相机thin-lens">薄透镜相机（Thin Lens）</h2>
+<p>薄透镜相机是对传统透镜的模拟，只不过忽略了透镜的实际厚度影响；为了模拟真实的相机，需要加入<strong>光圈</strong>、<strong>焦距</strong>、<strong>焦平面距透镜距离（像距）</strong>；整个相机的<a href="http://www.360doc.com/content/18/0104/17/50354283_719051589.shtml">示意图</a>，光圈所在位置实际就是透镜所在位置；关键的问题是如何根据相机模型，以及屏幕（像平面）上坐标获取所发射出来的射线；过程如下：</p>
+<ul>
+<li>在透镜（光圈）上均匀采样，作为光线的起点，来获取所有经过光圈的光线；</li>
+<li>为了模拟对焦，像平面上坐标点与透镜中心的连线，相交于焦平面一点；此点即为所有采样射线必须经过的焦点；</li>
+<li>前面两个步骤所获取的光圈采样点、焦平面焦点即可决定采样的光线；</li>
+</ul>
 <pre><code class="language-C++">//透镜描述
 float _apertureRedius;	//光圈半径
 float _focusDistance;		//焦距
@@ -259,20 +275,31 @@ Ray getRay(float screenX, float screenY, float randx, float randy)
     return Ray(origin, dir);
 }
 </code></pre>
-<h2 id="环境相机">环境相机</h2>
-<p>环境相机实际就是将像素的x、y坐标映射到体积角上，然后计算出相应体积角下的射线；整个像素映射下来刚好覆盖整个4pi体积角；</p>
-<pre><code class="language-C++">Ray getRay(float screenX, float screenY, float randx, float randy)
-{
-    float theta = PI*(1.f - screenY);
-    float phi = 2*PI * screenX;
-    vector&lt;float&gt; dir = _right * (std::sin(theta)*std::cos(phi)) + _front * (std::sin(theta)*std::sin(phi)) + _up * std::cos(theta);
-    return Ray(_origin, dir);
-}
-</code></pre>
+<h2 id="猫眼效应cats-eye-effect与暗角vignette">猫眼效应（Cat's Eye Effect）与暗角（vignette）</h2>
+<p>猫眼效应与暗角形成的原因，要从实际的相机模型来思考；实际的相机镜头是圆筒状的，这就导致光圈中心的光通量比较充足，而沿着光圈边缘的光线有很大概率会被镜筒遮挡住；从而导致屏幕边缘的亮度较弱，且会产生轻微畸变；</p>
+<p>知道原理后，模拟方法就比较简单了：</p>
+<ol>
+<li>我们先设定镜筒的长度（镜头头部距光圈的距离）、以及镜筒的半径，实际相机的长度不会很长，但可以设置很长来产生明显的效果；</li>
+<li>计算投射光线与镜头头部平面的交点，然后判断该交点是否在镜筒半径范围内，如果大于该范围，则舍弃该光线；</li>
+</ol>
+<h2 id="任意形状的虚化光斑">任意形状的虚化光斑</h2>
+<p>实际的相机是放置相应的透光图案至于镜头前产生该效果（及镜筒的头部）</p>
+<p>模拟方法一：我们只需要在光圈采样时，能在相应图案的范围内进行采样即可；<br>
+模拟方法二：根据实际产生的原理，去计算采样光线与镜头头部平面的交点，然后判断该交点是否在相应图案内，舍弃图案外的光线即可；</p>
+<h2 id="鱼眼镜头fisheye-lens">鱼眼镜头（Fisheye Lens）</h2>
+<p>一般的投射相机在广角很大时，会产生很大的透视畸变；采用鱼眼镜头可以处理超过后180度广角的情况，和一般的镜头不一样，鱼眼镜头拍摄的相片允许很重的Barrel Distortion，也就是说现实中的一条直线在相片中允许被扭曲成弯曲的形状。</p>
+<p>鱼眼镜头类似于环境相机，只不过同样是将像素坐标映射到球坐标系，两者的映射方法不同；环境相机是将像素坐标x、y作为球坐标系下的两个夹角维度；而鱼眼镜头的映射要看具体的模拟方法；</p>
+<p>鱼眼镜头的一种模拟方法叫做等立体角投影（Equisolid Angle Projection）；等立体角投影的定义是，图像上每个像素位置到图像中心位置的距离与此像素出射光线方向和相机方向间的夹角大小成正比。也就是说，每个像素所覆盖的立体角大小是相等的。</p>
+<p>模拟方法为：</p>
+<ol>
+<li>先根据与相机方向夹角随着到图像中心距离线性变换的定义，由像素到图像中心的距离计算出出射光线在球坐标系中的theta（0-pi）。</li>
+<li>接着再根据像素位置距离图像中心的水平距离和垂直距离求出出射光线在极坐标系中的phi（0-2pi）；</li>
+</ol>
 <h2 id="参考文章">参考文章</h2>
-<p><a href="https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/">learnopengl-cn</a></p>
-<p><a href="https://book.douban.com/subject/26821639/">Unity Shader入门精要</a></p>
-<p><a href="http://www.songho.ca/opengl/gl_projectionmatrix.html">OpenGL Projection Matrix</a></p>
+<p><a href="https://learnopengl-cn.github.io/01%20Getting%20started/09%20Camera/">learnopengl-cn</a><br>
+<a href="https://book.douban.com/subject/26821639/">Unity Shader入门精要</a><br>
+<a href="http://www.songho.ca/opengl/gl_projectionmatrix.html">OpenGL Projection Matrix</a><br>
+<a href="https://zhuanlan.zhihu.com/behindthepixels">离线渲染中的相机</a>，</p>
 
             </div>
             
