@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>GPU编程之DDX、DDY详解 | CG黑魔法作坊</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600785130672">
+<link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="ddx、ddy函数的含义为返回大约目前变量的偏导数；
+所谓偏导数，实际上就是分别在x方向和y方向的单位距离下，变量的差值；
+在GPU中用数值进行计算的话，就是相邻像素下该变量的差值；
+使用细节
+对于矢量变量，仍然返回一个矢量，但是矢量中的每..." />
+    <meta name="keywords" content="GPU,图形学" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://wingstone.github.io">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1600785130672" class="site-logo">
+        <h1 class="site-title">CG黑魔法作坊</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      分享与记录关于CG技术的一切
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/wingstone/wingstone.github.io" target="_blank">wingstone</a> | <a class="rss" href="https://wingstone.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">GPU编程之DDX、DDY详解</h2>
+            <div class="post-date">2020-09-21</div>
+            
+            <div class="post-content" v-pre>
+              <p>ddx、ddy函数的含义为返回大约目前变量的偏导数；</p>
+<p>所谓偏导数，实际上就是分别在x方向和y方向的单位距离下，变量的差值；</p>
+<p>在GPU中用数值进行计算的话，就是相邻像素下该变量的差值；</p>
+<h2 id="使用细节">使用细节</h2>
+<p>对于矢量变量，仍然返回一个矢量，但是矢量中的每个元素都会计算其偏导数；</p>
+<p>该函数只能在fragment program profiles中使用，但是并不是所有的硬件都支持；</p>
+<p>当该函数使用在条件分支语句中，ddx、ddy的偏导计算并不是完全正确的，因为并不是所有的fragment都运行在同一个分支中；</p>
+<p>当变量所依据的参数是基于中心插值的情况下，偏导计算并不是非常精确；</p>
+<h2 id="实现细节">实现细节</h2>
+<p>其偏导数的实现方式要依据具体的实现方式；典型的实现方式为fragment被光栅化时，会以为2x2的形式形成像素块（称作quad-fragments），偏导计算就在quad-fragments中相邻的fragment中进行差值计算；这是像素着色器上面的最小工作单元 ，在像素着色器中，会将相邻的四个像素作为不可分隔的一组，送入同一个SM内4个不同的Core。</p>
+<p><a href="https://www.khronos.org/registry/OpenGL/extensions/NV/NV_shader_thread_group.txt">NV shader thread group</a>提供了OpenGL的扩展，可以查询GPU线程、Core、SM、Warp等硬件相关的属性。在处理2x2的像素块时，那些未被图元覆盖的像素着色器线程将被标记为<code>gl_HelperThreadNV = true</code>，它们的结果将被忽略，也不会被存储，但仍然进行着色器的计算，可辅助一些计算，如导数<code>ddx</code>和<code>ddy</code>。</p>
+<p>原文：</p>
+<blockquote>
+<p>The variable gl_HelperThreadNV specifies if the current thread is a helper thread. In implementations supporting this extension, fragment shader invocations may be arranged in SIMD thread groups of 2x2 fragments called &quot;quad&quot;. When a fragment shader instruction is executed on a quad, it's possible that some fragments within the quad will execute the instruction even if they are not covered by the primitive. Those threads are called helper threads. Their outputs will be discarded and they will not execute global store functions, but the intermediate values they compute can still be used by thread group sharing functions or by fragment derivative functions like dFdx and dFdy.</p>
+</blockquote>
+<h2 id="reference">Reference</h2>
+<p><a href="https://developer.download.nvidia.cn/cg/ddx.html">cg-ddx</a><br>
+<a href="https://www.cnblogs.com/timlly/p/11471507.html#436-%E5%83%8F%E7%B4%A0%E5%9D%97%EF%BC%88pixel-quad%EF%BC%89">深入GPU硬件架构及运行机制</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://wingstone.github.io/tag/eFgUX3uF5/" class="tag">
+                    GPU
+                  </a>
+                
+                  <a href="https://wingstone.github.io/tag/KFv9_-Z2a/" class="tag">
+                    图形学
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://wingstone.github.io/post/yi-dong-gpu-jia-gou/">
+                  <h3 class="post-title">
+                    移动GPU架构
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>

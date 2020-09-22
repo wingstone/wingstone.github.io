@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://wingstone.github.io</id>
     <title>CG黑魔法作坊</title>
-    <updated>2020-09-18T08:28:35.974Z</updated>
+    <updated>2020-09-22T14:32:17.138Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://wingstone.github.io"/>
     <link rel="self" href="https://wingstone.github.io/atom.xml"/>
@@ -10,6 +10,32 @@
     <logo>https://wingstone.github.io/images/avatar.png</logo>
     <icon>https://wingstone.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, CG黑魔法作坊</rights>
+    <entry>
+        <title type="html"><![CDATA[GPU编程之DDX、DDY详解]]></title>
+        <id>https://wingstone.github.io/post/gpu-bian-cheng-zhi-ddxddy-xiang-jie/</id>
+        <link href="https://wingstone.github.io/post/gpu-bian-cheng-zhi-ddxddy-xiang-jie/">
+        </link>
+        <updated>2020-09-21T08:18:43.000Z</updated>
+        <content type="html"><![CDATA[<p>ddx、ddy函数的含义为返回大约目前变量的偏导数；</p>
+<p>所谓偏导数，实际上就是分别在x方向和y方向的单位距离下，变量的差值；</p>
+<p>在GPU中用数值进行计算的话，就是相邻像素下该变量的差值；</p>
+<h2 id="使用细节">使用细节</h2>
+<p>对于矢量变量，仍然返回一个矢量，但是矢量中的每个元素都会计算其偏导数；</p>
+<p>该函数只能在fragment program profiles中使用，但是并不是所有的硬件都支持；</p>
+<p>当该函数使用在条件分支语句中，ddx、ddy的偏导计算并不是完全正确的，因为并不是所有的fragment都运行在同一个分支中；</p>
+<p>当变量所依据的参数是基于中心插值的情况下，偏导计算并不是非常精确；</p>
+<h2 id="实现细节">实现细节</h2>
+<p>其偏导数的实现方式要依据具体的实现方式；典型的实现方式为fragment被光栅化时，会以为2x2的形式形成像素块（称作quad-fragments），偏导计算就在quad-fragments中相邻的fragment中进行差值计算；这是像素着色器上面的最小工作单元 ，在像素着色器中，会将相邻的四个像素作为不可分隔的一组，送入同一个SM内4个不同的Core。</p>
+<p><a href="https://www.khronos.org/registry/OpenGL/extensions/NV/NV_shader_thread_group.txt">NV shader thread group</a>提供了OpenGL的扩展，可以查询GPU线程、Core、SM、Warp等硬件相关的属性。在处理2x2的像素块时，那些未被图元覆盖的像素着色器线程将被标记为<code>gl_HelperThreadNV = true</code>，它们的结果将被忽略，也不会被存储，但仍然进行着色器的计算，可辅助一些计算，如导数<code>ddx</code>和<code>ddy</code>。</p>
+<p>原文：</p>
+<blockquote>
+<p>The variable gl_HelperThreadNV specifies if the current thread is a helper thread. In implementations supporting this extension, fragment shader invocations may be arranged in SIMD thread groups of 2x2 fragments called &quot;quad&quot;. When a fragment shader instruction is executed on a quad, it's possible that some fragments within the quad will execute the instruction even if they are not covered by the primitive. Those threads are called helper threads. Their outputs will be discarded and they will not execute global store functions, but the intermediate values they compute can still be used by thread group sharing functions or by fragment derivative functions like dFdx and dFdy.</p>
+</blockquote>
+<h2 id="reference">Reference</h2>
+<p><a href="https://developer.download.nvidia.cn/cg/ddx.html">cg-ddx</a><br>
+<a href="https://www.cnblogs.com/timlly/p/11471507.html#436-%E5%83%8F%E7%B4%A0%E5%9D%97%EF%BC%88pixel-quad%EF%BC%89">深入GPU硬件架构及运行机制</a></p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[移动GPU架构]]></title>
         <id>https://wingstone.github.io/post/yi-dong-gpu-jia-gou/</id>
@@ -53,6 +79,9 @@
         <updated>2020-09-16T05:23:05.000Z</updated>
         <content type="html"><![CDATA[<p><a href="https://github.com/mrdoob/three.js/issues/10600">半透投影问题</a></p>
 <p><a href="https://github.com/gkjohnson/unity-dithered-transparency-shader">dithered transparency / Screen-door transparency（扰动半透渲染技术）</a></p>
+<p><a href="https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows">点光源的投影问题</a><br>
+<a href="https://www.slideshare.net/stefan_b/shadow-techniques-for-realtime-and-interactive-applications">shadow techniques for realtime and interactive applications</a><br>
+<a href="http://www.gamedevelop.eu/Tutorials/Dual-Paraboloid-Shadow-Mapping.htm">Dual Paraboloid Shadow Mapping</a></p>
 ]]></content>
     </entry>
     <entry>
@@ -149,7 +178,7 @@ Pass2：开启深度深度测试为Less并写入，关闭alpha test，cull back�
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[图形学资源推荐]]></title>
+        <title type="html"><![CDATA[图形学学习资源推荐]]></title>
         <id>https://wingstone.github.io/post/tu-xing-xue-zi-yuan-tui-jian/</id>
         <link href="https://wingstone.github.io/post/tu-xing-xue-zi-yuan-tui-jian/">
         </link>
@@ -160,8 +189,12 @@ Pass2：开启深度深度测试为Less并写入，关闭alpha test，cull back�
 </ol>
 <h2 id="实时渲染">实时渲染</h2>
 <ol>
+<li><a href="http://www.realtimerendering.com/index.html">Real-Time Rendering</a>：实时渲染技术的圣经，涵盖了实时渲染技术的各个方面，建议购买实体书查看；最重要的是记得去官网逛逛，官网包含了大量实时渲染的资料；随着实时ray tracing的发展，官网甚至涵盖了大量ray tracing相关的资料；一级推荐！</li>
 <li><a href="https://developer.nvidia.com/gpugems/gpugems/contributors">GPU Gems1-3部曲</a>：学习GPU编程必备系列，学习如何编写shader来实现各种实时渲染技术；</li>
 <li><a href="http://advances.realtimerendering.com/">Advances in Real-Time Rendering in 3D Graphics and Games</a>：SIGGRAPH中的课程系列，介绍每一年中关于实时计算机图形学中的高级渲染技术；</li>
+<li><a href="http://www.rastertek.com/tutindex.html">Raster Tek</a>：一个关于DirectX入门的学习资料，对于新手非常推荐；相比于龙书，这个更接近与实际引擎开发，多个渲染功能都集成到一起；</li>
+<li><a href="http://www.d3dcoder.net/">d3dcoder</a>：这是龙书系列的官方网站，含有从DirectX9到DirectX12的教程源代码。</li>
+<li><a href="https://learnopengl.com/">learnopengl</a>：OpenGL的入门教程，必读！</li>
 </ol>
 ]]></content>
     </entry>
@@ -362,53 +395,6 @@ Pass2：开启深度深度测试为Less并写入，关闭alpha test，cull back�
 <p><a href="https://www.cnblogs.com/zhibolife/p/3620440.html">Unity3D引擎架构设计</a>（文章）</p>
 </li>
 </ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[C++ Static Usage]]></title>
-        <id>https://wingstone.github.io/post/c-static-usage/</id>
-        <link href="https://wingstone.github.io/post/c-static-usage/">
-        </link>
-        <updated>2020-09-07T06:37:51.000Z</updated>
-        <content type="html"><![CDATA[<p>C++中的一些细节问题</p>
-<h2 id="c语言中的static关键字">C语言中的static关键字</h2>
-<h3 id="修饰全局变量全局函数">修饰全局变量，全局函数</h3>
-<p>将限制该变量及函数的作用域为本文，不能实现连接时的跨文本使用；</p>
-<pre><code class="language-C++">//file1.c
-static int a = 10;      //变量作用范围限制在本文本作用域中
-
-//file2.c
-#include &lt;iostream&gt;
-
-using namespace std;
-
-extern int a;   //无法使用file1.c中的a变量
-
-int main()
-{
-    cout &lt;&lt; &quot;a = &quot; &lt;&lt; a &lt;&lt;endl;
-
-    return 0;
-}
-
-</code></pre>
-<h3 id="修饰局部变量">修饰局部变量</h3>
-<p>在用static修饰局部变量后，该变量只在初次运行时进行初始化工作，且只进行一次；且该变量便存放在静态数据区，其生命周期一直持续到整个程序执行结束。</p>
-<pre><code class="language-c++">#include&lt;stdio.h&gt;
-
-void fun()
-{
-    static int a=1;
-    a++;
-}
-
-int main(void)
-{
-    fun();  //这里运行时，a会进行初始化，随后a++
-    fun();  //这里运行时，只会运行a++
-    return 0;
-}
-</code></pre>
 ]]></content>
     </entry>
 </feed>
