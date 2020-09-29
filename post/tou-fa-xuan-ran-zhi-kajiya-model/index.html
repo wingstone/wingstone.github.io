@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1600785130672">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1601388507440">
 <link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
 
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://wingstone.github.io">
-        <img src="https://wingstone.github.io/images/avatar.png?v=1600785130672" class="site-logo">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1601388507440" class="site-logo">
         <h1 class="site-title">CG黑魔法作坊</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -130,6 +130,10 @@
 </code></pre>
 <p>如下图：T'与T''是切变后的切向量；<br>
 <img src="https://wingstone.github.io/post-images/1600414455694.jpg" alt="" loading="lazy"></p>
+<p>T表示发丝的方向，那么当发丝方向发生变化时，N（多边形对应法线）自然而然也同样产生变化，偏移后的N为：</p>
+<pre><code class="language-C++">float3 B = cross(N, T);
+N = cross(T, B);
+</code></pre>
 <blockquote>
 <p>实质上，N对T的偏移，是模拟头发的起伏，即发丝方向突出多边形平面或凹陷多边形平面；</p>
 </blockquote>

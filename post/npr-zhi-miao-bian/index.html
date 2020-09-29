@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>architecture | CG黑魔法作坊</title>
+<title>NPR之描边 | CG黑魔法作坊</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -18,7 +18,10 @@
 
 
 
-    <meta name="description" content="分享与记录关于CG技术的一切">
+    <meta name="description" content="对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；
+解决方法为：背面的扩展法线要使用法线贴图计算后的法线，这样能得到高模下的法线分布，而高模法线是平滑分布的；
+" />
+    <meta name="keywords" content="" />
   </head>
   <body>
     <div id="app" class="main">
@@ -88,28 +91,30 @@
 
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
-          <h2 class="current-tag">标签: architecture</h2>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://wingstone.github.io/post/ecs-architecture/">
-                  <h2 class="post-title">ECS Architecture</h2>
-                </a>
-                <div class="post-date">
-                  2020-09-10
-                </div>
-                <div class="post-abstract">
-                  
-                </div>
-              </div>
-              
-            </article>
-          
+          <div class="post-detail">
+            <h2 class="post-title">NPR之描边</h2>
+            <div class="post-date">2020-09-28</div>
+            
+            <div class="post-content" v-pre>
+              <p>对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；<br>
+解决方法为：背面的扩展法线要使用法线贴图计算后的法线，这样能得到高模下的法线分布，而高模法线是平滑分布的；</p>
 
-          <div class="pagination-container">
-  
-  
-</div>
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://wingstone.github.io/post/pi-fu-xuan-ran-fang-fa-zong-jie/">
+                  <h3 class="post-title">
+                    皮肤渲染方法总结
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
 
         </div>
       </div>

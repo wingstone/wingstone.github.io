@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>architecture | CG黑魔法作坊</title>
+<title>皮肤渲染方法总结 | CG黑魔法作坊</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -18,7 +18,12 @@
 
 
 
-    <meta name="description" content="分享与记录关于CG技术的一切">
+    <meta name="description" content="
+wrap方法，模拟透射，纹理空间blur
+不同的Specular BRDF，改善模拟透射，纹理空间 Diffusion，屏幕空间Diffusion
+pre-integrated skin rendering
+GPU Pro 2, Part..." />
+    <meta name="keywords" content="" />
   </head>
   <body>
     <div id="app" class="main">
@@ -88,28 +93,34 @@
 
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
-          <h2 class="current-tag">标签: architecture</h2>
-          
-            <article class="post-item">
-              <div class="left">
-                <a href="https://wingstone.github.io/post/ecs-architecture/">
-                  <h2 class="post-title">ECS Architecture</h2>
-                </a>
-                <div class="post-date">
-                  2020-09-10
-                </div>
-                <div class="post-abstract">
-                  
-                </div>
-              </div>
-              
-            </article>
-          
+          <div class="post-detail">
+            <h2 class="post-title">皮肤渲染方法总结</h2>
+            <div class="post-date">2020-09-28</div>
+            
+            <div class="post-content" v-pre>
+              <ol>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-16-real-time-approximations-subsurface-scattering">wrap方法，模拟透射，纹理空间blur</a></li>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-14-advanced-techniques-realistic-real-time-skin">不同的Specular BRDF，改善模拟透射，纹理空间 Diffusion，屏幕空间Diffusion</a></li>
+<li><a href="https://www.slideshare.net/leegoonz/penner-preintegrated-skin-rendering-siggraph-2011-advances-in-realtime-rendering-course">pre-integrated skin rendering</a></li>
+<li>GPU Pro 2, Part 2. Rendering, Chapter 1. Pre-Intergrated Skin Shading</li>
+</ol>
 
-          <div class="pagination-container">
-  
-  
-</div>
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://wingstone.github.io/post/pi-fu-xuan-ran-zhi-preintegrated-subsurface-scattering/">
+                  <h3 class="post-title">
+                    皮肤渲染之Preintegrated Subsurface Scattering
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
 
         </div>
       </div>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>皮肤渲染之Preintegrated Subsurface Scattering | CG黑魔法作坊</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1601388507440">
+<link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="预积分皮肤散射主要解决三种皮肤散射情况：
+
+表面弯曲引起的散射（Surface Curvature）；
+表面凸起引起的散射（Small Surface Bumps）；
+投影边缘引起的散射（Shadows）；
+皮肤背面的投射问题（Transl..." />
+    <meta name="keywords" content="Rendering,图形学" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://wingstone.github.io">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1601388507440" class="site-logo">
+        <h1 class="site-title">CG黑魔法作坊</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      分享与记录关于CG技术的一切
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/wingstone/wingstone.github.io" target="_blank">wingstone</a> | <a class="rss" href="https://wingstone.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">皮肤渲染之Preintegrated Subsurface Scattering</h2>
+            <div class="post-date">2020-09-28</div>
+            
+            <div class="post-content" v-pre>
+              <p>预积分皮肤散射主要解决三种皮肤散射情况：</p>
+<ol>
+<li>表面弯曲引起的散射（Surface Curvature）；</li>
+<li>表面凸起引起的散射（Small Surface Bumps）；</li>
+<li>投影边缘引起的散射（Shadows）；</li>
+<li>皮肤背面的投射问题（Translucency）（自己添加的）；</li>
+</ol>
+<h2 id="surface-curvature">Surface Curvature</h2>
+<p>单纯的wrap并不符合物理，需要通过diffusion profile积分才能获取正确的wrap；<br>
+预积分贴图是在球形假设下进行计算的，因此该方法最大的缺陷是模拟表面拓扑复杂的结构时，有很大不合理之处；<br>
+幸运的是，当今模型表面大都是平滑的，而不平滑的小的部分都用法线贴图进行假设计算；<br>
+积分方程为：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>D</mi><mo>(</mo><mi>θ</mi><mo separator="true">,</mo><mi>r</mi><mo>)</mo><mo>=</mo><mfrac><mrow><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>π</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow><mrow><mi>π</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msubsup><mrow><mi>c</mi><mi>o</mi><mi>s</mi><mo>(</mo><mi>θ</mi><mo>+</mo><mi>x</mi><mo>)</mo><mo>∗</mo><mi>R</mi><mo>(</mo><mn>2</mn><mi>r</mi><mi>s</mi><mi>i</mi><mi>n</mi><mo>(</mo><mi>x</mi><mi mathvariant="normal">/</mi><mn>2</mn><mo>)</mo><mo>)</mo></mrow><mtext> </mtext><mi mathvariant="normal">d</mi><mi>x</mi></mrow><mrow><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>π</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow><mrow><mi>π</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msubsup><mrow><mi>R</mi><mo>(</mo><mn>2</mn><mi>r</mi><mi>s</mi><mi>i</mi><mi>n</mi><mo>(</mo><mi>x</mi><mi mathvariant="normal">/</mi><mn>2</mn><mo>)</mo><mo>)</mo></mrow><mtext> </mtext><mi mathvariant="normal">d</mi><mi>x</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">D(\theta, r) = \frac{\int_{-\pi/2}^{\pi/2} {cos(\theta+x)*R(2rsin(x/2))} \,{\rm d}x}{\int_{-\pi/2}^{\pi/2} {R(2rsin(x/2))} \,{\rm d}x} 
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.50744em;vertical-align:-1.50372em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.00372em;"><span style="top:-2.1100000000000003em;"><span class="pstrut" style="height:3.0829em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="margin-right:0.19445em;position:relative;top:-0.0005599999999999772em;">∫</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0829em;"><span style="top:-2.3441799999999997em;margin-left:-0.19445em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">π</span><span class="mord mtight">/</span><span class="mord mtight">2</span></span></span></span><span style="top:-3.2579000000000002em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">π</span><span class="mord mtight">/</span><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5308200000000001em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.00773em;">R</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mopen">(</span><span class="mord mathdefault">x</span><span class="mord">/</span><span class="mord">2</span><span class="mclose">)</span><span class="mclose">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">d</span></span></span><span class="mord mathdefault">x</span></span></span><span style="top:-3.3129em;"><span class="pstrut" style="height:3.0829em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-4.00372em;"><span class="pstrut" style="height:3.0829em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="margin-right:0.19445em;position:relative;top:-0.0005599999999999772em;">∫</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0829em;"><span style="top:-2.3441799999999997em;margin-left:-0.19445em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">π</span><span class="mord mtight">/</span><span class="mord mtight">2</span></span></span></span><span style="top:-3.2579000000000002em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">π</span><span class="mord mtight">/</span><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5308200000000001em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault">s</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault" style="margin-right:0.00773em;">R</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mopen">(</span><span class="mord mathdefault">x</span><span class="mord">/</span><span class="mord">2</span><span class="mclose">)</span><span class="mclose">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">d</span></span></span><span class="mord mathdefault">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.50372em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>式中R(d)表示Diffusion profile，表示相应距离下的辐射度，d表示距离。该式表示在曲率半径为r的半球下，对应<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>角度下，其它所有角度在该角度下的散射强度；对应模型如下图所示：</p>
+<figure data-type="image" tabindex="1"><img src="https://wingstone.github.io/post-images/1601282044664.jpg" alt="Diffusion profile，Integrated model" loading="lazy"></figure>
+<p>**图中的<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>应该全部用x来表示！**从图中的右侧的模型能够看出，N为我们要求的散射角度，L与N之间的角度为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>，L在<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi><mo>+</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">N+x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span>处的光照强度为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>c</mi><mi>o</mi><mi>s</mi><mo>(</mo><mi>θ</mi><mo>+</mo><mi>x</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">cos(\theta+x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault">s</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">x</span><span class="mclose">)</span></span></span></span>；N距N+x的距离为2rsin(x/2)，即弦长；N+x在N处的散射可由R(d)计算得出；</p>
+<p>图中的Diffusion profile一般使用高斯核叠加进行表示，对于rgb各成分的高斯核表示为：<br>
+<img src="https://wingstone.github.io/post-images/1601282423542.jpg" alt="A Sum-of-Gaussians Fit for Skin" loading="lazy"></p>
+<p>最终得到一个Diffusion profile在不同<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>角度和曲率半径下的积分分布；将<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>角度和曲率半径转换为NdoL和1/r，即可得到常用的预积分贴图；如下图所示：<br>
+<img src="https://wingstone.github.io/post-images/1601283515546.jpg" alt="曲率，预积分贴图" loading="lazy"></p>
+<p>其中曲率的求法可在shader中借助偏导函数计算，即：</p>
+<pre><code class="language-C++">float3 dn = fwidth(N);
+float3 dp = fwidth(P);
+
+float c = length(dn)/length(dp);
+</code></pre>
+<h2 id="small-surface-bumps">Small Surface Bumps</h2>
+<p>对于小的凸起以及皱纹，不能使用预积分来进行计算，但是由于可以多采样，因此可以使用预滤波的方式处理法线贴图；</p>
+<p>对于specular使用正常的normalmap，对于diffuse的rgb分别使用针对不同Diffusion profile处理后的normalmap，因此需要4张normalmap；</p>
+<p>为了效率考虑，可以使用一种高精度无滤波的normalmap，一张低精度预滤波的normalmap分别针对rgb插值来近似相应的预滤波处理；需要2张normalmap；</p>
+<p>可以将低精度无滤波的normalmap省略，直接使用模型法线来代替，这样就可以指使用一张高精度无滤波的normalmap进行处理了；</p>
+<p>最终的结果为：进行滤波处理的通道，其法线凹凸变弱，反应在视觉上，就是凹凸处该通道有相应的溢出（根本原因是此通道趋于恒定，而其他通道凹凸变换大）；</p>
+<h2 id="shadows-scattering">Shadows Scattering</h2>
+<p>皮肤出的散射特性在投影边缘会体现出来，具体模拟此现象是很困难的一件事情，但是我们可以通过一些trick来实现；</p>
+<p>首先，阴影强度为0或1，表示被遮挡，或不被遮挡；位于两者之间的值，及表示半影区域，及发生散射的区域（前提是使用软阴影）；因此我们可以针对这一点，利用Diffusion profile进行积分，来得到阴影值与散射强度的关系；</p>
+<p>积分的过程是针对位置进行积分，需要将阴影值映射到位置上后才能积分，针对不同的软阴影方法，映射函数是不同的；我们用P()表示阴影值与到blur kernel距离的函数，则此映射为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>p</mi><mo>−</mo></msup><mn>1</mn><mo>(</mo><mo>)</mo></mrow><annotation encoding="application/x-tex">p^-{1}()</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.021331em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault">p</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.771331em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span></span></span></span></span><span class="mord"><span class="mord">1</span></span><span class="mopen">(</span><span class="mclose">)</span></span></span></span>；具体的积分方程为：</p>
+<p class='katex-block katex-error' title='ParseError: KaTeX parse error: Expected group after &#039;^&#039; at position 45: …ty}^{\infty} {P^̲&#039;(P^{-1}(s)+x)R…'>P_S(s,w)  = \frac{\int_{-\infty}^{\infty} {P^&#039;(P^{-1}(s)+x)R(x/w)} \,{\rm d}x}{\int_{-\infty}^{\infty} {R(x/w)} \,{\rm d}x} 
+</p>
+<p>针对box blur软阴影（PCF）方法，其过程如下：<br>
+<img src="https://wingstone.github.io/post-images/1601347525242.jpg" alt="投影预积分" loading="lazy"></p>
+<p>需要注意的是，半影区域的一部分（宽度到没提及）作为正常的软阴影计算插值，剩下的一部分作为这些软阴影散射产生的影响；P'()即表示新的半影函数分布；</p>
+<p>最终得到一张投影的预积分图；其散射强度为阴影值s、以及半影宽度w（世界空间）的函数；</p>
+<h2 id="translucency">Translucency</h2>
+<p>关于背面透射问题，可以借助light空间的depth map来大约计算光线在物体所穿过的距离；使用depth map对于非凸物体会产生一些不正确现象，但是还能够接受；</p>
+<p>使用指数函数来处理距离，典型的使用<code>exp(-depth * sigma_t)</code>即可，这里sigma_t表示物体的透射系数；</p>
+<p>额外需要处理的问题包括：</p>
+<ol>
+<li>光照的正面会得到穿过距离为0的问题，需要使用ndl进行处理，不能只是用ndl的sign值，否则会产生锯齿，不能产生平滑结果；</li>
+<li>同理只有视角背向光源时，才能产生透射现象，需要使用vdl进行处理；</li>
+</ol>
+<p>最终的渲染结果为：<br>
+<img src="https://wingstone.github.io/post-images/1601388479937.jpg" alt="预积分渲染结果" loading="lazy"></p>
+<h2 id="问题及展望">问题及展望</h2>
+<ol>
+<li>曲率在PS中计算的话，在三角形边缘会出现异常；</li>
+<li>三张normal map贴图问题；</li>
+<li>对几何拓扑做出了大量的假设；</li>
+</ol>
+<h2 id="reference">Reference</h2>
+<ol>
+<li><a href="https://www.slideshare.net/leegoonz/penner-preintegrated-skin-rendering-siggraph-2011-advances-in-realtime-rendering-course">Penner pre-integrated skin rendering (siggraph 2011 advances in real-time rendering course)</a>：PPT</li>
+<li>GPU Pro 2, Part 2. Rendering, Chapter 1. Pre-Intergrated Skin Shading：Book</li>
+<li><a href="http://simonstechblog.blogspot.com/2015/02/pre-integrated-skin-shading.html">Simon's Tech Blog</a>：使用数值插值代替预积分贴图</li>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-16-real-time-approximations-subsurface-scattering">GPU Gems 1, Real-Time Approximations to Subsurface Scattering</a></li>
+</ol>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://wingstone.github.io/tag/Ne-pv5ANi/" class="tag">
+                    Rendering
+                  </a>
+                
+                  <a href="https://wingstone.github.io/tag/KFv9_-Z2a/" class="tag">
+                    图形学
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://wingstone.github.io/post/gpu-bian-cheng-zhi-ddxddy-xiang-jie/">
+                  <h3 class="post-title">
+                    GPU编程之DDX、DDY详解
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>

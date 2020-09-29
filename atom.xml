@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://wingstone.github.io</id>
     <title>CG黑魔法作坊</title>
-    <updated>2020-09-22T14:32:17.138Z</updated>
+    <updated>2020-09-29T14:08:33.326Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://wingstone.github.io"/>
     <link rel="self" href="https://wingstone.github.io/atom.xml"/>
@@ -10,6 +10,104 @@
     <logo>https://wingstone.github.io/images/avatar.png</logo>
     <icon>https://wingstone.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, CG黑魔法作坊</rights>
+    <entry>
+        <title type="html"><![CDATA[NPR之描边]]></title>
+        <id>https://wingstone.github.io/post/npr-zhi-miao-bian/</id>
+        <link href="https://wingstone.github.io/post/npr-zhi-miao-bian/">
+        </link>
+        <updated>2020-09-28T07:49:37.000Z</updated>
+        <content type="html"><![CDATA[<p>对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；<br>
+解决方法为：背面的扩展法线要使用法线贴图计算后的法线，这样能得到高模下的法线分布，而高模法线是平滑分布的；</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[皮肤渲染方法总结]]></title>
+        <id>https://wingstone.github.io/post/pi-fu-xuan-ran-fang-fa-zong-jie/</id>
+        <link href="https://wingstone.github.io/post/pi-fu-xuan-ran-fang-fa-zong-jie/">
+        </link>
+        <updated>2020-09-28T06:45:56.000Z</updated>
+        <content type="html"><![CDATA[<ol>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-16-real-time-approximations-subsurface-scattering">wrap方法，模拟透射，纹理空间blur</a></li>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-14-advanced-techniques-realistic-real-time-skin">不同的Specular BRDF，改善模拟透射，纹理空间 Diffusion，屏幕空间Diffusion</a></li>
+<li><a href="https://www.slideshare.net/leegoonz/penner-preintegrated-skin-rendering-siggraph-2011-advances-in-realtime-rendering-course">pre-integrated skin rendering</a></li>
+<li>GPU Pro 2, Part 2. Rendering, Chapter 1. Pre-Intergrated Skin Shading</li>
+</ol>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[皮肤渲染之Preintegrated Subsurface Scattering]]></title>
+        <id>https://wingstone.github.io/post/pi-fu-xuan-ran-zhi-preintegrated-subsurface-scattering/</id>
+        <link href="https://wingstone.github.io/post/pi-fu-xuan-ran-zhi-preintegrated-subsurface-scattering/">
+        </link>
+        <updated>2020-09-28T04:18:24.000Z</updated>
+        <content type="html"><![CDATA[<p>预积分皮肤散射主要解决三种皮肤散射情况：</p>
+<ol>
+<li>表面弯曲引起的散射（Surface Curvature）；</li>
+<li>表面凸起引起的散射（Small Surface Bumps）；</li>
+<li>投影边缘引起的散射（Shadows）；</li>
+<li>皮肤背面的投射问题（Translucency）（自己添加的）；</li>
+</ol>
+<h2 id="surface-curvature">Surface Curvature</h2>
+<p>单纯的wrap并不符合物理，需要通过diffusion profile积分才能获取正确的wrap；<br>
+预积分贴图是在球形假设下进行计算的，因此该方法最大的缺陷是模拟表面拓扑复杂的结构时，有很大不合理之处；<br>
+幸运的是，当今模型表面大都是平滑的，而不平滑的小的部分都用法线贴图进行假设计算；<br>
+积分方程为：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>D</mi><mo>(</mo><mi>θ</mi><mo separator="true">,</mo><mi>r</mi><mo>)</mo><mo>=</mo><mfrac><mrow><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>π</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow><mrow><mi>π</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msubsup><mrow><mi>c</mi><mi>o</mi><mi>s</mi><mo>(</mo><mi>θ</mi><mo>+</mo><mi>x</mi><mo>)</mo><mo>∗</mo><mi>R</mi><mo>(</mo><mn>2</mn><mi>r</mi><mi>s</mi><mi>i</mi><mi>n</mi><mo>(</mo><mi>x</mi><mi mathvariant="normal">/</mi><mn>2</mn><mo>)</mo><mo>)</mo></mrow><mtext> </mtext><mi mathvariant="normal">d</mi><mi>x</mi></mrow><mrow><msubsup><mo>∫</mo><mrow><mo>−</mo><mi>π</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow><mrow><mi>π</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msubsup><mrow><mi>R</mi><mo>(</mo><mn>2</mn><mi>r</mi><mi>s</mi><mi>i</mi><mi>n</mi><mo>(</mo><mi>x</mi><mi mathvariant="normal">/</mi><mn>2</mn><mo>)</mo><mo>)</mo></mrow><mtext> </mtext><mi mathvariant="normal">d</mi><mi>x</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">D(\theta, r) = \frac{\int_{-\pi/2}^{\pi/2} {cos(\theta+x)*R(2rsin(x/2))} \,{\rm d}x}{\int_{-\pi/2}^{\pi/2} {R(2rsin(x/2))} \,{\rm d}x} 
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">D</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.50744em;vertical-align:-1.50372em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.00372em;"><span style="top:-2.1100000000000003em;"><span class="pstrut" style="height:3.0829em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="margin-right:0.19445em;position:relative;top:-0.0005599999999999772em;">∫</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0829em;"><span style="top:-2.3441799999999997em;margin-left:-0.19445em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">π</span><span class="mord mtight">/</span><span class="mord mtight">2</span></span></span></span><span style="top:-3.2579000000000002em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">π</span><span class="mord mtight">/</span><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5308200000000001em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.00773em;">R</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mopen">(</span><span class="mord mathdefault">x</span><span class="mord">/</span><span class="mord">2</span><span class="mclose">)</span><span class="mclose">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">d</span></span></span><span class="mord mathdefault">x</span></span></span><span style="top:-3.3129em;"><span class="pstrut" style="height:3.0829em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-4.00372em;"><span class="pstrut" style="height:3.0829em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="margin-right:0.19445em;position:relative;top:-0.0005599999999999772em;">∫</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0829em;"><span style="top:-2.3441799999999997em;margin-left:-0.19445em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mathdefault mtight" style="margin-right:0.03588em;">π</span><span class="mord mtight">/</span><span class="mord mtight">2</span></span></span></span><span style="top:-3.2579000000000002em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.03588em;">π</span><span class="mord mtight">/</span><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5308200000000001em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault">s</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault" style="margin-right:0.00773em;">R</span><span class="mopen">(</span><span class="mord">2</span><span class="mord mathdefault" style="margin-right:0.02778em;">r</span><span class="mord mathdefault">s</span><span class="mord mathdefault">i</span><span class="mord mathdefault">n</span><span class="mopen">(</span><span class="mord mathdefault">x</span><span class="mord">/</span><span class="mord">2</span><span class="mclose">)</span><span class="mclose">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">d</span></span></span><span class="mord mathdefault">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.50372em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>式中R(d)表示Diffusion profile，表示相应距离下的辐射度，d表示距离。该式表示在曲率半径为r的半球下，对应<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>角度下，其它所有角度在该角度下的散射强度；对应模型如下图所示：</p>
+<figure data-type="image" tabindex="1"><img src="https://wingstone.github.io/post-images/1601282044664.jpg" alt="Diffusion profile，Integrated model" loading="lazy"></figure>
+<p>**图中的<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>应该全部用x来表示！**从图中的右侧的模型能够看出，N为我们要求的散射角度，L与N之间的角度为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>，L在<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>N</mi><mo>+</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">N+x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathdefault" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span>处的光照强度为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>c</mi><mi>o</mi><mi>s</mi><mo>(</mo><mi>θ</mi><mo>+</mo><mi>x</mi><mo>)</mo></mrow><annotation encoding="application/x-tex">cos(\theta+x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">c</span><span class="mord mathdefault">o</span><span class="mord mathdefault">s</span><span class="mopen">(</span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">x</span><span class="mclose">)</span></span></span></span>；N距N+x的距离为2rsin(x/2)，即弦长；N+x在N处的散射可由R(d)计算得出；</p>
+<p>图中的Diffusion profile一般使用高斯核叠加进行表示，对于rgb各成分的高斯核表示为：<br>
+<img src="https://wingstone.github.io/post-images/1601282423542.jpg" alt="A Sum-of-Gaussians Fit for Skin" loading="lazy"></p>
+<p>最终得到一个Diffusion profile在不同<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>角度和曲率半径下的积分分布；将<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>θ</mi></mrow><annotation encoding="application/x-tex">\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.02778em;">θ</span></span></span></span>角度和曲率半径转换为NdoL和1/r，即可得到常用的预积分贴图；如下图所示：<br>
+<img src="https://wingstone.github.io/post-images/1601283515546.jpg" alt="曲率，预积分贴图" loading="lazy"></p>
+<p>其中曲率的求法可在shader中借助偏导函数计算，即：</p>
+<pre><code class="language-C++">float3 dn = fwidth(N);
+float3 dp = fwidth(P);
+
+float c = length(dn)/length(dp);
+</code></pre>
+<h2 id="small-surface-bumps">Small Surface Bumps</h2>
+<p>对于小的凸起以及皱纹，不能使用预积分来进行计算，但是由于可以多采样，因此可以使用预滤波的方式处理法线贴图；</p>
+<p>对于specular使用正常的normalmap，对于diffuse的rgb分别使用针对不同Diffusion profile处理后的normalmap，因此需要4张normalmap；</p>
+<p>为了效率考虑，可以使用一种高精度无滤波的normalmap，一张低精度预滤波的normalmap分别针对rgb插值来近似相应的预滤波处理；需要2张normalmap；</p>
+<p>可以将低精度无滤波的normalmap省略，直接使用模型法线来代替，这样就可以指使用一张高精度无滤波的normalmap进行处理了；</p>
+<p>最终的结果为：进行滤波处理的通道，其法线凹凸变弱，反应在视觉上，就是凹凸处该通道有相应的溢出（根本原因是此通道趋于恒定，而其他通道凹凸变换大）；</p>
+<h2 id="shadows-scattering">Shadows Scattering</h2>
+<p>皮肤出的散射特性在投影边缘会体现出来，具体模拟此现象是很困难的一件事情，但是我们可以通过一些trick来实现；</p>
+<p>首先，阴影强度为0或1，表示被遮挡，或不被遮挡；位于两者之间的值，及表示半影区域，及发生散射的区域（前提是使用软阴影）；因此我们可以针对这一点，利用Diffusion profile进行积分，来得到阴影值与散射强度的关系；</p>
+<p>积分的过程是针对位置进行积分，需要将阴影值映射到位置上后才能积分，针对不同的软阴影方法，映射函数是不同的；我们用P()表示阴影值与到blur kernel距离的函数，则此映射为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>p</mi><mo>−</mo></msup><mn>1</mn><mo>(</mo><mo>)</mo></mrow><annotation encoding="application/x-tex">p^-{1}()</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.021331em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathdefault">p</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.771331em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span></span></span></span></span><span class="mord"><span class="mord">1</span></span><span class="mopen">(</span><span class="mclose">)</span></span></span></span>；具体的积分方程为：</p>
+<p class='katex-block katex-error' title='ParseError: KaTeX parse error: Expected group after &#039;^&#039; at position 45: …ty}^{\infty} {P^̲&#039;(P^{-1}(s)+x)R…'>P_S(s,w)  = \frac{\int_{-\infty}^{\infty} {P^&#039;(P^{-1}(s)+x)R(x/w)} \,{\rm d}x}{\int_{-\infty}^{\infty} {R(x/w)} \,{\rm d}x} 
+</p>
+<p>针对box blur软阴影（PCF）方法，其过程如下：<br>
+<img src="https://wingstone.github.io/post-images/1601347525242.jpg" alt="投影预积分" loading="lazy"></p>
+<p>需要注意的是，半影区域的一部分（宽度到没提及）作为正常的软阴影计算插值，剩下的一部分作为这些软阴影散射产生的影响；P'()即表示新的半影函数分布；</p>
+<p>最终得到一张投影的预积分图；其散射强度为阴影值s、以及半影宽度w（世界空间）的函数；</p>
+<h2 id="translucency">Translucency</h2>
+<p>关于背面透射问题，可以借助light空间的depth map来大约计算光线在物体所穿过的距离；使用depth map对于非凸物体会产生一些不正确现象，但是还能够接受；</p>
+<p>使用指数函数来处理距离，典型的使用<code>exp(-depth * sigma_t)</code>即可，这里sigma_t表示物体的透射系数；</p>
+<p>额外需要处理的问题包括：</p>
+<ol>
+<li>光照的正面会得到穿过距离为0的问题，需要使用ndl进行处理，不能只是用ndl的sign值，否则会产生锯齿，不能产生平滑结果；</li>
+<li>同理只有视角背向光源时，才能产生透射现象，需要使用vdl进行处理；</li>
+</ol>
+<p>最终的渲染结果为：<br>
+<img src="https://wingstone.github.io/post-images/1601388479937.jpg" alt="预积分渲染结果" loading="lazy"></p>
+<h2 id="问题及展望">问题及展望</h2>
+<ol>
+<li>曲率在PS中计算的话，在三角形边缘会出现异常；</li>
+<li>三张normal map贴图问题；</li>
+<li>对几何拓扑做出了大量的假设；</li>
+</ol>
+<h2 id="reference">Reference</h2>
+<ol>
+<li><a href="https://www.slideshare.net/leegoonz/penner-preintegrated-skin-rendering-siggraph-2011-advances-in-realtime-rendering-course">Penner pre-integrated skin rendering (siggraph 2011 advances in real-time rendering course)</a>：PPT</li>
+<li>GPU Pro 2, Part 2. Rendering, Chapter 1. Pre-Intergrated Skin Shading：Book</li>
+<li><a href="http://simonstechblog.blogspot.com/2015/02/pre-integrated-skin-shading.html">Simon's Tech Blog</a>：使用数值插值代替预积分贴图</li>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-16-real-time-approximations-subsurface-scattering">GPU Gems 1, Real-Time Approximations to Subsurface Scattering</a></li>
+</ol>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[GPU编程之DDX、DDY详解]]></title>
         <id>https://wingstone.github.io/post/gpu-bian-cheng-zhi-ddxddy-xiang-jie/</id>
@@ -124,6 +222,10 @@
 </code></pre>
 <p>如下图：T'与T''是切变后的切向量；<br>
 <img src="https://wingstone.github.io/post-images/1600414455694.jpg" alt="" loading="lazy"></p>
+<p>T表示发丝的方向，那么当发丝方向发生变化时，N（多边形对应法线）自然而然也同样产生变化，偏移后的N为：</p>
+<pre><code class="language-C++">float3 B = cross(N, T);
+N = cross(T, B);
+</code></pre>
 <blockquote>
 <p>实质上，N对T的偏移，是模拟头发的起伏，即发丝方向突出多边形平面或凹陷多边形平面；</p>
 </blockquote>
@@ -262,139 +364,6 @@ Pass2：开启深度深度测试为Less并写入，关闭alpha test，cull back�
 <li>Execute 阶段，是真正执行 RP 渲染逻辑的阶段。在这个阶段可以直接调用渲染 API 将 Render Command 和 GPU 资源提交到渲染设备中，完成真正的渲染。</li>
 </ol>
 <p>Setup 一般只需要执行一次，Execute 每帧都需要执行，Compile 可根据情况执行多次，比如某个 RP 根据配置动态变化，这时需要重新 Compile，以获得变化后的 RP 执行路径图。</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Pipeline——GPU Graphic Pipeline（图形管线）]]></title>
-        <id>https://wingstone.github.io/post/gpu-graphic-pipeline/</id>
-        <link href="https://wingstone.github.io/post/gpu-graphic-pipeline/">
-        </link>
-        <updated>2020-09-13T01:14:06.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="管线介绍">管线介绍</h2>
-<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程<strong>Graphic Pipeline（图形管线）</strong>；针对实际应用来说，渲染一帧画面也需要一个渲染流程<strong>Render Pipeline/Path（渲染管线/路径）</strong>；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
-<h2 id="gpu-graphic-pipeline">GPU Graphic Pipeline</h2>
-<p>具体的管线流程要看实际的硬件驱动，Direct3D每一个版本都有很大的改动，这里以Direct3D11为例进行介绍；具体的文章参考可以看这里：<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-graphics-pipeline">Direct3D 11 Graphics Pipeline</a>，<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/pipelines-and-shaders-with-directx-12">Direct3D 12 Graphics Pipeline</a>；</p>
-<h3 id="input-assembler-stage图元装配阶段">Input-Assembler Stage（图元装配阶段）</h3>
-<p>这一阶段主要进行图元的装配，先从用户填充的缓冲中读取数据，然后将数据装配成图元；此阶段可装配成不同的图元类型（如 line lists, triangle strips, or primitives with adjacency）</p>
-<h3 id="vertex-shader-stage顶点着色阶段">Vertex Shader Stage（顶点着色阶段）</h3>
-<p><strong>一个可编程shader阶段</strong>，此阶段主要处理IA阶段输入的顶点，执行每顶点的处理（如变换、蒙皮、变形，顶点光照等）；VS阶段总是处理单一顶点，并输出单一顶点；VS阶段必须处于激活状态，VS必须提供；</p>
-<h3 id="tessellation-stages细分阶段">Tessellation Stages（细分阶段）</h3>
-<p>该阶段实际上有三个小阶段来完成图元的细分；通过硬件实现细分，GPU Graphic Pipeline能将低细节的模型转换为高细节模型进行渲染；</p>
-<h4 id="hull-shader-stage壳着色阶段">Hull-Shader Stage（壳着色阶段）</h4>
-<p><strong>一个可编程shader阶段</strong>，用来生成一个patch（和patch constants），每个patch对应一个输入的patch（quad, triangle, or line）；有点像一个基本的图元类型；</p>
-<h4 id="tessellator-stage">Tessellator Stage</h4>
-<p>一个固定处理阶段，用来生成简单格式的域，一个域代表一个geometry patch并用来生成更小物体的集合（triangles, points, or lines），通过连接domain sample来实现；</p>
-<h4 id="domain-shader-stage域着色阶段">Domain-Shader Stage（域着色阶段）</h4>
-<p><strong>一个可编程shader阶段</strong>，用来计算每个domain sample的顶点的位置，</p>
-<h3 id="geometry-shader-stage几何着色阶段">Geometry Shader Stage（几何着色阶段）</h3>
-<p><strong>一个可编程shader阶段</strong>，该阶段同样以顶点作为输入，以顶点作为输出；但与VS有很大不同；</p>
-<ol>
-<li>输入顶点数不一定为一，输入顶点数刚好可以可组成一完整图元（two vertices for lines, three vertices for triangles, or single vertex for point）；并且可以携带邻接的图元顶点数据（an additional two vertices for a line, an additional three for a triangle）；</li>
-<li>输出顶点数不一定为一，输出的顶点数目可以形成特定的拓扑结构即可，输出的拓扑结构可选（GS stage output topologies available are: tristrip, linestrip, and pointlist）；</li>
-</ol>
-<h3 id="stream-output-stage流输出阶段">Stream-Output Stage（流输出阶段）</h3>
-<p>该阶段的目的在于能够从不断的GS阶段输出顶点数据，至一个或多个缓存中；</p>
-<h3 id="rasterizer-stage光栅化阶段">Rasterizer Stage（光栅化阶段）</h3>
-<p>此阶段，将每个图元光栅化为像素，通过顶点差值来计算像素信息；光栅化过程总是运行顶点裁剪，透视除法，将顶点转换为齐次裁剪空间，然后将顶点映射到视口上；</p>
-<h3 id="pixel-shader-stage像素着色器阶段">Pixel Shader Stage（像素着色器阶段）</h3>
-<p><strong>一个可编程shader阶段</strong>，该阶段能够使用更加丰富的着色技术（每像素光照，后处理效果）；该阶段能够将常量，纹理数据，顶点差值数据以及其他数据进行计算，从而产生像素的输出；</p>
-<h3 id="output-merger-stage输出合并阶段">Output-Merger Stage（输出合并阶段）</h3>
-<p>该阶段生成最终的像素颜色，通过管线状态的整合，即：PS阶段生成的数据，如render target、depth/stencil buffer；OM阶段是用来决定可见颜色的最后一步，并且会Blend最终的像素颜色；</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Opengl Vertex Interpolation]]></title>
-        <id>https://wingstone.github.io/post/opengl-vertex-interpolation/</id>
-        <link href="https://wingstone.github.io/post/opengl-vertex-interpolation/">
-        </link>
-        <updated>2020-09-10T06:39:18.000Z</updated>
-        <content type="html"><![CDATA[<p>OpenGL中关于插值问题</p>
-<h2 id="opengl中关于插值问题">OpenGL中关于插值问题</h2>
-<p>在GPU的光栅化阶段，会针对每个片段进行插值计算；需要注意的是，这个时候进行的插值不能是简单的screen space线性插值，而应该是透视空间矫正的view space线性插值；</p>
-<p>OpenGL中默认的是透视插值，也就是在view space空间中的线性插值，可以给变量加no perspective in/out使其插值时不做透视矫正，也就不线性了。如果要自定义插值方式，只能自己把相关参数都传到片元shader里计算了。</p>
-<blockquote>
-<p>注意：透视矫正插值仍是线性的，只不过是screen space下等距的线性插值，转换为view space下的非等距的线性插值，也是view space空间上的线性插值；</p>
-</blockquote>
-<h2 id="透视插值的公式推导">透视插值的公式推导</h2>
-<p>参考《3D游戏与计算机图形学中的数学方法》4.4节</p>
-<p>简单概括就是：</p>
-<p>对于深度插值：由相似三角形变换可以得到，Z的倒数在光栅化时，恰好是按照线性进行插值的；</p>
-<p>对于顶点属性插值：也能推导出：</p>
-<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>b</mi><mn>3</mn></msub><mo>=</mo><mfrac><mrow><mfrac><msub><mi>b</mi><mn>1</mn></msub><msub><mi>z</mi><mn>1</mn></msub></mfrac><mo>(</mo><mn>1</mn><mo>−</mo><mi>t</mi><mo>)</mo><mo>+</mo><mfrac><msub><mi>b</mi><mn>2</mn></msub><msub><mi>z</mi><mn>2</mn></msub></mfrac><mi>t</mi></mrow><mrow><mfrac><mn>1</mn><msub><mi>z</mi><mn>1</mn></msub></mfrac><mo>(</mo><mn>1</mn><mo>−</mo><mi>t</mi><mo>)</mo><mo>+</mo><mfrac><mn>1</mn><msub><mi>z</mi><mn>2</mn></msub></mfrac><mi>t</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">b_3 = \frac{\frac{b_1}{z_1}(1-t)+\frac{b_2}{z_2}t}{\frac{1}{z_1}(1-t)+\frac{1}{z_2}t}
-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.9115159999999998em;vertical-align:-1.180208em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7313079999999998em;"><span style="top:-2.264892em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44509999999999994em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44509999999999994em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathdefault">t</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.8351em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8962079999999999em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4101em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44509999999999994em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathdefault">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8962079999999999em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight" style="margin-right:0.04398em;">z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:-0.04398em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4101em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathdefault mtight">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31731428571428577em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.44509999999999994em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord mathdefault">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.180208em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
-<p>也就是说，顶点属性的插值为<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>b</mi><mi mathvariant="normal">/</mi><mi>z</mi></mrow><annotation encoding="application/x-tex">b/z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">b</span><span class="mord">/</span><span class="mord mathdefault" style="margin-right:0.04398em;">z</span></span></span></span>的线性插值再除以<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mi>z</mi></mrow><annotation encoding="application/x-tex">1/z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mord">/</span><span class="mord mathdefault" style="margin-right:0.04398em;">z</span></span></span></span>的线性插值；</p>
-<h2 id="为什么像素插值光照要优于顶点插值光照">为什么像素插值光照要优于顶点插值光照</h2>
-<p>是因为顶点插值光照是线性插值（当然指透视矫正后）的，但是对于向量只是进行线性插值是不够的，还应该有个归一化阶段；</p>
-<p>像素插值光照可以在PS中进行向量的归一化（特别是法向量），如此就纠正了向量插值的错误问题，然后可进行正确的光照；</p>
-<p>其次光照计算过程并不是一个线性的过程；对计算结果进行线性插值，当然就不可能得到正确的光照效果；</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[ECS Architecture]]></title>
-        <id>https://wingstone.github.io/post/ecs-architecture/</id>
-        <link href="https://wingstone.github.io/post/ecs-architecture/">
-        </link>
-        <updated>2020-09-10T06:38:33.000Z</updated>
-        <content type="html"><![CDATA[<p>ECS架构介绍</p>
-<h2 id="ecs架构介绍">ECS架构介绍</h2>
-<p><strong>ECS</strong> ，即 <strong>Entity-Component-System（实体-组件-系统）</strong> 的缩写，其模式遵循 <strong>组合优于继承</strong> 原则，游戏内的每一个基本单元都是一个 <strong>实体</strong> ，每个 <strong>实体</strong> 又由一个或多个 <strong>组件</strong> 构成，每个 <strong>组件</strong> 仅仅包含代表其特性的 <strong>数据（即在组件中没有任何方法）</strong> ，<strong>系统</strong> 便是来处理拥有一个或多个相同组件的实体集合的工具，其只拥有 <strong>行为（即在系统中没有任何数据）</strong> 。</p>
-<p><strong>实体与组件是一个一对多的关系</strong> ，实体拥有怎样的能力，完全是取决于其拥有哪些组件，通过动态添加或删除组件，可以在（游戏）运行时改变实体的行为。</p>
-<h2 id="ecs详解">ECS详解</h2>
-<h3 id="实体">实体</h3>
-<p>实体是游戏中的一个独特物体，使用一个ID进行表示和标记；</p>
-<h3 id="组件">组件</h3>
-<p>一个组件是一个数据的集合，不存在任何方法；一个经典的实现是使用 <strong>继承（或实现）同一个基类（或接口）</strong> ，这样就可以在运行时动态的添加和移除；</p>
-<p>根据设计需求，有时在全局上下文中只有一个特殊的组件，这种组件一般称之为 <strong>Singleton Component（单例组件）</strong> ；</p>
-<h3 id="系统">系统</h3>
-<p>系统便是ECS架构中用来 <strong>处理游戏逻辑</strong> 的部分。一个系统就是对拥有一个或多个相同组件的实体集合进行操作的工具，它只有行为，没有状态，即不存放任何数据。OW差不多拥有上百个系统；</p>
-<p>由于代码逻辑分布于各个系统中，各个系统之间为了解耦又不能互相访问，那么如果有多个系统希望运行同样的逻辑，该如何解决，总不能把代码复制 N 份，放到各个系统之中。 <strong>UtilityFunction（实用函数）</strong> 便是用来解决这一问题的，它将被多个系统调用的方法单独提取出来，放到统一的地方，同系统一样， <strong>UtilityFunction</strong> 中不能存放状态，它应该是拥有各个方法的纯净集合。</p>
-<h2 id="ecs架构优点">ECS架构优点</h2>
-<ol>
-<li>性能优势：ECS带来的两大性能优势，就是cache友好，以及易于做多线程并行。</li>
-<li>数据与行为分离：修改方便，逻辑清晰；</li>
-</ol>
-<h2 id="oop面向对象架构">OOP（面向对象）架构</h2>
-<p>传统的很多游戏引擎是基于 <strong>面向对象</strong> 来设计的，游戏中的东西都是对象，每个对象有一个叫做 <strong>Update</strong> 的方法，框架 <strong>遍历所有的对象</strong> ，依次调用其 <strong>Update</strong> 方法。有些引擎甚至定义了多种 <strong>Update</strong> 方法，在同一帧的不同时机去调用。</p>
-<h2 id="unity引擎的架构">Unity引擎的架构</h2>
-<p>Unity的设计思想为 <strong>基于组件</strong> 的对象模型；<strong>基于组件</strong> 的对象模型就是把所有需要提供给游戏对象的基础功能都独立成单独的 <strong>组件模块(Component)</strong> ，一个具体的游戏对象可以将它需要的功能模块组合到一起使用。所有 <strong>功能</strong> 不再是父类中的接口，而变成子对象实例，为游戏对象提供服务。</p>
-<p>在Unity中， <strong>GameObject</strong> 除了作为 <strong>Component</strong> 的容器之外，基本上没有其他功能。所有需要的功能都要通过 <strong>组合Component</strong> 来实现。虽然这些 <strong>Component</strong> 在物理上是完全并列的关系，但是他们之间还是会有一定的层次关系的。在设计一个游戏对象的具体功能时，组件一般会被分为三个层次。</p>
-<ol>
-<li><strong>引擎的基础组件</strong>：Unity本身提供的各种内部功能组件。比如渲染组件，物理组件，声音组件等等。</li>
-<li><strong>模块功能脚本组件</strong>：通过脚本实现的一些相对独立的通用模块功能的组件。这类组件的设计是脚本可重用的关键，需要仔细分析游戏对象中哪些功能可以被独立出来成为一个可重用的功能模块组件，并且在实现上应该尽量降低与其他组件的耦合性。</li>
-<li><strong>高层的胶水代码脚本</strong>：这些脚本用来真正将引擎基础组件和模块功能组件组合到一起实现最终游戏对象逻辑。用“胶水代码”来形容这些脚本非常的贴切，就是把所有这些子功能“粘”在一起。</li>
-</ol>
-<h3 id="unity的架构与ecs架构的区别">Unity的架构与ECS架构的区别</h3>
-<p>可以看出Unity的架构与ECS架构并不一样，虽然在组件-实体这一部分有很大的相似性；</p>
-<ol>
-<li>Unity的每个组件含有相应的方法，数据与行为并没有实现完全的解耦；</li>
-<li>Unity没有那么多系统（毕竟Unity只提供最基本的功能而已），系统也并不是只提供行为而已；</li>
-</ol>
-<h3 id="unity所带的ecs插件包">Unity所带的ECS插件包</h3>
-<ol>
-<li><a href="https://github.com/sschmid/Entitas-CSharp">Entitas插件系统</a></li>
-<li>UnityPackages Managers下的Entities插件包</li>
-</ol>
-<blockquote>
-<p>注意：实际上，使用哪种架构模式还是得根据具体情况；ECS并不是万能的，局限性<a href="https://www.zhihu.com/question/286963885/answer/456710929">参考这里</a></p>
-</blockquote>
-<h2 id="reference">Reference</h2>
-<ol>
-<li>
-<p><a href="https://www.gdcvault.com/play/1024001/-Overwatch-Gameplay-Architecture-and">守望先锋GDC源视频分享连接</a>（视频）</p>
-</li>
-<li>
-<p><a href="https://gameinstitute.qq.com/community/detail/114516">守望先锋GDC源视频中文翻译</a>（文章）</p>
-</li>
-<li>
-<p><a href="https://zhuanlan.zhihu.com/p/30538626">一个ECS系统的介绍及简易实现</a>（文章）</p>
-</li>
-<li>
-<p><a href="https://blog.codingnow.com/2017/06/overwatch_ecs.html">一个关于ECS系统的深入理解</a>（文章）</p>
-</li>
-<li>
-<p><a href="https://www.cnblogs.com/zhibolife/p/3620440.html">Unity3D引擎架构设计</a>（文章）</p>
-</li>
-</ol>
 ]]></content>
     </entry>
 </feed>
