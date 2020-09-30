@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://wingstone.github.io</id>
     <title>CG黑魔法作坊</title>
-    <updated>2020-09-29T14:08:33.326Z</updated>
+    <updated>2020-09-30T14:54:16.298Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://wingstone.github.io"/>
     <link rel="self" href="https://wingstone.github.io/atom.xml"/>
@@ -11,13 +11,123 @@
     <icon>https://wingstone.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, CG黑魔法作坊</rights>
     <entry>
+        <title type="html"><![CDATA[Texture Technique——Parallax Mapping（视差贴图）]]></title>
+        <id>https://wingstone.github.io/post/texture-technique-parallax-mappingshi-chai-tie-tu/</id>
+        <link href="https://wingstone.github.io/post/texture-technique-parallax-mappingshi-chai-tie-tu/">
+        </link>
+        <updated>2020-09-30T05:10:15.000Z</updated>
+        <content type="html"><![CDATA[<p>视差贴图属于位移贴图(Displacement Mapping)技术的一种，它对根据储存在纹理中的几何信息对顶点进行位移或偏移。一般使用位移贴图之前，需要对模型进行细分（细分着色器），然后进行顶点位移；</p>
+<p>位移贴图要想有好的效果，需要大量顶点支持，而使用视差贴图即可省去大量的顶点使用；</p>
+<p>视差贴图的原理实际上是对采样纹理坐标进行偏移，而偏移的原理根据视角观察高度图的真实过程进行模拟，因此可以模拟出真实的贴图凹凸遮挡关系；</p>
+<p>在实际的使用过程中，一般使用 <strong>深度图来代替高度图</strong> ，两种互为反相；</p>
+<h2 id="parallax-mapping">Parallax mapping</h2>
+<p>最原始视差贴图方法就叫Parallax mapping，其大概原理是：在切线空间下，当前采样坐标获得的高度作为V向量偏移的长度，然后偏移后的长度在切平面的投影即为坐标的偏移量</p>
+<pre><code class="language-C++">//_ParallaxHeight为一控制参数
+uv -= tex2D(_HightMap, uv)*TV.xy*_ParallaxHeight;     //V向量为切空间下的向量
+</code></pre>
+<p>在高度图变化比较剧烈的地方，采用这种方法会有很对问题；因此又发展出了Steep Parallax Mapping（陡峭视差贴图）；</p>
+<h2 id="steep-parallax-mapping">Steep Parallax Mapping</h2>
+<p>对于高度变化剧烈地方，其实很难通过一步就定位到偏移后的位置，陡峭视差贴图方法实际上就是ray matching方法，使用此方法可以更精确的定位到偏移后位置；但由于ray matching算法的性质，在计算量不足的情况下，容易出现分层的痕迹；针对分层问题，后面提出了Parallax Occlusion Mapping(视差遮蔽映射)方法；</p>
+<p>该算法首先将深度值进行分层，每一步递进一层；若当前步所获取深度值与步进深度值的差值的符号，与前一步相反，则可定位当前层深度即为偏移深度；分层数量越多，计算量越大，计算结果越精细；</p>
+<pre><code class="language-C++">float numLayers = 10;
+float depthStep = 1.0 / numLayers;
+float currentDepth = 0.0;
+float2 uvStep = TV.xy * _ParallaxHeight/ numLayers; 
+float currentDepthMapValue = tex2D(_DepthTex, uv).r;
+
+for(int i = 0; i&lt; 10; i++)
+{
+    if(currentDepth &gt; currentDepthMapValue)
+        break;
+    uv -= uvStep;
+    currentDepthMapValue = tex2D(_DepthTex, uv).r;
+    currentDepth += depthStep;  
+}
+</code></pre>
+<h2 id="parallax-occlusion-mapping">Parallax Occlusion Mapping</h2>
+<p>视差遮蔽贴图与陡峭视差贴图类似，区别仅在于最后深度的选择；陡峭视差贴图最终的深度为步进深度的倍数，并且最终深度大于此位置的采样深度，而前一步的深度小于前一步位置的采样深度；针对此现象，我们可以在两者之间进行深度插值，这样最终采样深度就是一个连续的分布了；</p>
+<p>插值的根本原理就是相似三角形原理；代码如下，示意图请看参考引用；</p>
+<pre><code class="language-C++">float numLayers = 10;
+float depthStep = 1.0 / numLayers;
+float currentDepth = 0.0;
+float2 uvStep = TV.xy * _ParallaxHeight/ numLayers; 
+float currentDepthMapValue = tex2D(_DepthTex, uv).r;
+
+float preDiff = 1e-5;       //防止除0
+for(int i = 0; i&lt; 10; i++)
+{
+    if(currentDepth &gt;= currentDepthMapValue)
+    {
+        float curDiff = currentDepth-currentDepthMapValue;
+        uv -= uvStep*preDiff/(curDiff+preDiff);
+        break;
+    }
+    else
+        preDiff = currentDepthMapValue - currentDepth;
+    uv -= uvStep;
+    currentDepthMapValue = tex2D(_DepthTex, uv).r;
+    currentDepth += depthStep; 
+}
+</code></pre>
+<h2 id="relief-mapping">Relief Mapping</h2>
+<p>视差遮蔽贴图在最后的一步采用插值进行计算，本质上是采用线性分布模拟步进深度中的非线性深度分布；因此最好的方法就是采用更细的步进深度进行测试，但这样就要求需要有大量的步进运算；因此可采用二分法方法来进行步进，这样可以更快定位到相交的深度；但是二分法要求单调性，实际的深度分布不可能是但单调分布的，因此最佳的步进方法为，先进行大步进深度的传统线性步进，再进行二分步进，这就是Relief Mapping的中心思想；</p>
+<pre><code class="language-C++">//linear rematching
+float numLayers = 10;
+float depthStep = 1.0 / numLayers;
+float currentDepth = 0.0;
+float2 uvStep = TV.xy * _ParallaxHeight/ numLayers; 
+float currentDepthMapValue = tex2D(_DepthTex, uv).r;
+
+for(int i = 0; i&lt; 10; i++)
+{
+    if(currentDepth &gt; currentDepthMapValue)
+    {
+        break;
+    }
+    uv -= uvStep;
+    currentDepthMapValue = tex2D(_DepthTex, uv).r;
+    currentDepth += depthStep;  
+}
+
+//binary rematching
+for(int i = 0; i&lt; 8; i++)
+{
+    uvStep *= 0.5;
+    depthStep *= 0.5;
+    currentDepthMapValue = tex2D(_DepthTex, uv).r;
+    if(currentDepth &lt; currentDepthMapValue)
+    {
+        uv -= uvStep;
+        currentDepth += depthStep;
+    }
+    else
+    {
+        uv += uvStep;
+        currentDepth -= depthStep;
+    }
+}
+</code></pre>
+<p>实际上，深度图的使用原理，与地形及其类似；确定好视线与深度相交点后，就可以沿光源方向进行阴影计算，<a href="https://shintaroiguchidotcom.files.wordpress.com/2016/01/relief-mapping-in-a-pixel-shader-using-binary-search.pdf">PDF：Relief Mapping</a>这篇文章也提到了使用深度图进行自投影的计算；</p>
+<p>关于使用raymatching方法进行地形的渲染，可以参考<a href="https://www.iquilezles.org/www/articles/terrainmarching/terrainmarching.htm">iq：raymarching terrains</a>，读完后相应对于视差贴图的理解可以更深一步；</p>
+<h2 id="个人思考">个人思考</h2>
+<p>从结果上来看，确实算法越来越精确了，但是都要有一个严重的问题：如下图所示：<br>
+<img src="https://wingstone.github.io/post-images/1601477127814.jpg" alt="实际运行图片" loading="lazy"><br>
+可以看出，在视差起作用的边界处，出现了明显的锯齿，感觉如何解决这个要命的问题才是当下需要着重研究的；</p>
+<h2 id="参考">参考</h2>
+<p><a href="https://learnopengl.com/Advanced-Lighting/Parallax-Mapping">learnopengl：Parallax-Mapping</a><br>
+<a href="https://learnopengl-cn.github.io/05%20Advanced%20Lighting/05%20Parallax%20Mapping/">learnopengl中文版：Parallax-Mapping</a><br>
+<a href="https://shintaroiguchidotcom.files.wordpress.com/2016/01/relief-mapping-in-a-pixel-shader-using-binary-search.pdf">PDF：Relief Mapping</a><br>
+<a href="https://en.wikipedia.org/wiki/Parallax_mapping">Wiki：Parallax mapping</a></p>
+]]></content>
+    </entry>
+    <entry>
         <title type="html"><![CDATA[NPR之描边]]></title>
         <id>https://wingstone.github.io/post/npr-zhi-miao-bian/</id>
         <link href="https://wingstone.github.io/post/npr-zhi-miao-bian/">
         </link>
         <updated>2020-09-28T07:49:37.000Z</updated>
-        <content type="html"><![CDATA[<p>对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；<br>
-解决方法为：背面的扩展法线要使用法线贴图计算后的法线，这样能得到高模下的法线分布，而高模法线是平滑分布的；</p>
+        <content type="html"><![CDATA[<p>对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；</p>
+<p>解决方法为：背面的扩展法线要使用法线贴图计算后的法线，这样能得到高模下的法线分布，而高模法线是平滑分布的；</p>
 ]]></content>
     </entry>
     <entry>
@@ -27,15 +137,15 @@
         </link>
         <updated>2020-09-28T06:45:56.000Z</updated>
         <content type="html"><![CDATA[<ol>
-<li><a href="https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-16-real-time-approximations-subsurface-scattering">wrap方法，模拟透射，纹理空间blur</a></li>
-<li><a href="https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-14-advanced-techniques-realistic-real-time-skin">不同的Specular BRDF，改善模拟透射，纹理空间 Diffusion，屏幕空间Diffusion</a></li>
-<li><a href="https://www.slideshare.net/leegoonz/penner-preintegrated-skin-rendering-siggraph-2011-advances-in-realtime-rendering-course">pre-integrated skin rendering</a></li>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-16-real-time-approximations-subsurface-scattering">gpugems1：wrap方法，模拟透射，纹理空间blur</a></li>
+<li><a href="https://developer.nvidia.com/gpugems/gpugems3/part-iii-rendering/chapter-14-advanced-techniques-realistic-real-time-skin">gpugems3：不同的Specular BRDF，改善模拟透射，纹理空间 Diffusion，屏幕空间Diffusion</a></li>
+<li><a href="https://www.slideshare.net/leegoonz/penner-preintegrated-skin-rendering-siggraph-2011-advances-in-realtime-rendering-course">siggraph2011：pre-integrated skin rendering</a></li>
 <li>GPU Pro 2, Part 2. Rendering, Chapter 1. Pre-Intergrated Skin Shading</li>
 </ol>
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[皮肤渲染之Preintegrated Subsurface Scattering]]></title>
+        <title type="html"><![CDATA[皮肤渲染——Preintegrated Subsurface Scattering]]></title>
         <id>https://wingstone.github.io/post/pi-fu-xuan-ran-zhi-preintegrated-subsurface-scattering/</id>
         <link href="https://wingstone.github.io/post/pi-fu-xuan-ran-zhi-preintegrated-subsurface-scattering/">
         </link>
@@ -43,9 +153,9 @@
         <content type="html"><![CDATA[<p>预积分皮肤散射主要解决三种皮肤散射情况：</p>
 <ol>
 <li>表面弯曲引起的散射（Surface Curvature）；</li>
-<li>表面凸起引起的散射（Small Surface Bumps）；</li>
+<li>表面小凸起引起的散射（Small Surface Bumps）；</li>
 <li>投影边缘引起的散射（Shadows）；</li>
-<li>皮肤背面的投射问题（Translucency）（自己添加的）；</li>
+<li>皮肤背面的透射问题（Translucency）（自己添加的）；</li>
 </ol>
 <h2 id="surface-curvature">Surface Curvature</h2>
 <p>单纯的wrap并不符合物理，需要通过diffusion profile积分才能获取正确的wrap；<br>
@@ -85,6 +195,7 @@ float c = length(dn)/length(dp);
 <p>最终得到一张投影的预积分图；其散射强度为阴影值s、以及半影宽度w（世界空间）的函数；</p>
 <h2 id="translucency">Translucency</h2>
 <p>关于背面透射问题，可以借助light空间的depth map来大约计算光线在物体所穿过的距离；使用depth map对于非凸物体会产生一些不正确现象，但是还能够接受；</p>
+<p>使用depth map需要重新渲染一张深度图，直接使用shadowmap其实也可以，但对于某些管线并不能很好的结合在一起，因此，一般使用一张表示物体的厚度贴图来作为光线穿过距离；</p>
 <p>使用指数函数来处理距离，典型的使用<code>exp(-depth * sigma_t)</code>即可，这里sigma_t表示物体的透射系数；</p>
 <p>额外需要处理的问题包括：</p>
 <ol>
@@ -183,7 +294,7 @@ float c = length(dn)/length(dp);
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[头发渲染之Kajiya model]]></title>
+        <title type="html"><![CDATA[头发渲染——Kajiya model]]></title>
         <id>https://wingstone.github.io/post/tou-fa-xuan-ran-zhi-kajiya-model/</id>
         <link href="https://wingstone.github.io/post/tou-fa-xuan-ran-zhi-kajiya-model/">
         </link>
@@ -298,72 +409,6 @@ Pass2：开启深度深度测试为Less并写入，关闭alpha test，cull back�
 <li><a href="http://www.d3dcoder.net/">d3dcoder</a>：这是龙书系列的官方网站，含有从DirectX9到DirectX12的教程源代码。</li>
 <li><a href="https://learnopengl.com/">learnopengl</a>：OpenGL的入门教程，必读！</li>
 </ol>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Pipeline——Render Pipeline/Path（渲染管线/路径）]]></title>
-        <id>https://wingstone.github.io/post/xuan-ran-guan-xian/</id>
-        <link href="https://wingstone.github.io/post/xuan-ran-guan-xian/">
-        </link>
-        <updated>2020-09-14T06:51:39.000Z</updated>
-        <content type="html"><![CDATA[<p>Render Path称之为渲染路径更为合适，实际上指渲染一帧所要走的流程，这个流程主要用来处理光照，以及后处理等；常见的有Forward/Deferred Rendering；以及其改版Forward+、Tiled Based Deferred Rendering、Clustered Shading；以及更灵活的Frame Graph（寒霜引擎）、SRP（Unity引擎）；</p>
-<p>注意：在render之前，一般还会有一个Application stage，用以在CPU上运行一些必要的前置任务：如碰撞检测、全局加速算法（视锥剔除、遮挡剔除）、物理模拟、动画效果等等；处理完这些后，才能进行高效合理的渲染；</p>
-<h2 id="forward-rendering">Forward Rendering</h2>
-<p>总的来说，前向渲染绘制次数为光源个数乘以物体个数，通常在一个pass中处理一个光源；然后多个pass处理多个光源，并在pass中通过blend add相加得到总的光照效果；</p>
-<p><strong>DC复杂度为O(num(obj)*num(light))</strong>，通常会限制light的数量来减少DC；</p>
-<p>更甚者，会将限制光源数量（一般附加光源数量为4），并将所有的光照写进一个Uber Shader，通过传递光照参数来实现；</p>
-<h3 id="z-prepass避免overdraw问题">Z-Prepass避免overdraw问题</h3>
-<p>具体来说，在实际渲染之前，加入了一个称之为z prepass的流程，这个流程关闭了color buffer的写入，同时pixel shader极为简单或者索性为空，可以非常快速的执行完毕并且获得场景中的z buffer；紧接着，我们再关闭z buffer的写入，改depth test function为equal。这样就只绘制我们所能看到的像素了（当然只针对于不透明问题）；</p>
-<h2 id="deferred-rendering">Deferred Rendering</h2>
-<p>得益于MRT的支持，我们可以发展处延迟渲染，它的核心技术是 <strong>第一阶段</strong> 在绘制物体时将光照所需要的的basecolor、normal、smoothness等信息存储于G-buffer中，而不进行真正的光照；待物体绘制完后， <strong>第二阶段</strong> 再重新使用G-buffer进行光照的计算（及将光照的计算进行推迟）；</p>
-<p>传统的延迟渲染在G-Buffer生成之后，会根据光源的形状（light volume），对每个光源执行一次draw call，如果某个像素被light volume覆盖到了，我们就在该像素的位置执行一次当前光源的lighting计算。</p>
-<p>需要注意的是，为了防止同一像素被光源正反面计算两次，我们需要在绘制light volume的时候使用单面渲染，如果摄像机在光源内，则需要开启正面剔除，并且将depth test设置为farOrEqual，如果摄像机在光源之外，则开启背面剔除，并且将depth test设置为nearOrEqual。</p>
-<p><strong>DC的复杂度为O(num(obj)+num(light))</strong>；num(obj)为前期绘制物体的数量，num(light)为后期光照时光源的数量；在光照渲染时，同样通过blend add来实现多光源效果的叠加；</p>
-<p>一种简单但耗费资源的做法：可以直接将所有光源信息传至一个shader，在这一个shader中进行所有光源的计算与累积，由于是在整个屏幕中进行计算，也就导致会产生多余的光照计算（光源照不到区域也进行了计算）；优点是只有O(1)的复杂度进行光照计算；</p>
-<p>另外，G-Buffer除了用于直接照明外，还能够被用于一些间接照明的效果，比如SSAO，SSR；也正是G-Buffer概念的提出，使得近十年来越来越多的算法从world space向screen space的演进；</p>
-<h2 id="light-pre-pass">Light Pre-Pass</h2>
-<p>Light Pre-Pass是Deferred Rendering的一个变种，它将整个渲染流程分为<strong>三个阶段</strong>：</p>
-<ol>
-<li>只在G-Buffer中存储Z值和Normal值。对比Deferred Render，少了Diffuse Color， Specular Color以及对应位置的材质索引值。</li>
-<li>在FS阶段（对应于普通Deferred Rendering的light volume绘制阶段）利用上面的G-Buffer计算出所必须的light properties，比如Normal*LightDir,LightColor,Specular等light properties。将这些计算出的光照进行blend add并存入LightBuffer（就是用来存储light properties的buffer）。</li>
-<li>最后将结果送到forward rendering渲染方式计算最后的光照效果；采用Front to Back的绘制顺序，以及前面的LightBuffer进行光照计算；</li>
-</ol>
-<p>可以看到光照相关的light properties已经在第二阶段计算过了，第三阶段更多是光照成分的组合，因此又称之为Light Pre-Pass；总体的<strong>DC复杂度为O(num(obj)+num(light)+num(obj))</strong>，分别对应第一二三阶段；</p>
-<p>相对于传统的Deferred Render，Light Pre-Pass第三步使用的其实是forward rendering，所以可以对每个mesh设置其材质，这两者是相辅相成的，有利有弊。另一个Light Pre-Pass的优点是在使用MSAA上很有利。</p>
-<h2 id="tiled-based-deferred-rendering-forward">Tiled Based Deferred Rendering &amp; Forward+</h2>
-<p>实际上TBDR和Forward+是tiled based方法在forward和deferred上各自的体现，相较于过去的管线，TBDR和Forward+增加了一个 <strong>light culling</strong> 的流程，这个流程把整个屏幕分割成若干个tile（通常每个tile是16*16个pixel），每个tile各自计算出一个单独的<strong>light list</strong>，找出场景中那些对当前tile有贡献的光源。然后对每个tile中的pixel，只需要计算其对应的tile中light list内的光源对该像素的贡献。</p>
-<h3 id="tbdr">TBDR</h3>
-<p><strong>light culling</strong> 后的光照计算过程，是在一个Computer shader中进行计算，针对每个tile，采用Deferred rendering只需累加相应light list的光照即可；<strong>不考虑tile数量，DC复杂度为O(1)</strong>；</p>
-<p>由于只读取一次G-buffer，大大减少了带宽的影响；</p>
-<h3 id="forward">Forward+</h3>
-<p><strong>light culling</strong> 后的光照计算过程，针对每个tile里的物体，采用Forward rendering在一个shader中累加相应light list的光照即可；<strong>不考虑tile数量，复杂度为O(num(obj))</strong>；</p>
-<p>与普通的Forward Rendering相比，其大大减少了DC的数量（因为所有的light都合到一个pass中进行了计算）；</p>
-<p>另外，<strong>Z-Prepass</strong>对于Forward+来说是必须的，其大大减弱了Overdraw所带来的性能损耗；毕竟在Forward Rendering+流程中一个pass中进行了大量的light的运算；</p>
-<h2 id="clustered-shading">Clustered Shading</h2>
-<p>TBDR和Forward+使用平面上的tile进行light culling，每一个tile的深度为Z-Near（摄像机近平面）到Z-Far（摄像机远平面）；这样同样会产生问题，即物体对应的像素可能并不会被深度相差太远的光源给照到，因此针对深度上应该再进行一次light culling；</p>
-<p>clustered shading就此产生，其给light list的划分增加了一个维度，即depth，它根据view frustum的zmin，zmax把场景进一步根据depth划分成若干个slice（基于指数的划分，通常16个），然后在每个slice上对场景中的所有灯光进行light culling；</p>
-<p>在实际shading的时候，每个像素根据自己的depth和screen position，找到对应的depth slice，从3D Texture里拿到offset和num lights，再执行一个num lights次循环；</p>
-<h2 id="unity-scriptable-render-pipelinesrp可编程渲染管线">Unity Scriptable Render Pipeline（SRP可编程渲染管线）</h2>
-<p>Unity SRP实际上是对底层渲染API进行了封装，并且结合unity内部的渲染模块，提供了一个相对高级的可编程化的渲染管线；用户可以使用SRP编写适合自己产品的Render Pipeline；不过要想自定义SRP，必须要对已有的管线有深入了解，才能编写出高效的管线；</p>
-<p>在Unity SRP出现之前，Unity提供的是不可更改的standard built-in pipeline；Unity SRP出现后，Unity还提供了两个已经相对标准且开源的基于SRP的管线，<strong>URP与HDRP</strong>；URP主要侧重于通用平台下的渲染，支持多平台；HDRP主要侧重高端平台下的渲染（大量使用了Computer Shader），普通平台支持不了；</p>
-<h2 id="frame-graph">Frame Graph</h2>
-<p>随着时代的发展，内置固化的渲染管线架构已经越来越不能满足行业发展的需求，具体表现在以下几个方面：</p>
-<ol>
-<li>多样化的游戏画面表现需求：有的写实，有的卡通，有的更加风格化，这就要求引擎的渲染管线能具有相应的可调整的能力；</li>
-<li>不同平台的软硬件能力差异：比如 PC、主机硬件能力更强，需要有更高端的画面表现，试图通过一种渲染流程来充分发挥每个平台的优势以及消除劣势，是一件非常困难的事情；</li>
-<li>Rendering Path 的不断进化：即前面介绍的各种render path；</li>
-<li>新的渲染技术：近年来的 VR\AR\XR 渲染技术对渲染管线提出了特定的需求，一套管线已经很难做到完全兼容这些渲染机制。在 2018 年微软发布了革命性的 DirectX RayTracing，这更是完全不同Rendering\Computing 机制。</li>
-</ol>
-<p>通过上述几点，说明传统的固定功能的渲染管线架构已经不再适合未来游戏发展的需求，如果重新设计引擎的渲染管线，必须要考虑到渲染管线的可扩展性、可配置性、甚至是 Data-Driven 的。</p>
-<p><strong>Frostbite：Frame Graph（FG）<strong>就此产生，FG 由</strong> RenderPass</strong> 以及其依赖的 **Resource **组成。RenderPass 定义了一个完整的渲染操作，Resource 包括了 RenderPass 使用的 PSO、Texture、RenderTarget、ConstantBuffer、Shader 等资源。每个 RenderPass 都有 Input 和 Output 资源，这样 RenderPass 和 Resource 就形成了有向非循环图（DAG）结构，因为描述的是引擎在一帧内的渲染流程，所以称之为 Frame Graph。</p>
-<p>更详细的Frame Graph接受看<a href="https://www.cnblogs.com/username/p/8497150.html">这里</a>；</p>
-<p>在 RG 中，每个 RenderPass（RP） 包含三个重要阶段：</p>
-<ol>
-<li>Setup 阶段，主要用于定义输入和输出所使用的资源，比如 RenderTarget、Buffer 等。</li>
-<li>Compile 阶段，根据 Setup 所定义的资源，来决定真正需要执行的 RP 执行路径图，并且裁剪掉不需要执行的 RP 依赖资源。</li>
-<li>Execute 阶段，是真正执行 RP 渲染逻辑的阶段。在这个阶段可以直接调用渲染 API 将 Render Command 和 GPU 资源提交到渲染设备中，完成真正的渲染。</li>
-</ol>
-<p>Setup 一般只需要执行一次，Execute 每帧都需要执行，Compile 可根据情况执行多次，比如某个 RP 根据配置动态变化，这时需要重新 Compile，以获得变化后的 RP 执行路径图。</p>
 ]]></content>
     </entry>
 </feed>

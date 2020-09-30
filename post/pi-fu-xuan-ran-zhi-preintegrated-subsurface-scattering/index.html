@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" >
 
-<title>皮肤渲染之Preintegrated Subsurface Scattering | CG黑魔法作坊</title>
+<title>皮肤渲染——Preintegrated Subsurface Scattering | CG黑魔法作坊</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1601388507440">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1601477443977">
 <link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
 
 
@@ -21,9 +21,9 @@
     <meta name="description" content="预积分皮肤散射主要解决三种皮肤散射情况：
 
 表面弯曲引起的散射（Surface Curvature）；
-表面凸起引起的散射（Small Surface Bumps）；
+表面小凸起引起的散射（Small Surface Bumps）；
 投影边缘引起的散射（Shadows）；
-皮肤背面的投射问题（Transl..." />
+皮肤背面的透射问题（Trans..." />
     <meta name="keywords" content="Rendering,图形学" />
   </head>
   <body>
@@ -33,7 +33,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://wingstone.github.io">
-        <img src="https://wingstone.github.io/images/avatar.png?v=1601388507440" class="site-logo">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1601477443977" class="site-logo">
         <h1 class="site-title">CG黑魔法作坊</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -95,16 +95,16 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">皮肤渲染之Preintegrated Subsurface Scattering</h2>
+            <h2 class="post-title">皮肤渲染——Preintegrated Subsurface Scattering</h2>
             <div class="post-date">2020-09-28</div>
             
             <div class="post-content" v-pre>
               <p>预积分皮肤散射主要解决三种皮肤散射情况：</p>
 <ol>
 <li>表面弯曲引起的散射（Surface Curvature）；</li>
-<li>表面凸起引起的散射（Small Surface Bumps）；</li>
+<li>表面小凸起引起的散射（Small Surface Bumps）；</li>
 <li>投影边缘引起的散射（Shadows）；</li>
-<li>皮肤背面的投射问题（Translucency）（自己添加的）；</li>
+<li>皮肤背面的透射问题（Translucency）（自己添加的）；</li>
 </ol>
 <h2 id="surface-curvature">Surface Curvature</h2>
 <p>单纯的wrap并不符合物理，需要通过diffusion profile积分才能获取正确的wrap；<br>
@@ -144,6 +144,7 @@ float c = length(dn)/length(dp);
 <p>最终得到一张投影的预积分图；其散射强度为阴影值s、以及半影宽度w（世界空间）的函数；</p>
 <h2 id="translucency">Translucency</h2>
 <p>关于背面透射问题，可以借助light空间的depth map来大约计算光线在物体所穿过的距离；使用depth map对于非凸物体会产生一些不正确现象，但是还能够接受；</p>
+<p>使用depth map需要重新渲染一张深度图，直接使用shadowmap其实也可以，但对于某些管线并不能很好的结合在一起，因此，一般使用一张表示物体的厚度贴图来作为光线穿过距离；</p>
 <p>使用指数函数来处理距离，典型的使用<code>exp(-depth * sigma_t)</code>即可，这里sigma_t表示物体的透射系数；</p>
 <p>额外需要处理的问题包括：</p>
 <ol>
