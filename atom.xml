@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://wingstone.github.io</id>
     <title>CG黑魔法作坊</title>
-    <updated>2020-09-30T14:54:16.298Z</updated>
+    <updated>2020-09-30T14:56:03.839Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://wingstone.github.io"/>
     <link rel="self" href="https://wingstone.github.io/atom.xml"/>
@@ -11,7 +11,7 @@
     <icon>https://wingstone.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, CG黑魔法作坊</rights>
     <entry>
-        <title type="html"><![CDATA[Texture Technique——Parallax Mapping（视差贴图）]]></title>
+        <title type="html"><![CDATA[贴图技术——Parallax Mapping（视差贴图）]]></title>
         <id>https://wingstone.github.io/post/texture-technique-parallax-mappingshi-chai-tie-tu/</id>
         <link href="https://wingstone.github.io/post/texture-technique-parallax-mappingshi-chai-tie-tu/">
         </link>
@@ -371,7 +371,7 @@ Pass2：开启深度深度测试为Less并写入，关闭alpha test，cull back�
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[皮肤渲染之Screen Space Separable Subsurface Scattering]]></title>
+        <title type="html"><![CDATA[皮肤渲染——Screen Space Separable Subsurface Scattering]]></title>
         <id>https://wingstone.github.io/post/pi-fu-xuan-ran-zhi-screen-space-separable-subsurface-scattering/</id>
         <link href="https://wingstone.github.io/post/pi-fu-xuan-ran-zhi-screen-space-separable-subsurface-scattering/">
         </link>
