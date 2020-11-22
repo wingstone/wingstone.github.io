@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://wingstone.github.io</id>
     <title>CG黑魔法作坊</title>
-    <updated>2020-11-11T14:56:05.508Z</updated>
+    <updated>2020-11-22T15:33:54.145Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://wingstone.github.io"/>
     <link rel="self" href="https://wingstone.github.io/atom.xml"/>
@@ -269,8 +269,10 @@ for(int i = 0; i&lt; 8; i++)
         <link href="https://wingstone.github.io/post/npr-zhi-miao-bian/">
         </link>
         <updated>2020-09-28T07:49:37.000Z</updated>
-        <content type="html"><![CDATA[<p>对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；</p>
-<p>解决方法为：背面的扩展法线要使用法线贴图计算后的法线，这样能得到高模下的法线分布，而高模法线是平滑分布的；</p>
+        <content type="html"><![CDATA[<p><strong>对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；</strong></p>
+<p>解决方法为：<strong>使用高模的平滑法线来进行背面的扩展</strong>，可以使用法线贴图计算高模法线；</p>
+<p>对于NPR渲染，其实一般也不怎么使用贴图；所以可以<strong>将高模的法线bake到顶点色</strong>里面；</p>
+<p>由于蒙皮网格会实时计算变换后的切空间下的normal、tangent、binormal；因此不能bake local space下的高模法线，除非将local space下的高模法线bake到tangent或binormal进行存储，或者将tangent space下的高模法线bake到顶点色里进行存储；</p>
 ]]></content>
     </entry>
     <entry>
