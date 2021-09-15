@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1626108065962">
+<link rel="shortcut icon" href="https://wingstone.github.io/favicon.ico?v=1631719017371">
 <link rel="stylesheet" href="https://wingstone.github.io/styles/main.css">
 
 
@@ -33,7 +33,7 @@ Spectral Pow..." />
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://wingstone.github.io">
-        <img src="https://wingstone.github.io/images/avatar.png?v=1626108065962" class="site-logo">
+        <img src="https://wingstone.github.io/images/avatar.png?v=1631719017371" class="site-logo">
         <h1 class="site-title">CG黑魔法作坊</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -155,6 +155,8 @@ LogC最大的优点是维持更多的动态范围信息，甚至是超过人眼�
 由于LogC特性，常在LogC空间下进行对比度的计算，对比度的计算可能会导致负数、以及远超1的数，这些都可以在LogC空间下进行保存，使用再从LogC空间解码到原来的空间即可；</p>
 <h3 id="hsv">HSV</h3>
 <p>H为色相（Hue）、S为饱和度（Saturation）、V为亮度（Value）；HSV也被称作为HSB（Brightness），它是RGB空间的非线性转换，并不是独立的颜色空间，因此没有RGB Primaries以及白点的定义<a href="https://psychology.wikia.org/wiki/HSV_color_space">参考这里</a>；</p>
+<h3 id="aces">ACES</h3>
+<p>ACES并不是一个单独的颜色空间，而是一个系统，包含了颜色空间的一整套系统；ACES的存在就是为了标准化整个颜色的工作流；其内部包含了各颜色空间到ACES空间的转换，ACES内部还定义了ACES2065-1颜色空间（常称为AP0），该空间包含了整个色度图的范围，采用D60作为white point；还定义了ACEScg颜色空间，该空间常作为compositing与cg所使用的空间（常称为AP1），虽不如AP0，但也涵盖了大量的色域，采用D60作为white point；另外还有一个ACEScc，ACEScc与ACEScg基本一致，除了其使用了log gamma的形式，常用在grading中；ACES最后还定义了ACES空间至屏幕显示空间的转换，常有RRT与ODT组成，RRT与ODT内部包含的内容比想象中的要复杂的多，不仅考虑了Gamm，tonemapping，还有很多其他的因素；</p>
 <h2 id="cie-chromaticity-diagramcie色度图">CIE chromaticity diagram(CIE色度图)</h2>
 <p>直接在CIE XYZ空间上工作有众多不便；常用的做法是将XYZ投影到x+y+z=1的平面；即将XYZ进行归一化得到xyz值，这样只需要记录xy值（范围为0-1），z值为1-x-y；xy值所在的空间被称之为CIE色度图（特指CIE 1931 xy chromaticity diagram）；</p>
 <ul>
@@ -214,7 +216,10 @@ LogC最大的优点是维持更多的动态范围信息，甚至是超过人眼�
 [11] <a href="https://en.wikipedia.org/wiki/Black_body">Black Body</a><br>
 [12] <a href="https://pomfort.com/article/an-in-depth-look-at-asc-cdl-based-color-controls/">AN IN-DEPTH LOOK AT ASC-CDL BASED COLOR CONTROLS</a><br>
 [13] <a href="https://cinematiccolor.org/">Cinematic Color</a><br>
-[14] <a href="https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@7.1/manual/Post-Processing-Lift-Gamma-Gain.html">Lift Gamma Gain</a></p>
+[14] <a href="https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@7.1/manual/Post-Processing-Lift-Gamma-Gain.html">Lift Gamma Gain</a><br>
+[15] <a href="https://z-fx.nl/ColorspACES.pdf">ACES pdf</a><br>
+[16] <a href="https://acescolorspace.com/">ACES Space</a><br>
+[17] <a href="https://chrisbrejon.com/cg-cinematography/chapter-1-5-academy-color-encoding-system-aces/">Color system</a></p>
 
             </div>
             
