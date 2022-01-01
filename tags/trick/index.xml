@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>trick on wingstone's blog</title><link>/tags/trick/</link><description>Recent content in trick on wingstone's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 28 Sep 2020 15:49:37 +0000</lastBuildDate><atom:link href="/tags/trick/index.xml" rel="self" type="application/rss+xml"/><item><title>NPR之描边</title><link>/posts/npr-zhi-miao-bian/</link><pubDate>Mon, 28 Sep 2020 15:49:37 +0000</pubDate><guid>/posts/npr-zhi-miao-bian/</guid><description>对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；
+解决方法为：使用高模的平滑法线来进行背面的扩展，可以使用法线贴图计算高模法线；
+对于NPR渲染，其实一般也不怎么使用贴图；所以可以将高模的法线bake到顶点色里面；
+由于蒙皮网格会实时计算变换后的切空间下的normal、tangent、binormal；因此不能bake local space下的高模法线，除非将local space下的高模法线bake到tangent或binormal进行存储，或者将tangent space下的高模法线bake到顶点色里进行存储；</description></item></channel></rss>

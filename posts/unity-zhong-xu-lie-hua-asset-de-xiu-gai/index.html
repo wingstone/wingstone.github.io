@@ -1,0 +1,40 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Unity中序列化Asset的修改 | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+</head>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/>Home</a></li>
+<li><a href=/about/>About</a></li>
+<li><a href=/categories/>Categories</a></li>
+<li><a href=/tags/>Tags</a></li>
+<li><a href=/index.xml>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h1><span class=title>Unity中序列化Asset的修改</span></h1>
+<h2 class=date>2021/02/28</h2>
+</div>
+<main>
+<p>代码片段事例：</p>
+<pre><code>        Object obj = new Object();
+        SerializedObject so = new SerializedObject(obj);     //这里obj为要进行序列化操作的asset对象
+        SerializedProperty sp = so.FindProperty(&quot;property&quot;);    //这里property为要进行操作的property，需要查看asset文件获取
+        sp.boolValue = true;
+</code></pre>
+</main>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+</footer>
+</body>
+</html>

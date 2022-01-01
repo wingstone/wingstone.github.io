@@ -1,0 +1,73 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>C++ Static Usage | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+</head>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/>Home</a></li>
+<li><a href=/about/>About</a></li>
+<li><a href=/categories/>Categories</a></li>
+<li><a href=/tags/>Tags</a></li>
+<li><a href=/index.xml>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h1><span class=title>C++ Static Usage</span></h1>
+<h2 class=date>2020/09/07</h2>
+</div>
+<main>
+<p>C++中的一些细节问题</p>
+<h2 id=c语言中的static关键字>C语言中的static关键字</h2>
+<h3 id=修饰全局变量全局函数>修饰全局变量，全局函数</h3>
+<p>将限制该变量及函数的作用域为本文，不能实现连接时的跨文本使用；</p>
+<pre><code class=language-C++>//file1.c
+static int a = 10;      //变量作用范围限制在本文本作用域中
+
+//file2.c
+#include &lt;iostream&gt;
+
+using namespace std;
+
+extern int a;   //无法使用file1.c中的a变量
+
+int main()
+{
+    cout &lt;&lt; &quot;a = &quot; &lt;&lt; a &lt;&lt;endl;
+
+    return 0;
+}
+
+</code></pre>
+<h3 id=修饰局部变量>修饰局部变量</h3>
+<p>在用static修饰局部变量后，该变量只在初次运行时进行初始化工作，且只进行一次；且该变量便存放在静态数据区，其生命周期一直持续到整个程序执行结束。</p>
+<pre><code class=language-c++>#include&lt;stdio.h&gt;
+
+void fun()
+{
+    static int a=1;
+    a++;
+}
+
+int main(void)
+{
+    fun();  //这里运行时，a会进行初始化，随后a++
+    fun();  //这里运行时，只会运行a++
+    return 0;
+}
+</code></pre>
+</main>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+</footer>
+</body>
+</html>

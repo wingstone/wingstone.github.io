@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>engine on wingstone's blog</title><link>/tags/engine/</link><description>Recent content in engine on wingstone's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 10 Sep 2020 14:38:33 +0000</lastBuildDate><atom:link href="/tags/engine/index.xml" rel="self" type="application/rss+xml"/><item><title>ECS Architecture</title><link>/posts/ecs-architecture/</link><pubDate>Thu, 10 Sep 2020 14:38:33 +0000</pubDate><guid>/posts/ecs-architecture/</guid><description>ECS架构介绍
+ECS架构介绍 ECS ，即 Entity-Component-System（实体-组件-系统） 的缩写，其模式遵循 组合优于继承 原则，游戏内的每一个基本单元都是一个 实体 ，每个 实体 又由一个或多个 组件 构成，每个 组件 仅仅包含代表其特性的 数据（即在组件中没有任何方法） ，系统 便是来处理拥有一个或多个相同组件的实体集合的工具，其只拥有 行为（即在系统中没有任何数据） 。
+实体与组件是一个一对多的关系 ，实体拥有怎样的能力，完全是取决于其拥有哪些组件，通过动态添加或删除组件，可以在（游戏）运行时改变实体的行为。
+ECS详解 实体 实体是游戏中的一个独特物体，使用一个ID进行表示和标记；
+组件 一个组件是一个数据的集合，不存在任何方法；一个经典的实现是使用 继承（或实现）同一个基类（或接口） ，这样就可以在运行时动态的添加和移除；
+根据设计需求，有时在全局上下文中只有一个特殊的组件，这种组件一般称之为 Singleton Component（单例组件） ；
+系统 系统便是ECS架构中用来 处理游戏逻辑 的部分。一个系统就是对拥有一个或多个相同组件的实体集合进行操作的工具，它只有行为，没有状态，即不存放任何数据。OW差不多拥有上百个系统；
+由于代码逻辑分布于各个系统中，各个系统之间为了解耦又不能互相访问，那么如果有多个系统希望运行同样的逻辑，该如何解决，总不能把代码复制 N 份，放到各个系统之中。 UtilityFunction（实用函数） 便是用来解决这一问题的，它将被多个系统调用的方法单独提取出来，放到统一的地方，同系统一样， UtilityFunction 中不能存放状态，它应该是拥有各个方法的纯净集合。
+ECS架构优点 性能优势：ECS带来的两大性能优势，就是cache友好，以及易于做多线程并行。 数据与行为分离：修改方便，逻辑清晰； OOP（面向对象）架构 传统的很多游戏引擎是基于 面向对象 来设计的，游戏中的东西都是对象，每个对象有一个叫做 Update 的方法，框架 遍历所有的对象 ，依次调用其 Update 方法。有些引擎甚至定义了多种 Update 方法，在同一帧的不同时机去调用。
+Unity引擎的架构 Unity的设计思想为 基于组件 的对象模型；基于组件 的对象模型就是把所有需要提供给游戏对象的基础功能都独立成单独的 组件模块(Component) ，一个具体的游戏对象可以将它需要的功能模块组合到一起使用。所有 功能 不再是父类中的接口，而变成子对象实例，为游戏对象提供服务。</description></item><item><title>Mathematics about camera in graphics（图形学中关于相机的数学）</title><link>/posts/mathematics-about-camera-in-3d-game-engine/</link><pubDate>Thu, 18 Jun 2020 14:34:51 +0000</pubDate><guid>/posts/mathematics-about-camera-in-3d-game-engine/</guid><description>以OpenGL中的右手坐标系为例，介绍引擎中和各种应用中跟相机有关的数学；
+实现渲染中的相机 观察矩阵 首先理解观察矩阵的作用，观察矩阵是为了将相机位置和转向不同的情况进行统一，最合适的统一方式就是将相机移动到坐标原点，然后将相机朝向变为-Z轴，这样所有的世界在相机看来就是一致的，便于后续的处理；
+实际就是将以(0, 0, 0)为原点的世界坐标系转变为以(cameraPos.x, cameraPos.y, cameraPos.z)为原点的坐标系，当然，这里不能少了旋转；
+由于矩阵相乘的顺序影响最后的结果，由于旋转矩阵是相对原点进行旋转的，所以自然而然，我们应该先将相机移至原点（平移矩阵）再进行转向（旋转矩阵）；
+在OpenGl中，假设相机坐标为cameraPos，朝向分别为Front，Up，Right，坐标为列向量，则相应的矩阵为： 投影矩阵 关于投影矩阵的推导，看这里;
+相机中非线性0-1的深度转为线性0-1深度 设非线性深度值0-1为depth，线性深度值0-1为lineardepth，Zn表示-1到1的NDC深度，Ze表示观察空间下的深度，n表示近裁剪面，f表示远裁剪面； 则几者之间的关系为：
+其中由公式2可以看出，线性的0-1范围并不是指近裁剪面对应0、远裁剪面对应1，而是相机位置对应0，远裁剪面对应1；
+其中公式3可以在上面投影矩阵那篇文章中看到，跟进上面三式，可以得到depth与lineardepth的关系为：
+第一人称视角相机的实现 第一人称视角相机，其实就是FPS类游戏中常用的相机，即相机所看的就是游戏中的人眼所看到的，可以自由的前后左右移动，以及左右上下旋转视角；
+第一人称视角相机需要存储一些额外的变量，一个是移动的速度MovementSpeed，二是Pitch，Yaw角度，Pitch表示俯仰角，Yaw表示偏航角；
+相机自带的变量为Front，Up，Right，cameraPos，worldUp，worldUp表示世界的正上方向；
+相机的移动实现 void ProcessKeyBoard(CEMERA_MOVEMENT direction, float deltaTime) { float offset = MovementSpeed * deltaTime; switch (direction) { case FORWARD: Position += Front * offset; break; case BACKWARD: Position -= Front * offset; break; case LEFT: Position -= Right * offset; break; case RIGHT: Position += Right * offset; break; default: break; } } 相机的旋转实现 void ProcessMouseMovement(float xOffset, float yOffset, bool focusCenter = true, GLboolean constrainPitch = true) { xOffset *= MouseSensitivity; yOffset *= MouseSensitivity; Yaw += xOffset; Pitch += yOffset; if (constrainPitch) { if (Pitch &amp;gt; 89.</description></item></channel></rss>

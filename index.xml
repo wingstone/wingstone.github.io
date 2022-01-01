@@ -1,1 +1,251 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>wingstone's blog</title><link>https://example.org/</link><description>Recent content on wingstone's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 01 Jan 2022 13:18:23 +0800</lastBuildDate><atom:link href="https://example.org/index.xml" rel="self" type="application/rss+xml"/><item><title>First</title><link>https://example.org/post/first/</link><pubDate>Sat, 01 Jan 2022 13:18:23 +0800</pubDate><guid>https://example.org/post/first/</guid><description>hhhhhh</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Home on wingstone's blog</title><link>/</link><description>Recent content in Home on wingstone's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 01 Jan 2022 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml"/><item><title>About</title><link>/about/</link><pubDate>Sat, 01 Jan 2022 11:07:14 +0800</pubDate><guid>/about/</guid><description>网站建立经历 阶段一： 之前曾使用jekyll来建立个人网站，后来因为配置jekyll要配置ruby环境，且配置主题经常出问题，以至于blog经常显示出问题；
+于是第一次建立个人网站就这样被搁置一旁，不了了之；转向了CSDN，知乎这些写作平台；
+阶段二： 第二次建立个人网站是借助Gridea，不得不说，Gridea设计的初衷是非常好的；通过集成整个博客开发及部署流程，使得Gridea非常的简单好用，而且免费提供的主题也非常的优美，于是使用Gridea开发了一段时间；
+后来使用Gridea的过程中发现小bug略多，有两个个重要的问题没解决：
+经常网站push不成功； 不能pull工作进度，以至于不能多端工作； 后来发现Gridea已经不维护了，遂放弃Gridea，转向了CSDN，知乎这些写作平台； 阶段三： 后来觉得在这些博客平台写作还是不合适，内容自己不会经常维护，感觉写了之后就不像是自己的东西了；
+于是开始了解其他的建站工具，这时接触到hugo，hugo是真的好用；
+首先配置简单：直接下载程序，配置环境变量即可；
+再者是开源主题更加丰富，且主题配置简单，主题与网站文件几乎没有耦合；
+最重要的一点是，通过搭建两个仓库就可以实现自动部署以及多端工作的功能！于是就出现了现在这个博客网站的样子~
+个人简介 我英文名叫wingstone，于是网名就沿用了中文翻译风石这个名字；
+本科毕业于东南大学，硕士毕业于浙江大学，毕业后在网易任职技术美术，目前在字节跳动担任游戏引擎开发；
+我本人不是计算机专业，但是酷爱计算机图形学，于是毕业后转行来到了游戏行业，目前仍在专心修炼中；
+这里将作为我潜修图形学知识的仓库，欢迎有兴趣的有志之士一同交流图形学知识~
+联系方式 QQ：1812467051
+WeChat：1812467051</description></item><item><title>Real Shading in Unreal Engine 4</title><link>/posts/real-shading-in-unreal-engine-4/</link><pubDate>Sat, 01 Jan 2022 00:00:00 +0000</pubDate><guid>/posts/real-shading-in-unreal-engine-4/</guid><description>&lt;p>本文主要讲述PBR在Unreal中的实现思路，主要涉及Material Model、Shading Model、Lighting Model的背后原理与经验总结；在文章最后，添加了我个人的理解与实现过程中的相关参考；&lt;/p></description></item><item><title>[Light and Color] Color Space</title><link>/posts/light-and-color-color-space/</link><pubDate>Sat, 26 Jun 2021 23:14:15 +0000</pubDate><guid>/posts/light-and-color-color-space/</guid><description>Color Space Physical Basis of Color（颜色的物理基础） 说道颜色，首先得从光说起，因为光具有真实的物理属性；
+光是由不同波长的光照成分组成的，人眼能看到的光的范围称之为可见光谱； Spectral Power Distribution (SPD)为谱功率密度，表示一束光在不同波长下的功率分布；常用来测量真实的光； SPD具有线性叠加性； 说完光，再来说颜色，颜色是光在人眼感知下的结果；并不是光的通用属性，与人眼具有强关联性；
+Biological Basis of Color（颜色的生物基础） 人眼球中分布着Rods cell（杆状细胞，用来识别亮度），Cone cells（锥状细胞，用来识别颜色）； 锥状细胞分为三种类型：S、M以及L，三种细胞对于不同波长的光，具有不同的反映峰值，各拥有各的spectral response curve；
+Tristimulus Theory of Color（颜色的三色理论） 前面已知不同锥状细胞具有不同的反映曲线，人的大脑处理的实际上是三种锥状细胞处理后输出的信号；即输入SPD与三种Response Function积分后得到的三个分量（S,M,L）；
+Luminosity Function（亮度函数） 锥状细胞感受颜色，杆状细胞感受强度；同样不同的波长，杆状细胞感受出来的强度是不同的，感官亮度可以表示为Luminosity Function亮度随波长变化的函数；
+Metamerism（同色异谱） 由于是积分产生的结果，那么不同的输入积分后就有可能产生同样的结果；即人眼看到的同样的颜色，可能是由不同的SPD产生；
+Color Reproduction / Matching（颜色匹配） 同色异谱机制使得颜色匹配得以进行；Color Matching首先指定三盏光（每盏拥有固定SPD），调整三盏光的强度，使得混合后的颜色能匹配制定测试光，三盏光得到的强度由RGB组成，即为测试光光强； 有时Color Matching的测试光需要进行补光，此时获取的RGB值可为负值；
+CIE RGB Color Matching Experiment（CIE颜色匹配实验） CIE颜色匹配实验是CIE所推出的颜色匹配标准；
+CIE使用red=700nm, green=546.1nm, blue=435.8nm三种波长的纯色光来进行匹配； 对可见波长的纯色光进行匹配后，得到了三条颜色匹配曲线，称之为Color Matching Curves或Color Matching Function； 有了颜色匹配曲线后，对于任意的SPD，只需将其与三条曲线进行积分，即可得到CIE rgb值，该值所在的空间，称之为CIE RGB空间； Color Space（颜色空间） LMS Space 此处LMS即为前面所说的眼睛内部的三种锥形细胞，以三种细胞的response curve作为积分曲线，积分后得到的颜色值位于LMS 空间；Unity中的白平衡既是在此空间下进行计算；</description></item><item><title>[Light and Color] Gamma</title><link>/posts/light-and-color-gamma/</link><pubDate>Sat, 26 Jun 2021 21:11:24 +0000</pubDate><guid>/posts/light-and-color-gamma/</guid><description>前言 在图形开发中，总绕不开的一个名词，Gamma，这里会对Gamma进行一个粗暴但是通俗的讲解；便于理清图形开发中理解Gamma的一切；
+一、Gamma是什么？ Gamma是什么，Gamma FAQ[1]中有解释：在传统的CRT显示器中，屏幕显示的Luminance与电压并不是成正比的关系，而是成一个幂次方的关系，即$L = V^\gamma$，其中的幂就是我们通说所说的Gamma； ![Gamma变换](https://img-blog.csdnimg.cn/20210623234248419.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM1ODE3NzAw,size_16,color_FFFFFF,t_70#pic_center =256x256)
+显示器的Gamma变换 二、Gamma Correction Gamma Correction是什么？ 由于显示器所显示的Luminance为正常展示场景亮度的gamma次方（我们称之为Gamma变换），为了使显示器亮度为正常的展示场景亮度，抵消显示器Gamma变换的影响，必须在显示器前对展示场景亮度做 Gamma变换的逆变换 ，此逆变换我们称之为 Gamma Correction ； ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210623234433372.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM1ODE3NzAw,size_16,color_FFFFFF,t_70#pic_center =256x256)
+显示器的Gamma Correction 实际上场景所在的空间，我们常称之为线性空间，即 Linear Space ，对应着曲线y=x；经过 Gamma Correction过后的空间 ，我们称之为Gamma空间，即 Gamma Space ，对应着曲线y=x的上半段；
+Gamma Correction有时也称 Encode Gamma ，从Gamma空间转换到线性空间变换则称之为 Decode Gamma ；
+为什么需要Gamma Correction？ 上面已经说到，做Gamma Correction是为了让显示器显示正常的场景亮度，这就是要做Gamma Correction的做主要的原因；
+实际上人眼看到现实场景就是线性的，要想让观众觉得显示器里的东西更接近现实，显示器就必须要显示为线性空间；
+关于Gamma的巧合 实际上， 人眼对亮度的感知也并不是线性的，巧合的是，人眼对亮度的感知曲线搞刚好是显示器Gamma变换的逆变换的曲线（与Gamma矫正类似）[2] ；
+这样导致的结果就是：假如没有Gamma Correction，显示器显示一段均匀变化的亮度，人眼感知到的亮度刚好也是均匀的；因为显示器先做了Gamma变换，人眼感知又做了Gamma逆变换，导致人眼感知到的是均匀的；如下图所示：
+![未做Gamma Correction的0-1渐变图](https://img-blog.csdnimg.cn/20210623231605422.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM1ODE3NzAw,size_16,color_FFFFFF,t_70#pic_center =512x256)
+未做Gamma Correction的0-1渐变图 如果我们做了Gamma Correction，这个时候虽然是显示器最终显示的是均匀变化的亮度，但是人眼的感受却是不均匀的；因为先做了Gamma Correction（Gamma逆变换），然后显示器做了Gamma变换，人眼感知又做了Gamma逆变换，导致人眼感知到的是Gamma逆变换后的；如下图所示： ![在这里插入图片描述](https://img-blog.csdnimg.cn/2021062323311715.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM1ODE3NzAw,size_16,color_FFFFFF,t_70#pic_center =512x256)
+做了Gamma Correction的0-1渐变图 做了Gamma Correction之后的渐变图就是人眼真正应该感知到的渐变图：暗部人眼感知到的亮度大于实际亮度，且相差比较大；亮部人眼感知到的亮度与实际亮度基本持平，且相差较小；
+之所以人眼有这样的特征，是因为为了能够在夜晚中生存，暗部或被人眼感知上提亮，这样就能够避免夜晚中不可知的危险；
+三、实际使用的Gamma 文件保存中的Gamma 实时上， 我们在电脑屏幕上看到的大部分图片都是处于Gamma空间的 ，尤其是屏幕的截图，屏幕的吸色，得到的都是Gamma空间的颜色，他们经常存储在PNG、TGA、JPG等格式的文件；在显示这些图片时， 他们直接会被送到屏幕缓冲中进行显示 ；由于文件本身为Gamma空间，图片颜色经过显示器的Gamma变换，就会显示为线性空间下的颜色，再进入人眼中，被我们人眼感知；</description></item><item><title>[Thingking] PostProcess关于UV的思考</title><link>/posts/postprocess-guan-yu-uv-de-si-kao/</link><pubDate>Thu, 10 Jun 2021 23:47:44 +0000</pubDate><guid>/posts/postprocess-guan-yu-uv-de-si-kao/</guid><description>以前一直以为屏幕空间下的UV应该是0-1的范围内的；
+Blit操作下的PostProcess 但是最近在做后处理时，对这件事重新进行了思考，其实Shader中使用的uv肯定是经过光栅化后的数据，既然是光栅化后的数据，那么UV坐标应该是像素中心的UV坐标；
+后期一般都是通过DrawMesh来实现的，Mesh里的UV值为0-1，而此时的Mesh肯定需要覆盖整个屏幕，那么可以得到屏幕的最左侧uv.x = 0，最右侧uv.x = 1；而最左侧对应于最左列像素的左边，最右侧对应于最右列像素的右边；
+由此可见，对于Vertex Shader，其UV是 0-1 范围内的； 对于FragmentSahder，其UV范围是最左列像素坐标到最右侧像素坐标的，令_Size = float4(1/ScreenWidth, 1/ScreenHeight, ScreenWidth, ScreenHeight)，则UV范围为 (0.5*_Size.x~1-0.5*_Size.x, 0.5*_Size.y~1-0.5*_Size.y) ；
+下图为10x10分辨率下的UV灰度图： ![](https://wingstone.github.io/post-images/1623341545976.jpg =200x200) 可以看到最左列的灰度值并不为0，看来我们的思考是对的；
+ComputerShader下的PostProcess ComputerShader（简称CS）下的UV获取比较特殊，因为CS并不走正常的GPU绘制流水线，只是单纯的用多线程进行并行计算，所以我们在CS中获取UV值一般是由ThreadID除以屏幕分辨率来获取；
+简易CS Example：
+#pragma kernel CSMain RWTexture2D&amp;lt;float4&amp;gt; _Result; float4 _Size; //(1/width, 1/height, width, height) [numthreads(8,8,1)] void CSMain (uint3 id : SV_DispatchThreadID) { float2 uv = id.xy/_Size.zw; _Result[id.xy] = uv.x; } threadID即为我们分配的线程ID，每个线程有唯一值，对于图片处理，一般范围为(0~width-1,0~height-1)，那么算下来，CS里的UV范围应该为 (0~1-_Size.x, 0~1-_Size.y) ；
+下图为10x10分辨率下的UV灰度图： ![](https://wingstone.github.io/post-images/1623342423558.jpg =200x200)</description></item><item><title>FXAA理论方法</title><link>/posts/fxaa-li-lun-fang-fa/</link><pubDate>Mon, 01 Mar 2021 22:52:01 +0000</pubDate><guid>/posts/fxaa-li-lun-fang-fa/</guid><description>FXAA是基于图像空间理论的抗拒齿方法；
+基础理论为： 进行图像边缘检测； 针对检测出来的图像边缘，进行抗拒齿处理； 基础步骤： 采样屏幕颜色，转换至亮度； Nvidia建议使用red以及green通道来计算亮度进行优化，人眼对这两种颜色最为敏感；亮度计算方法如下： float FxaaLuma(float3 rgb) {return rgb.y * (0.587/0.299) + rgb.x; } 根据亮度来计算对比度，用对比度来作为边缘检测的标准； 一般边缘检测都会使用当前像素，以及上下左右四个像素来进行对比度的计算；当对比度大于某个阈值时，认为当前点处于边缘位置； float3 rgbN = FxaaTextureOffset(tex, pos.xy, FxaaInt2( 0,-1)).xyz; float3 rgbW = FxaaTextureOffset(tex, pos.xy, FxaaInt2(-1, 0)).xyz; float3 rgbM = FxaaTextureOffset(tex, pos.xy, FxaaInt2( 0, 0)).xyz; float3 rgbE = FxaaTextureOffset(tex, pos.xy, FxaaInt2( 1, 0)).xyz; float3 rgbS = FxaaTextureOffset(tex, pos.xy, FxaaInt2( 0, 1)).xyz; float lumaN = FxaaLuma(rgbN); float lumaW = FxaaLuma(rgbW); float lumaM = FxaaLuma(rgbM); float lumaE = FxaaLuma(rgbE); float lumaS = FxaaLuma(rgbS); float rangeMin = min(lumaM, min(min(lumaN, lumaW), min(lumaS, lumaE))); float rangeMax = max(lumaM, max(max(lumaN, lumaW), max(lumaS, lumaE))); float range = rangeMax -rangeMin; if(range &amp;lt; max(FXAA_EDGE_THRESHOLD_MIN, rangeMax * XAA_EDGE_THRESHOLD)) {return FxaaFilterReturn(rgbM); } 边缘的横纵向检测，用于后续抗拒齿处理； 边缘进行光栅化之后，在比较小的维度上，只有横向边缘与纵向边缘之分；检测出来横向与纵向，可以便于后续沿边缘进行延伸； float edgeVert = abs((0.</description></item><item><title>Unity中序列化Asset的修改</title><link>/posts/unity-zhong-xu-lie-hua-asset-de-xiu-gai/</link><pubDate>Sun, 28 Feb 2021 23:31:35 +0000</pubDate><guid>/posts/unity-zhong-xu-lie-hua-asset-de-xiu-gai/</guid><description>代码片段事例：
+Object obj = new Object(); SerializedObject so = new SerializedObject(obj); //这里obj为要进行序列化操作的asset对象 SerializedProperty sp = so.FindProperty(&amp;quot;property&amp;quot;); //这里property为要进行操作的property，需要查看asset文件获取 sp.boolValue = true;</description></item><item><title>各种常用渲染技术文章集合</title><link>/posts/ge-chong-chang-yong-xuan-ran-ji-zhu-wen-zhang-ji-he/</link><pubDate>Wed, 11 Nov 2020 21:52:21 +0000</pubDate><guid>/posts/ge-chong-chang-yong-xuan-ran-ji-zhu-wen-zhang-ji-he/</guid><description>LocalCubemap ImplementingReflectionsinUnityUsingLocalCubemaps PDF Reflections Based on Local Cubemaps in Unity Web
+ClearCoat Clear coat model in filament Web
+Cloud In Sky Bump Noise Cloud – 3D噪点+GPU instancing制作基于模型的体积云 Web 浅谈《Sky 光·遇》中的渲染技术 Web</description></item><item><title>景深的实现技术</title><link>/posts/jing-shen-de-shi-xian-ji-zhu/</link><pubDate>Tue, 20 Oct 2020 16:47:41 +0000</pubDate><guid>/posts/jing-shen-de-shi-xian-ji-zhu/</guid><description>景深的实现技术有很多，针对不同的使用场景，可以使用不同的方法；
+基于光线追踪的景深效果（离线） 基于光线追踪的景深效果，直接使用薄透镜模型，在透镜上面进行多采样即可实现景深效果；
+关于薄透镜理论的使用，可以参考这里基于摄影参数渲染;
+基于累积贴图的景深效果（实时） 大致思路为，将相机进行移动（可按照透镜多采样的方式移动），沿焦平面进行多个相机的渲染，然后将渲染结果进行累加，这样就能获取与光线追踪类似的效果；本质上类似于光线追踪的多采样方式，但需要花费大量的DC，一般只用来验证；
+基于分层绘制的景深效果（实时） 本质上，是基于2D图层的方式来实现；将场景按深度进行分层绘制，然后将远离焦距的绘制rt记性模糊，然后按层进行混合，即可获取接近景深的效果；
+使用要求时，不同的景物之间不能有交叉，即物体不能有太强的深度变化；因为针对单个物体是无法产生即聚焦又失焦的现象；
+基于前向映射的Z-buffer的景深效果（实时） 此方法常用在后处理效果中，该方法存储颜色缓冲与深度缓冲作为最后的blit对象；然后使用深度缓冲计算COC（circle of confusion），即点投影在屏幕上形成的弥散圆；再然后利用弥散圆进行模糊与blend，这里模糊并不是通常意义上的模糊，模糊需要的圆盘采样与普通模糊一致，但是采样的判定需要根据采样点的COC是否能覆盖到当前点，来确定该采样点的弥散圆是否对当前点有贡献；GPU Gems中说blend只能混合到距离摄像机比自己远的那些相邻像素中，以避免模糊的像素影响它们前面的清晰像素。实际上，blend的是为了避免前面模糊造成聚焦物体边缘的消失；
+基于反向映射的Z-buffer的景深效果（实时） 该方法与上一种技术类似，区别在于并不是通过blend来形成最后的图像，而是通过使用深度值距焦距的距离来进行blur，从而形成最终的效果；这里把当前点的弥散圆当做模糊范围来进行计算了，与实际的PBR有些偏差，但也能凑活使用；
+Reference Depth of Field Depth of Field: A Survey of Techniques 基于摄影参数渲染 渲染中的景深(Depth of Field/DOF) A Life of a Bokeh - SIGGRAPH 2018</description></item><item><title>后处理技术——景深</title><link>/posts/hou-chu-li-ji-zhu-jing-shen/</link><pubDate>Tue, 20 Oct 2020 16:05:48 +0000</pubDate><guid>/posts/hou-chu-li-ji-zhu-jing-shen/</guid><description>景深是能体现场景纵深的重要效果，同时还能虚化前景与背景，这样可以让玩家将注意力集中在聚焦物体上；
+实现步骤 提取COC 所谓COC即circle of confusion，表示一点投影在屏幕上所形成的弥散圆。可知，焦距上的点仍然会形成点，而远离焦距的点则会形成弥散圆；
+一般将COC的半径存储为rt，此半径需要根据焦距（focus distance）以及焦距范围（focus range）来进行计算；
+计算散景效果 实际上就是使用圆形范围的模糊效果来进行RT的blit；这里模糊并不是通常意义上的模糊，模糊需要的圆盘采样与普通模糊一致，但是采样的判定需要根据采样点的COC是否能覆盖到当前点，来确定该采样点的弥散圆是否对当前点有贡献（GPU Gems中说blend只能混合到距离摄像机比自己远的那些相邻像素中，以避免模糊的像素影响它们前面的清晰像素。）；
+考虑到采样所带来的的效率问题，一般都会讲rt进行降采样处理；同样的COC也要记性降采样，才可以使用，一般会将其存储至rt的alpha通道；
+一般散景模糊主要考虑的就是效率问题，可以采用其他的途径来获取相应效果；毕竟只是实现模糊就有很多种不同方法；
+与物模糊背景进行融合 计算散景效果时，对于聚焦物体的边缘部分，还是会产生模糊问题；为了比较这种问题产生，只能使用blend方法，将这些区域恢复为原来的无模糊图像；</description></item><item><title>天空渲染——大气物理</title><link>/posts/tian-kong-xuan-ran-da-qi-wu-li/</link><pubDate>Sat, 10 Oct 2020 15:38:30 +0000</pubDate><guid>/posts/tian-kong-xuan-ran-da-qi-wu-li/</guid><description>大气物理现象 假设1：空气密度随着高度成指数进行衰减；即： $$ density(h) = density(0)e^{-\frac{h}{H}} $$ 其中density(0)为海平面密度，h为当前高度，H为scale height，随温度变化；不是所有的人都采用这种模型，另一种密度假设为分层模型，每一层采用不同的大气密度；
+大气分子散射主要可分为空气分子散射（Rayleigh scattering，小于光线波长）与气溶胶散射（Mie scattering，大于光线波长）；空气分子散射主要会产生天空的蓝色成分与橘黄色成分（日出、日落时分），气溶胶散射主要会导致灰白色条带（特别是污染都市上空）；
+在进行光追计算时，还需要进行地球半径的假设，以及大气层半径的假设；我们假设地球半径为6360 km，大气半径为6420 km，此外还需要假设太阳光为平行光，因为太阳距地球足够远；
+计算的过程中需要注意量纲的统一，一般都去Km；
+熟悉体渲染的人应该知道，物体的体渲染熟悉可以用散射系数（针对外散射）、吸收系数、相位函数（针对内散射）进行描述，我们这里忽略大气吸收的过程，即忽略吸收系数的计算；
+Rayleigh scattering Rayleigh scattering具有很强的波长依赖性，散射蓝光比绿光和红光具有更高的精确性；
+Rayleigh首先提出了计算此现象的公式，他给出了散射系数的公式： $$ {\beta}_R^s(h, \lambda) = \frac{8\pi^3(n^2-1)^2}{3N\lambda^4}e^{-\frac{h}{H_R}} $$
+这里$\lambda$表示波长，N表示大气分子密度，n为大气折射率，$H_R$即为前面的scale height，此处我们取8Km；
+参考文献中N与n并没有给出相应的参数，但是给出了相应的散射系数$\beta^s_R=(5.8, 13.5, 33.1)10^-6m^-1$ for $\lambda=(680, 550, 440)nm$；
+渲染使用的extinction coefficient为： $$ \beta_R^e = \beta_R^s $$
+相位函数的公式为： $$ P_R(\mu)=\frac{3}{16\pi}(1+\mu^2) $$ 其中$\mu$表示光线与视角的夹角；
+Mie Scattering 与Rayleigh Scattering类似，其散射公式为： $$ \beta_M^s(h,\lambda)=\beta_M^s(0,\lambda) e^{-\frac{h}{H_M}} $$ 这里的$H_M$通常取1.2Km；同样类似于Rayleigh Scattering，气溶胶密度也随高度进行指数衰减，我们直接取散射系数为$\beta^s_M=210x10^-5m^-1$；
+渲染使用的extinction coefficient为： $$ \beta_R^e = 1.1\beta_R^s $$
+相位函数为： $$ P_M(\mu)=\frac{3}{8\pi}\frac{(1-g^2)(1+\mu^2)}{(2+g^2)(1+g^2-2g\mu)^{\frac{3}{2}}} $$ 其中$g$项用来控制介质的各向异性，一般取0.</description></item><item><title>软阴影技术——PCF、ESM、VSM、CSM、PCSS</title><link>/posts/yin-ying-ji-zhu-pcfesmvsmpcss/</link><pubDate>Wed, 30 Sep 2020 23:39:42 +0000</pubDate><guid>/posts/yin-ying-ji-zhu-pcfesmvsmpcss/</guid><description>PCF（Percentage-Closer Filtering） 就是对阴影结果进行滤波，这里的阴影结果指阴影测试函数所得的结果；一般采用双线性滤波，此时可以使用硬件PCF来进行插值；
+实现要求 Depth格式的shadow map或者ShadowMap格式的shadow map；
+ESM（Exponential Shadow Maps） PCF方法对阴影结果进行滤波，无法集成到阴影测试函数中；因此可以采用其他的阴影测试函数来进行实现软阴影效果；
+ESM采用指数空间下的深度测试函数来代替传统的深度测试函数；
+采用ESM方法，存储的为指数空间下的阴影数值，支持预滤波，这样就可以对shadowmap进行blur，将滤波与测试函数进行分离；
+传统shadowmap存储的为深度z，而在ESM中存储的为exp(c*z)，即深度值的指数形式；其中c表示指数常数，对于32位存储格式，极限值为88；
+而阴影测试函数，传统的shadowmap为step(d, z)，而ESM的阴影测试函数则变为exp(-cd)*tz；其中tz表示采样的指数深度值，即exp(c*z)，这样原来的z-d转变为了exp(c(z-d))；
+所带来的问题有： 计算出来的阴影值与shadow caseter、shadow receiver之间的距离有关，距离越远，阴影越黑，越近，阴影越接近于无； 多重阴影下，肯会由于shadow map精度问题产生瑕疵； 对rt精度要求比较高； 实现需求 一张Depth格式的shadow map即可，需要手动对其进行模糊；
+Renference 《实时阴影技术》 艾森曼努； 实时渲染中的软阴影技术 切换到esm</description></item><item><title>贴图技术——Parallax Mapping（视差贴图）</title><link>/posts/texture-technique-parallax-mappingshi-chai-tie-tu/</link><pubDate>Wed, 30 Sep 2020 13:10:15 +0000</pubDate><guid>/posts/texture-technique-parallax-mappingshi-chai-tie-tu/</guid><description>视差贴图属于位移贴图(Displacement Mapping)技术的一种，它对根据储存在纹理中的几何信息对顶点进行位移或偏移。一般使用位移贴图之前，需要对模型进行细分（细分着色器），然后进行顶点位移；
+位移贴图要想有好的效果，需要大量顶点支持，而使用视差贴图即可省去大量的顶点使用；
+视差贴图的原理实际上是对采样纹理坐标进行偏移，而偏移的原理根据视角观察高度图的真实过程进行模拟，因此可以模拟出真实的贴图凹凸遮挡关系；
+在实际的使用过程中，一般使用 深度图来代替高度图 ，两种互为反相；
+Parallax mapping 最原始视差贴图方法就叫Parallax mapping，其大概原理是：在切线空间下，当前采样坐标获得的高度作为V向量偏移的长度，然后偏移后的长度在切平面的投影即为坐标的偏移量
+//_ParallaxHeight为一控制参数 uv -= tex2D(_HightMap, uv)*TV.xy*_ParallaxHeight; //V向量为切空间下的向量 在高度图变化比较剧烈的地方，采用这种方法会有很对问题；因此又发展出了Steep Parallax Mapping（陡峭视差贴图）；
+Steep Parallax Mapping 对于高度变化剧烈地方，其实很难通过一步就定位到偏移后的位置，陡峭视差贴图方法实际上就是ray matching方法，使用此方法可以更精确的定位到偏移后位置；但由于ray matching算法的性质，在计算量不足的情况下，容易出现分层的痕迹；针对分层问题，后面提出了Parallax Occlusion Mapping(视差遮蔽映射)方法；
+该算法首先将深度值进行分层，每一步递进一层；若当前步所获取深度值与步进深度值的差值的符号，与前一步相反，则可定位当前层深度即为偏移深度；分层数量越多，计算量越大，计算结果越精细；
+float numLayers = 10; float depthStep = 1.0 / numLayers; float currentDepth = 0.0; float2 uvStep = TV.xy * _ParallaxHeight/ numLayers; float currentDepthMapValue = tex2D(_DepthTex, uv).r; for(int i = 0; i&amp;lt; 10; i++) { if(currentDepth &amp;gt; currentDepthMapValue) break; uv -= uvStep; currentDepthMapValue = tex2D(_DepthTex, uv).</description></item><item><title>NPR之描边</title><link>/posts/npr-zhi-miao-bian/</link><pubDate>Mon, 28 Sep 2020 15:49:37 +0000</pubDate><guid>/posts/npr-zhi-miao-bian/</guid><description>对于非平滑模型，采用背部扩展描边的方式，容易出现断裂问题；
+解决方法为：使用高模的平滑法线来进行背面的扩展，可以使用法线贴图计算高模法线；
+对于NPR渲染，其实一般也不怎么使用贴图；所以可以将高模的法线bake到顶点色里面；
+由于蒙皮网格会实时计算变换后的切空间下的normal、tangent、binormal；因此不能bake local space下的高模法线，除非将local space下的高模法线bake到tangent或binormal进行存储，或者将tangent space下的高模法线bake到顶点色里进行存储；</description></item><item><title>皮肤渲染方法总结</title><link>/posts/pi-fu-xuan-ran-fang-fa-zong-jie/</link><pubDate>Mon, 28 Sep 2020 14:45:56 +0000</pubDate><guid>/posts/pi-fu-xuan-ran-fang-fa-zong-jie/</guid><description> gpugems1：wrap方法，模拟透射，纹理空间blur gpugems3：不同的Specular BRDF，改善模拟透射，纹理空间 Diffusion，屏幕空间Diffusion siggraph2011：pre-integrated skin rendering GPU Pro 2, Part 2. Rendering, Chapter 1. Pre-Intergrated Skin Shading</description></item><item><title>皮肤渲染——Preintegrated Subsurface Scattering</title><link>/posts/pi-fu-xuan-ran-zhi-preintegrated-subsurface-scattering/</link><pubDate>Mon, 28 Sep 2020 12:18:24 +0000</pubDate><guid>/posts/pi-fu-xuan-ran-zhi-preintegrated-subsurface-scattering/</guid><description>预积分皮肤散射主要解决三种皮肤散射情况：
+表面弯曲引起的散射（Surface Curvature）； 表面小凸起引起的散射（Small Surface Bumps）； 投影边缘引起的散射（Shadows）； 皮肤背面的透射问题（Translucency）（自己添加的）； Surface Curvature 单纯的wrap并不符合物理，需要通过diffusion profile积分才能获取正确的wrap； 预积分贴图是在球形假设下进行计算的，因此该方法最大的缺陷是模拟表面拓扑复杂的结构时，有很大不合理之处； 幸运的是，当今模型表面大都是平滑的，而不平滑的小的部分都用法线贴图进行假设计算； 积分方程为：
+$$ D(\theta, r) = \frac{\int_{-\pi/2}^{\pi/2} {cos(\theta+x)*R(2rsin(x/2))} ,{\rm d}x}{\int_{-\pi/2}^{\pi/2} {R(2rsin(x/2))} ,{\rm d}x} $$
+式中R(d)表示Diffusion profile，表示相应距离下的辐射度，d表示距离。该式表示在曲率半径为r的半球下，对应$\theta$角度下，其它所有角度在该角度下的散射强度；对应模型如下图所示：
+**图中的$\theta$应该全部用x来表示！**从图中的右侧的模型能够看出，N为我们要求的散射角度，L与N之间的角度为$\theta$，L在$N+x$处的光照强度为$cos(\theta+x)$；N距N+x的距离为2rsin(x/2)，即弦长；N+x在N处的散射可由R(d)计算得出；
+图中的Diffusion profile一般使用高斯核叠加进行表示，对于rgb各成分的高斯核表示为： 最终得到一个Diffusion profile在不同$\theta$角度和曲率半径下的积分分布；将$\theta$角度和曲率半径转换为NdoL和1/r，即可得到常用的预积分贴图；如下图所示： 其中曲率的求法可在shader中借助偏导函数计算，即：
+float3 dn = fwidth(N); float3 dp = fwidth(P); float c = length(dn)/length(dp); Small Surface Bumps 对于小的凸起以及皱纹，不能使用预积分来进行计算，但是由于可以多采样，因此可以使用预滤波的方式处理法线贴图；
+对于specular使用正常的normalmap，对于diffuse的rgb分别使用针对不同Diffusion profile处理后的normalmap，因此需要4张normalmap；
+为了效率考虑，可以使用一种高精度无滤波的normalmap，一张低精度预滤波的normalmap分别针对rgb插值来近似相应的预滤波处理；需要2张normalmap；
+可以将低精度无滤波的normalmap省略，直接使用模型法线来代替，这样就可以指使用一张高精度无滤波的normalmap进行处理了；
+最终的结果为：进行滤波处理的通道，其法线凹凸变弱，反应在视觉上，就是凹凸处该通道有相应的溢出（根本原因是此通道趋于恒定，而其他通道凹凸变换大）；
+Shadows Scattering 皮肤出的散射特性在投影边缘会体现出来，具体模拟此现象是很困难的一件事情，但是我们可以通过一些trick来实现；
+首先，阴影强度为0或1，表示被遮挡，或不被遮挡；位于两者之间的值，及表示半影区域，及发生散射的区域（前提是使用软阴影）；因此我们可以针对这一点，利用Diffusion profile进行积分，来得到阴影值与散射强度的关系；
+积分的过程是针对位置进行积分，需要将阴影值映射到位置上后才能积分，针对不同的软阴影方法，映射函数是不同的；我们用P()表示阴影值与到blur kernel距离的函数，则此映射为$p^-{1}()$；具体的积分方程为： $$ P_S(s,w) = \frac{\int_{-\infty}^{\infty} {P^'(P^{-1}(s)+x)R(x/w)} ,{\rm d}x}{\int_{-\infty}^{\infty} {R(x/w)} ,{\rm d}x} $$ 针对box blur软阴影（PCF）方法，其过程如下： 需要注意的是，半影区域的一部分（宽度到没提及）作为正常的软阴影计算插值，剩下的一部分作为这些软阴影散射产生的影响；P'()即表示新的半影函数分布；</description></item><item><title>GPU编程之DDX、DDY详解</title><link>/posts/gpu-bian-cheng-zhi-ddxddy-xiang-jie/</link><pubDate>Mon, 21 Sep 2020 16:18:43 +0000</pubDate><guid>/posts/gpu-bian-cheng-zhi-ddxddy-xiang-jie/</guid><description>ddx、ddy函数的含义为返回大约目前变量的偏导数；
+所谓偏导数，实际上就是分别在x方向和y方向的单位距离下，变量的差值；
+在GPU中用数值进行计算的话，就是相邻像素下该变量的差值；
+使用细节 对于矢量变量，仍然返回一个矢量，但是矢量中的每个元素都会计算其偏导数；
+该函数只能在fragment program profiles中使用，但是并不是所有的硬件都支持；
+当该函数使用在条件分支语句中，ddx、ddy的偏导计算并不是完全正确的，因为并不是所有的fragment都运行在同一个分支中；
+当变量所依据的参数是基于中心插值的情况下，偏导计算并不是非常精确；
+实现细节 其偏导数的实现方式要依据具体的实现方式；典型的实现方式为fragment被光栅化时，会以为2x2的形式形成像素块（称作quad-fragments），偏导计算就在quad-fragments中相邻的fragment中进行差值计算；这是像素着色器上面的最小工作单元 ，在像素着色器中，会将相邻的四个像素作为不可分隔的一组，送入同一个SM内4个不同的Core。
+NV shader thread group提供了OpenGL的扩展，可以查询GPU线程、Core、SM、Warp等硬件相关的属性。在处理2x2的像素块时，那些未被图元覆盖的像素着色器线程将被标记为gl_HelperThreadNV = true，它们的结果将被忽略，也不会被存储，但仍然进行着色器的计算，可辅助一些计算，如导数ddx和ddy。
+原文：
+The variable gl_HelperThreadNV specifies if the current thread is a helper thread. In implementations supporting this extension, fragment shader invocations may be arranged in SIMD thread groups of 2x2 fragments called &amp;ldquo;quad&amp;rdquo;. When a fragment shader instruction is executed on a quad, it&amp;rsquo;s possible that some fragments within the quad will execute the instruction even if they are not covered by the primitive.</description></item><item><title>移动GPU架构</title><link>/posts/yi-dong-gpu-jia-gou/</link><pubDate>Thu, 17 Sep 2020 13:30:09 +0000</pubDate><guid>/posts/yi-dong-gpu-jia-gou/</guid><description>移动GPU架构经常被称之为TBDR（Tiled Based Deferred Rendering），我们这里也以TBDR代称；实际上移动架构有TBR与TBDR两种，为什么都被称之为TBDR，可以看这篇文章；我们这里使用TBDR来指整个移动GPU架构都包含的TBR特点；
+移动TBDR架构与桌面IMR架构 IMR架构 IMR（Immediate Mode Rendering）就如字面意思一样，提交的每个渲染命令都会立即开始执行，并且该渲染命令会在整条流水线中执行完毕后才开始执行下一个渲染命令。
+IMR的渲染会存在浪费带宽的情况。例如，当两次渲染有前后遮蔽关系时，IMR模式因为两次draw命令都要执行，因此会存在经过Pixel Shader后的Pixel被Depth test抛弃，这样就浪费了Shader Unit运算能力。不过幸运的是，目前几乎所有的IMR架构的GPU都会提供Early Z的判断方式，一般是在Rasterizer里面对图形的遮蔽关系进行判断，如果需要渲染的图形被遮挡住，那么就直接抛弃该图形而不需要执行Pixel Shader。
+IMR的另外一个缺点就是其渲染命令在执行需要随时读写frame buffer，depth buffer和stencil buffer，这带来大量的内存带宽消耗，在移动平台上面访问片外内存是最消耗电量和最耗时的操作。
+TBDR架构 移动端的硬件在设计最开始想到的最重要的问题就是功耗，功耗意味着发热量，意味着耗电量，意味着芯片大小…所以gpu也是把功耗摆在第一位，然而在gpu的渲染过程中，对功耗影响最大的是带宽；
+每渲染一帧图像，对FrameBuffer的访问量是惊人的（各种test，blend，再算上MSAA, overdraw等等），通常gpu的onchip memory（也就是SRAM，或者L1 L2 cache）很小，这么大的FrameBuffer要存储在离gpu相对较远的DRAM（显存）上，可以把gpu想象成你家，SRAM想象成小区便利店，DRAM想象成市中心超市，从gpu对framebuffer的访问就相当于一辆货车大量的在你家和市中心之间往返运输，带宽和发热量之巨大是手机上无法接受的。
+TBDR一般的实现策略是对于cpu过来的commandbuffer，只对他们做vetex process，然后对vs产生的结果暂时保存，等待非得刷新整个FrameBuffer的时候，才真正的随这批绘制做光栅化，做tile-based-rendering。什么是非得刷新整个FrameBuffer的时候？比如Swap Back and Front Buffer，glflush，glfinish，glreadpixels，glcopytexiamge，glbitframebuffer，queryingocclusion，unbind the framebuffer。总之是所有gpu觉得不得不把这块FrameData绘制好的时候。
+FrameData这个是tbr特有的在gpu绘制时所需的存储数据，在powervr上叫做arguments buffer，在arm上叫做plolygon lists。
+于是移动端的gpu想到了一种化整为零的方法，把巨大的FrameBuffer分解成很多小块，使得每个小块可以被离gpu更近的那个SRAM可以容纳，块的多少取决于你的硬件的SRAM的大小。这样gpu可以分批的一块块的在SRAM上访问framebuffer，一整块都访问好了后整体转移回DRAM上。
+对比 那么为什么pc不使用tbr，这是因为实际上直接对DRAM上进行读写的速度是最快的，tbdr需要一块块的绘制然后回拷，可以说如果哪一天手机上可以解决带宽产生的功耗问题，或者说sram可以做的足够大了，那么就没有TBDR什么事了。可以简单的认为TBR牺牲了执行效率，但是换来了相对更难解决的带宽功耗。
+TBDR的重要特性 关于early-z 因为tbdr有framedata队列，很多gpu会很聪明的尽量筛去不需要绘制的framedata。所以在tbdr上earlyz，或者stencil test这些是非常有益处的。例如你定义了一个stencil，gpu有可能在对framedata处理的过程中就筛掉了那些不能通过stencil的drawcall了。或者通过scissor test可能一整块tile都不需要绘制。
+blending和MSAA的效率其实很高，alpha-test效率很低 回头看下tbdr的渲染管线，对于一个tile上所有pixel的绘制都是在on-chip的mem上的，只在最后绘制好了才整体回拷给dram。所以我们通常认为会造成大量带宽的操作，例如blending（对framebuffer的读和写），msaa(增加对framebuffer读取的次数)其实在tbdr上反而是非常快速的。（当然msaa除了会造成framebuffer访问增多，还会带来渲染像素的数量增多，这个是tbr没什么优化的）
+alpha-test这个东西，他对depth的写入是不能预先确定的，它必须等到pixel shader执行，这导致了alpha-test之后的那些framedata失去了early–z的机会，也就破坏了TBDR架构中的延迟渲染特性（FrameData必须进行ps处理，不能继续缓存），也就增加了渲染量。
+移动TBDR架构与Render Pipeline中TBDR的区别 Render Pipeline中TBDR可以参考这里；RP中的TBDR指的光照渲染流程中，延迟光照的一种；为了减少DC，提高硬件利用效率；这里的延迟主要指：PS阶段光照的计算不立即计算，而是渲染到G-buffer中进行缓存，到最后使用的新的DC来使用G-buffer进行光照的计算（主要用于多光源下的渲染处理）；
+移动TBDR架构指的是GPU所采用的的一种渲染架构，是GPU硬件上的延迟渲染流程的硬件实现；而且这里的延迟渲染主要指：VS到PS之间有一个硬件的framedata队列，来延迟PS的处理；
+Reference 移动架构浅析 移动设备GPU架构知识汇总 针对移动端TBDR架构GPU特性的渲染优化</description></item><item><title>零散学习资源链接</title><link>/posts/ling-san-zi-yuan-lian-jie-ji-lu/</link><pubDate>Wed, 16 Sep 2020 13:23:05 +0000</pubDate><guid>/posts/ling-san-zi-yuan-lian-jie-ji-lu/</guid><description>半透投影问题
+dithered transparency / Screen-door transparency（扰动半透渲染技术）
+点光源的投影问题 shadow techniques for realtime and interactive applications Dual Paraboloid Shadow Mapping</description></item><item><title>头发渲染——Kajiya model</title><link>/posts/tou-fa-xuan-ran-zhi-kajiya-model/</link><pubDate>Wed, 16 Sep 2020 12:19:32 +0000</pubDate><guid>/posts/tou-fa-xuan-ran-zhi-kajiya-model/</guid><description>关键点：采用多边形建模，进行深度排序修正渲染顺序（因为半透问题），AO去模拟自阴影，两层高光，采用Tangent向量代替N进行高光计算；
+采用多边形建模 头发建模可分为发丝建模（关于发丝建模的渲染看这里）与多边形建模两种，当今游戏界所大量采用的做法也是多边形建模；
+多边形建模有更低的几何复杂性，以至于有更高的排序效率；相比之下采用发丝建模需要大约100K-150K的发丝来构建，复杂度高很多； 采用多边形建模可以更加容易的集成到已有的渲染管线中去，基本已有的渲染管线都是处理的多边形模型； 高光计算 主要的高光计算都集成在下面这张PPT上； 可以看出，kajiya计算模型与blin-phong模型比较类似，本质上都是采用pow(NdotH, specularity)来进行的高光计算；但是kajiya模型没有使用多边形几何的法线来作为法线计算，而是采用法线平面的概念来作为法线的代替计算；
+虽然几何是多边形，但是仍然将其作为发丝来看待，Tangent向量作为发丝的方向；而发丝的法线应该位于与发丝垂直的平面上，且发丝与此平面的交点作为法线的起点；
+法线平面即红色平面所显示的，法线平面中真正的法线，有T向量、H向量所决定的平面，与法线平面的交线来决定，我们将这里决定出来的法线用N1（区别于真正的多边形几何法线）来代替；由于T、H、N1都是单位向量，由几何关系可以得到N1dotH = sin(T,H)，到此，我们就可以使用T、H来进行高光计算了；
+模拟真正的头发高光 为了模拟头发真正的高光，还要基于对头发高光的观察进行部分假设，相应的观察假设在这张PPT上； 头发有两层高光； 主高光切变流向朝向发梢； 次高光拥有头发的颜色，且切变流向发根； 次高光带有闪烁效果，即不是很连续； 模拟两层高光比较简单，只需要计算两次高光即可；
+如何模拟高光的切变流向，即一个位置偏向发梢，一个偏向发根；因为我们使用模型的T来计算的高光，要想改变高光位置，只能从T下手；AMD提供的方法为，使用N（这里是多边形几何的法线，不是法线平面中的法线N1）对T进行偏移；偏移量可以从贴图中进行采样，计算公式如下：
+float ShiftTangent(float3 T, float3 N, float shift) { float3 shiftedT = T + shift * N; return normalize(shiftedT); } 如下图：T&amp;rsquo;与T'&amp;lsquo;是切变后的切向量； T表示发丝的方向，那么当发丝方向发生变化时，N（多边形对应法线）自然而然也同样产生变化，偏移后的N为：
+float3 B = cross(N, T); N = cross(T, B); 实质上，N对T的偏移，是模拟头发的起伏，即发丝方向突出多边形平面或凹陷多边形平面；
+次高光的闪烁效果模拟比较简单，只需要使用一个噪音纹理与次高光相乘即可；
+渲染排序问题 由于头发具有半透效果，必须依据一定的顺序进行渲染才能得到正确的Blend效果；
+模型内部排序 由于模型是一簇一簇的，因为只要决定簇之间的排序即可；依据视线观看头发的顺序，可以依照发簇距离头皮的距离进行排序；让靠近头皮的发簇对应的Index buffer排在整个模型Index buffer的前面；这样模型内部的渲染顺序就完全正确了；
+修改Index buffer的顺序，可以由模型制作时合并的顺序来决定；也可以由程序进行单独处理；</description></item><item><title>皮肤渲染——Screen Space Separable Subsurface Scattering</title><link>/posts/pi-fu-xuan-ran-zhi-screen-space-separable-subsurface-scattering/</link><pubDate>Wed, 16 Sep 2020 11:31:29 +0000</pubDate><guid>/posts/pi-fu-xuan-ran-zhi-screen-space-separable-subsurface-scattering/</guid><description>总体来说，渲染步骤为：
+首先对于不同的皮肤散射颜色，去计算相应的kernel（作为一维的颜色数组，存储该距离下次表面散射贡献），kernel是通过多层高斯曲线去拟合偶极子曲线得到的，因此需要多次高斯叠加计算；kernel的长度大小对应模糊的范围，也对应采样数的大小； 正常渲染皮肤，但要使用MRT，将diffuse成分与specular分离，并使用stencil进行标记； 在相机的BeforeImageEffectsOpaque时，进行皮肤部分的separable blur，并使用stencil test，保证只在皮肤部分进行blur；blur时要使用前面计算出来的kernel以及模型的曲率（借助深度的ddx、ddy计算），依据曲率来调整实际blur的范围； 将MRT进行合并，即blur后的diffuse部分与specular部分进行结合； Reference Separable Subsurface Scattering Advanced Techniques for Realistic Real-Time Skin Rendering</description></item><item><title>图形学学习资源推荐</title><link>/posts/tu-xing-xue-zi-yuan-tui-jian/</link><pubDate>Tue, 15 Sep 2020 16:10:15 +0000</pubDate><guid>/posts/tu-xing-xue-zi-yuan-tui-jian/</guid><description>离线渲染 Physically Based Rendering:From Theory To Implementation：大名鼎鼎的《基于物理的渲染：从理论到实现》，离线学习必看，包含了各种光线追踪中用到的技术！官网还提供了第三版书籍的网页版供免费看； 实时渲染 Real-Time Rendering：实时渲染技术的圣经，涵盖了实时渲染技术的各个方面，建议购买实体书查看；最重要的是记得去官网逛逛，官网包含了大量实时渲染的资料；随着实时ray tracing的发展，官网甚至涵盖了大量ray tracing相关的资料；一级推荐！ GPU Gems1-3部曲：学习GPU编程必备系列，学习如何编写shader来实现各种实时渲染技术； Advances in Real-Time Rendering in 3D Graphics and Games：SIGGRAPH中的课程系列，介绍每一年中关于实时计算机图形学中的高级渲染技术； Raster Tek：一个关于DirectX入门的学习资料，对于新手非常推荐；相比于龙书，这个更接近与实际引擎开发，多个渲染功能都集成到一起； d3dcoder：这是龙书系列的官方网站，含有从DirectX9到DirectX12的教程源代码。 learnopengl：OpenGL的入门教程，必读！</description></item><item><title>Pipeline——Render Pipeline/Path（渲染管线/路径）</title><link>/posts/xuan-ran-guan-xian/</link><pubDate>Mon, 14 Sep 2020 14:51:39 +0000</pubDate><guid>/posts/xuan-ran-guan-xian/</guid><description>Render Path称之为渲染路径更为合适，实际上指渲染一帧所要走的流程，这个流程主要用来处理光照，以及后处理等；常见的有Forward/Deferred Rendering；以及其改版Forward+、Tiled Based Deferred Rendering、Clustered Shading；以及更灵活的Frame Graph（寒霜引擎）、SRP（Unity引擎）；
+注意：在render之前，一般还会有一个Application stage，用以在CPU上运行一些必要的前置任务：如碰撞检测、全局加速算法（视锥剔除、遮挡剔除）、物理模拟、动画效果等等；处理完这些后，才能进行高效合理的渲染；
+Forward Rendering 总的来说，前向渲染绘制次数为光源个数乘以物体个数，通常在一个pass中处理一个光源；然后多个pass处理多个光源，并在pass中通过blend add相加得到总的光照效果；
+DC复杂度为O(num(obj)*num(light))，通常会限制light的数量来减少DC；
+更甚者，会将限制光源数量（一般附加光源数量为4），并将所有的光照写进一个Uber Shader，通过传递光照参数来实现；
+Z-Prepass避免overdraw问题 具体来说，在实际渲染之前，加入了一个称之为z prepass的流程，这个流程关闭了color buffer的写入，同时pixel shader极为简单或者索性为空，可以非常快速的执行完毕并且获得场景中的z buffer；紧接着，我们再关闭z buffer的写入，改depth test function为equal。这样就只绘制我们所能看到的像素了（当然只针对于不透明问题）；
+Deferred Rendering 得益于MRT的支持，我们可以发展处延迟渲染，它的核心技术是 第一阶段 在绘制物体时将光照所需要的的basecolor、normal、smoothness等信息存储于G-buffer中，而不进行真正的光照；待物体绘制完后， 第二阶段 再重新使用G-buffer进行光照的计算（及将光照的计算进行推迟）；
+传统的延迟渲染在G-Buffer生成之后，会根据光源的形状（light volume），对每个光源执行一次draw call，如果某个像素被light volume覆盖到了，我们就在该像素的位置执行一次当前光源的lighting计算。
+需要注意的是，为了防止同一像素被光源正反面计算两次，我们需要在绘制light volume的时候使用单面渲染，如果摄像机在光源内，则需要开启正面剔除，并且将depth test设置为farOrEqual，如果摄像机在光源之外，则开启背面剔除，并且将depth test设置为nearOrEqual。
+DC的复杂度为O(num(obj)+num(light))；num(obj)为前期绘制物体的数量，num(light)为后期光照时光源的数量；在光照渲染时，同样通过blend add来实现多光源效果的叠加；
+一种简单但耗费资源的做法：可以直接将所有光源信息传至一个shader，在这一个shader中进行所有光源的计算与累积，由于是在整个屏幕中进行计算，也就导致会产生多余的光照计算（光源照不到区域也进行了计算）；优点是只有O(1)的复杂度进行光照计算；
+另外，G-Buffer除了用于直接照明外，还能够被用于一些间接照明的效果，比如SSAO，SSR；也正是G-Buffer概念的提出，使得近十年来越来越多的算法从world space向screen space的演进；
+Light Pre-Pass Light Pre-Pass是Deferred Rendering的一个变种，它将整个渲染流程分为三个阶段：
+只在G-Buffer中存储Z值和Normal值。对比Deferred Render，少了Diffuse Color， Specular Color以及对应位置的材质索引值。 在FS阶段（对应于普通Deferred Rendering的light volume绘制阶段）利用上面的G-Buffer计算出所必须的light properties，比如Normal*LightDir,LightColor,Specular等light properties。将这些计算出的光照进行blend add并存入LightBuffer（就是用来存储light properties的buffer）。 最后将结果送到forward rendering渲染方式计算最后的光照效果；采用Front to Back的绘制顺序，以及前面的LightBuffer进行光照计算； 可以看到光照相关的light properties已经在第二阶段计算过了，第三阶段更多是光照成分的组合，因此又称之为Light Pre-Pass；总体的DC复杂度为O(num(obj)+num(light)+num(obj))，分别对应第一二三阶段；</description></item><item><title>Pipeline——GPU Graphic Pipeline（图形管线）</title><link>/posts/gpu-graphic-pipeline/</link><pubDate>Sun, 13 Sep 2020 09:14:06 +0000</pubDate><guid>/posts/gpu-graphic-pipeline/</guid><description>管线介绍 所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程Graphic Pipeline（图形管线）；针对实际应用来说，渲染一帧画面也需要一个渲染流程Render Pipeline/Path（渲染管线/路径）；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；
+GPU Graphic Pipeline 具体的管线流程要看实际的硬件驱动，Direct3D每一个版本都有很大的改动，这里以Direct3D11为例进行介绍；具体的文章参考可以看这里：Direct3D 11 Graphics Pipeline，Direct3D 12 Graphics Pipeline；
+Input-Assembler Stage（图元装配阶段） 这一阶段主要进行图元的装配，先从用户填充的缓冲中读取数据，然后将数据装配成图元；此阶段可装配成不同的图元类型（如 line lists, triangle strips, or primitives with adjacency）
+Vertex Shader Stage（顶点着色阶段） 一个可编程shader阶段，此阶段主要处理IA阶段输入的顶点，执行每顶点的处理（如变换、蒙皮、变形，顶点光照等）；VS阶段总是处理单一顶点，并输出单一顶点；VS阶段必须处于激活状态，VS必须提供；
+Tessellation Stages（细分阶段） 该阶段实际上有三个小阶段来完成图元的细分；通过硬件实现细分，GPU Graphic Pipeline能将低细节的模型转换为高细节模型进行渲染；
+Hull-Shader Stage（壳着色阶段） 一个可编程shader阶段，用来生成一个patch（和patch constants），每个patch对应一个输入的patch（quad, triangle, or line）；有点像一个基本的图元类型；
+Tessellator Stage 一个固定处理阶段，用来生成简单格式的域，一个域代表一个geometry patch并用来生成更小物体的集合（triangles, points, or lines），通过连接domain sample来实现；
+Domain-Shader Stage（域着色阶段） 一个可编程shader阶段，用来计算每个domain sample的顶点的位置，
+Geometry Shader Stage（几何着色阶段） 一个可编程shader阶段，该阶段同样以顶点作为输入，以顶点作为输出；但与VS有很大不同；
+输入顶点数不一定为一，输入顶点数刚好可以可组成一完整图元（two vertices for lines, three vertices for triangles, or single vertex for point）；并且可以携带邻接的图元顶点数据（an additional two vertices for a line, an additional three for a triangle）； 输出顶点数不一定为一，输出的顶点数目可以形成特定的拓扑结构即可，输出的拓扑结构可选（GS stage output topologies available are: tristrip, linestrip, and pointlist）； Stream-Output Stage（流输出阶段） 该阶段的目的在于能够从不断的GS阶段输出顶点数据，至一个或多个缓存中；</description></item><item><title>Opengl Vertex Interpolation</title><link>/posts/opengl-vertex-interpolation/</link><pubDate>Thu, 10 Sep 2020 14:39:18 +0000</pubDate><guid>/posts/opengl-vertex-interpolation/</guid><description>OpenGL中关于插值问题
+OpenGL中关于插值问题 在GPU的光栅化阶段，会针对每个片段进行插值计算；需要注意的是，这个时候进行的插值不能是简单的screen space线性插值，而应该是透视空间矫正的view space线性插值；
+OpenGL中默认的是透视插值，也就是在view space空间中的线性插值，可以给变量加no perspective in/out使其插值时不做透视矫正，也就不线性了。如果要自定义插值方式，只能自己把相关参数都传到片元shader里计算了。
+注意：透视矫正插值仍是线性的，只不过是screen space下等距的线性插值，转换为view space下的非等距的线性插值，也是view space空间上的线性插值；
+透视插值的公式推导 参考《3D游戏与计算机图形学中的数学方法》4.4节
+简单概括就是：
+对于深度插值：由相似三角形变换可以得到，Z的倒数在光栅化时，恰好是按照线性进行插值的；
+对于顶点属性插值：也能推导出： $$ b_3 = \frac{\frac{b_1}{z_1}(1-t)+\frac{b_2}{z_2}t}{\frac{1}{z_1}(1-t)+\frac{1}{z_2}t} $$ 也就是说，顶点属性的插值为$b/z$的线性插值再除以$1/z$的线性插值；
+为什么像素插值光照要优于顶点插值光照 是因为顶点插值光照是线性插值（当然指透视矫正后）的，但是对于向量只是进行线性插值是不够的，还应该有个归一化阶段；
+像素插值光照可以在PS中进行向量的归一化（特别是法向量），如此就纠正了向量插值的错误问题，然后可进行正确的光照；
+其次光照计算过程并不是一个线性的过程；对计算结果进行线性插值，当然就不可能得到正确的光照效果；</description></item><item><title>ECS Architecture</title><link>/posts/ecs-architecture/</link><pubDate>Thu, 10 Sep 2020 14:38:33 +0000</pubDate><guid>/posts/ecs-architecture/</guid><description>ECS架构介绍
+ECS架构介绍 ECS ，即 Entity-Component-System（实体-组件-系统） 的缩写，其模式遵循 组合优于继承 原则，游戏内的每一个基本单元都是一个 实体 ，每个 实体 又由一个或多个 组件 构成，每个 组件 仅仅包含代表其特性的 数据（即在组件中没有任何方法） ，系统 便是来处理拥有一个或多个相同组件的实体集合的工具，其只拥有 行为（即在系统中没有任何数据） 。
+实体与组件是一个一对多的关系 ，实体拥有怎样的能力，完全是取决于其拥有哪些组件，通过动态添加或删除组件，可以在（游戏）运行时改变实体的行为。
+ECS详解 实体 实体是游戏中的一个独特物体，使用一个ID进行表示和标记；
+组件 一个组件是一个数据的集合，不存在任何方法；一个经典的实现是使用 继承（或实现）同一个基类（或接口） ，这样就可以在运行时动态的添加和移除；
+根据设计需求，有时在全局上下文中只有一个特殊的组件，这种组件一般称之为 Singleton Component（单例组件） ；
+系统 系统便是ECS架构中用来 处理游戏逻辑 的部分。一个系统就是对拥有一个或多个相同组件的实体集合进行操作的工具，它只有行为，没有状态，即不存放任何数据。OW差不多拥有上百个系统；
+由于代码逻辑分布于各个系统中，各个系统之间为了解耦又不能互相访问，那么如果有多个系统希望运行同样的逻辑，该如何解决，总不能把代码复制 N 份，放到各个系统之中。 UtilityFunction（实用函数） 便是用来解决这一问题的，它将被多个系统调用的方法单独提取出来，放到统一的地方，同系统一样， UtilityFunction 中不能存放状态，它应该是拥有各个方法的纯净集合。
+ECS架构优点 性能优势：ECS带来的两大性能优势，就是cache友好，以及易于做多线程并行。 数据与行为分离：修改方便，逻辑清晰； OOP（面向对象）架构 传统的很多游戏引擎是基于 面向对象 来设计的，游戏中的东西都是对象，每个对象有一个叫做 Update 的方法，框架 遍历所有的对象 ，依次调用其 Update 方法。有些引擎甚至定义了多种 Update 方法，在同一帧的不同时机去调用。
+Unity引擎的架构 Unity的设计思想为 基于组件 的对象模型；基于组件 的对象模型就是把所有需要提供给游戏对象的基础功能都独立成单独的 组件模块(Component) ，一个具体的游戏对象可以将它需要的功能模块组合到一起使用。所有 功能 不再是父类中的接口，而变成子对象实例，为游戏对象提供服务。</description></item><item><title>C++ Static Usage</title><link>/posts/c-static-usage/</link><pubDate>Mon, 07 Sep 2020 14:37:51 +0000</pubDate><guid>/posts/c-static-usage/</guid><description>C++中的一些细节问题
+C语言中的static关键字 修饰全局变量，全局函数 将限制该变量及函数的作用域为本文，不能实现连接时的跨文本使用；
+//file1.c static int a = 10; //变量作用范围限制在本文本作用域中 //file2.c #include &amp;lt;iostream&amp;gt; using namespace std; extern int a; //无法使用file1.c中的a变量 int main() { cout &amp;lt;&amp;lt; &amp;quot;a = &amp;quot; &amp;lt;&amp;lt; a &amp;lt;&amp;lt;endl; return 0; } 修饰局部变量 在用static修饰局部变量后，该变量只在初次运行时进行初始化工作，且只进行一次；且该变量便存放在静态数据区，其生命周期一直持续到整个程序执行结束。
+#include&amp;lt;stdio.h&amp;gt; void fun() { static int a=1; a++; } int main(void) { fun(); //这里运行时，a会进行初始化，随后a++ fun(); //这里运行时，只会运行a++ return 0; }</description></item><item><title>排列与组合</title><link>/posts/pai-lie-yu-zu-he/</link><pubDate>Mon, 07 Sep 2020 14:37:00 +0000</pubDate><guid>/posts/pai-lie-yu-zu-he/</guid><description>关于排列与组合的算法问题
+排列与组合的区别 实际上，排列意味着数据一样，数据出现的顺序不一样； 组合意味着，数据不一样，与数据的顺序无关；
+排列的算法框架 如果数据没有重复，直接套用回溯算法框架即可；
+class Solution { public: void Help(vector&amp;lt;vector&amp;lt;int&amp;gt;&amp;gt;&amp;amp; results, vector&amp;lt;int&amp;gt;&amp;amp; result, vector&amp;lt;int&amp;gt;&amp;amp; num, vector&amp;lt;int&amp;gt;&amp;amp; flags) { if (result.size() == num.size()) { results.push_back(result); return; } for (int i = 0; i &amp;lt; flags.size(); i++) { if (flags[i] == 0) //跳过已经取过的数 continue; result.push_back(num[i]); flags[i] = 0; Help(results, result, num, flags); flags[i] = 1; result.pop_back(); } } vector&amp;lt;vector&amp;lt;int&amp;gt;&amp;gt; permute(vector&amp;lt;int&amp;gt;&amp;amp; nums) { vector&amp;lt;vector&amp;lt;int&amp;gt;&amp;gt; results; vector&amp;lt;int&amp;gt; result; vector&amp;lt;int&amp;gt; flags(nums.size(), 1);; Help(results, result, nums, flags); return results; } }; 对于特殊情况，比如数据中有重复的数据，需要考虑重复的情况；为了方便识别重复的情况，需要对数据源进行排序，这样在计算过程中，对于重复的情况，只需要向前单向查找是否重复即可；</description></item><item><title>Monte Carlo Integration</title><link>/posts/monte-carlo-integration/</link><pubDate>Sun, 06 Sep 2020 14:35:52 +0000</pubDate><guid>/posts/monte-carlo-integration/</guid><description>蒙特卡洛积分的简短介绍，以及PBRT中常用的函数分布；
+概率部分定义 期望定义 $$ E_p[f(x)] = \int_D {f(x)p(x)} ,{\rm d}x. $$
+方差定义 $$ V[f(x)] = E[(f(x)-E[f(x)])^2] $$
+蒙特卡洛积分 一维均匀分布下的积分 欲求 $$ F_N = \int_a^b {f(x)} ,{\rm d}x. $$ 的积分；
+假如我们有一个均匀随机分布的变量$X_i\in[a,b]$，那么蒙特卡洛积分器的形式为： $$ F_N = \frac{b-a}{N}\sum_{i=1}^N f(X_i). $$
+证明为： $$ E[F_N] = E[\frac{b-a}{N}\sum_{i=1}^N f(X_i)]. $$ $$ E[F_N] = \frac{b-a}{N}\sum_{i=1}^N E[f(X_i)]. $$ $$ E[F_N] = \frac{b-a}{N}\sum_{i=1}^N \int_a^b {f(x)p(x)} ,{\rm d}x. $$ $$ E[F_N] = \frac{1}{N}\sum_{i=1}^N \int_a^b {f(x)} ,{\rm d}x. $$ $$ E[F_N] = \int_a^b {f(x)} ,{\rm d}x.</description></item><item><title>Mathematics about camera in graphics（图形学中关于相机的数学）</title><link>/posts/mathematics-about-camera-in-3d-game-engine/</link><pubDate>Thu, 18 Jun 2020 14:34:51 +0000</pubDate><guid>/posts/mathematics-about-camera-in-3d-game-engine/</guid><description>以OpenGL中的右手坐标系为例，介绍引擎中和各种应用中跟相机有关的数学；
+实现渲染中的相机 观察矩阵 首先理解观察矩阵的作用，观察矩阵是为了将相机位置和转向不同的情况进行统一，最合适的统一方式就是将相机移动到坐标原点，然后将相机朝向变为-Z轴，这样所有的世界在相机看来就是一致的，便于后续的处理；
+实际就是将以(0, 0, 0)为原点的世界坐标系转变为以(cameraPos.x, cameraPos.y, cameraPos.z)为原点的坐标系，当然，这里不能少了旋转；
+由于矩阵相乘的顺序影响最后的结果，由于旋转矩阵是相对原点进行旋转的，所以自然而然，我们应该先将相机移至原点（平移矩阵）再进行转向（旋转矩阵）；
+在OpenGl中，假设相机坐标为cameraPos，朝向分别为Front，Up，Right，坐标为列向量，则相应的矩阵为： 投影矩阵 关于投影矩阵的推导，看这里;
+相机中非线性0-1的深度转为线性0-1深度 设非线性深度值0-1为depth，线性深度值0-1为lineardepth，Zn表示-1到1的NDC深度，Ze表示观察空间下的深度，n表示近裁剪面，f表示远裁剪面； 则几者之间的关系为：
+其中由公式2可以看出，线性的0-1范围并不是指近裁剪面对应0、远裁剪面对应1，而是相机位置对应0，远裁剪面对应1；
+其中公式3可以在上面投影矩阵那篇文章中看到，跟进上面三式，可以得到depth与lineardepth的关系为：
+第一人称视角相机的实现 第一人称视角相机，其实就是FPS类游戏中常用的相机，即相机所看的就是游戏中的人眼所看到的，可以自由的前后左右移动，以及左右上下旋转视角；
+第一人称视角相机需要存储一些额外的变量，一个是移动的速度MovementSpeed，二是Pitch，Yaw角度，Pitch表示俯仰角，Yaw表示偏航角；
+相机自带的变量为Front，Up，Right，cameraPos，worldUp，worldUp表示世界的正上方向；
+相机的移动实现 void ProcessKeyBoard(CEMERA_MOVEMENT direction, float deltaTime) { float offset = MovementSpeed * deltaTime; switch (direction) { case FORWARD: Position += Front * offset; break; case BACKWARD: Position -= Front * offset; break; case LEFT: Position -= Right * offset; break; case RIGHT: Position += Right * offset; break; default: break; } } 相机的旋转实现 void ProcessMouseMovement(float xOffset, float yOffset, bool focusCenter = true, GLboolean constrainPitch = true) { xOffset *= MouseSensitivity; yOffset *= MouseSensitivity; Yaw += xOffset; Pitch += yOffset; if (constrainPitch) { if (Pitch &amp;gt; 89.</description></item><item><title>Unity Custom UI Mesh</title><link>/posts/unity-custom-ui-mesh/</link><pubDate>Mon, 11 May 2020 14:34:08 +0000</pubDate><guid>/posts/unity-custom-ui-mesh/</guid><description>介绍在unity中实现自定义ui的形状；
+Unity Custom UI Mesh unity中继承Graphic类或者MaskableGraphic可以实现自定义UI组件，并且在protected override void OnPopulateMesh(UI.VertexHelper vh);函数中可以操作或自定义网格，用于实现各种各样的UI形状；
+这篇文章介绍了在unity中实现自定义ui的过程；
+我在我的个人项目中UnityScriptTools添加了圆形、矩形、圆角矩形的ui实现；
+在实际过程中，可能大部分情况是使用透明的贴图来实现相应形状的ui，但是一些情况使用自定义ui形状更合适，有些情况甚至必须使用自定义ui才能做；</description></item><item><title>Unity Useful Plugins And Projects</title><link>/posts/unity-useful-plugins-and-projects/</link><pubDate>Sun, 29 Mar 2020 14:33:26 +0000</pubDate><guid>/posts/unity-useful-plugins-and-projects/</guid><description>这是一个插件集合的列表，主要用来存储我在学习unity过程中使用到的非常好用的插件，或者一些不错的工程；本着通用和好用的要求，这里的插件都是一些基本功能的整合；
+Link List Debug Drawing Extension插件，该插件扩展了unity内部的Gizmos功能，可以绘制出更复杂更有用的Gizmos几何体；
+Bezier Solution插件，该插件集合了Bezier曲线功能，可以用来编辑Bezier曲线，并提供了一下基于Bezier曲线的效果；
+BoneTool - Bone Visualizer插件，用于transform层级的可视化，可用于角色骨骼的可视化；
+Transform Reset插件，扩充了Transform的界面UI，可以一键恢复Transform为默认变换；
+Volumetric Lines插件，一个简单渲染体积线的插件，效果很棒；
+3D Game Kit，Unity官方提供的3D游戏开发包，里面含有很多开发3D游戏用到的基础功能，包括Instance painter等很多工具；
+Dynamic Bone插件，用于骨骼的物理摆动，非常好用！
+Default Playables插件，Unity提供的Timeline功能的扩展包；
+Unity Particle Pack，Unity提供的免费粒子效果包；
+XLua，腾讯提供的Lua方案，可在unity中使用Lua；
+AssetBundles-Browser，Unity提供的AssetBundle的查看与Debug工具；
+2D Game Kit,Unity官方提供的2D游戏开发包，里面介绍了很多2D组件的使用；
+unity-text-typer，一个TextTyper，用来逐字打印字体，并且提供了多种字体动画；在很多红白机游戏、ACG Game、以及UI字体的显示都会用到这种功能，需要先安装Text Mesh Pro；
+待续
+Package List unity很多插件已经从原来的Asset store转移到Package Manager，因此这里提供一些在Package Manager中非常好用的插件（只写我用过的）；</description></item><item><title> Unity 2D Kit Note</title><link>/posts/unity-2d-kit-note/</link><pubDate>Sun, 29 Mar 2020 14:32:39 +0000</pubDate><guid>/posts/unity-2d-kit-note/</guid><description>介绍unity 2D Kit包中所用的一些组件；
+Sorting Group组件 Sorting Group组件可以改变Sprite Renderers的渲染顺序，Sorting Group作为Sprite Renderers的覆盖层，用于区分Group之间的渲染顺序；
+Sorting Layer可以改变物体以及子物体的排列层，不同的排列层之间有渲染顺序区分； Order In Layer可以改变物体及子物体在排列层内的渲染顺序； Sprite Renderer组件 渲染sprite时，使用的mesh不一定是一个四边形，其形状以能拟合Sprite的大致形状为准；
+Flip可以控制X或Y方向的翻转
+Draw Mode控制Sprite Renderer尺寸修改情况下的绘制方式；
+Mask Interaction控制Sprite Mask存在时，Sprite Render与mask之间的显示方式；
+Sprite Sort Point用来控制sprite Render绘制顺序的控制点，来计算其到相机的距离，优先级低于Sorting Layer、Order In Layer；
+StartScreenSpriteOffsetter组件 用于图片随鼠标偏移，可改进为随重力偏移
+NormalMappedTileAnimated材质 使用SineApproximation来模拟sin函数的顶点动画surface shader，没想到其着色方式竟然是完整的PBR==
+Scene Controller组件 场景控制的单例模式脚本，用来控制场景的切换
+BackgroundMusicPlayer组件 背景音乐控制的单例脚本，用于播放背景音乐的控制
+ScreenFader组件 控制屏幕渐变的单例组件，用于全屏渐变效果
+Platform Effector 2D组件 用来做横版2D游戏从下往上跳而不被阻挡的那种跳跃平台用的。还是中文读起来舒服;
+TileMap组件 搭建2D场景用的网格用组件</description></item><item><title>ShaderToy MultiParticle Rendering</title><link>/posts/shadertoy-multiparticle-rendering/</link><pubDate>Sat, 11 Jan 2020 14:31:41 +0000</pubDate><guid>/posts/shadertoy-multiparticle-rendering/</guid><description>在ShaderToy开发过程中，使用粒子可以极高的提升粒子效果，绘制粒子可以分为粒子着色以及粒子范围的确定，这篇文章主要讨论粒子范围的确定。
+粒子范围的确定 假如有40个粒子，最简单方法就是循环遍历四十个粒子的位置及半径，每遍历一个粒子就对一个粒子着色，这样就能绘制出一个简单的粒子系统，iq所写的Bubble就是遍历40个粒子，来模拟大量泡泡的上升效果; 其中位置及范围确定的伪代码为：
+for( int i = 0; i++; i &amp;lt; 40 ) { bool inCircle = distance(curPos, particlePos[i]) &amp;lt; particleRedius[i]; } 循环的优化 ShaderToy中开发着色器完全是在fragment shader中执行的，所以我们写的程序是在每个像素中执行一次，如何让程序在一个像素中执行时间变短是我们优化的目标；在此例子中，只要我们降低了计算的循环次数就能优化效率；
+在worley noise的实现中，有一个很好的思想就是限制控制点在栅格内，这样计算最近距离时，只需要计算最近的9个栅格即可；
+将方法映射到粒子的计算，我们可以将粒子中心限制到一个栅格，半径不超过一个栅格的边长，这样我们只需要计算最近的9个栅格就能完成粒子的绘制；
+这样会限制粒子的覆盖范围，因此我们可以将栅格的边长划分的大一些，或者遍历25个栅格，而扩大粒子的覆盖范围；
+但是这种方法只是扩大了粒子的覆盖范围，对于粒子的运动范围，粒子的中心点必须在中心的栅格内运动才不会出现割裂的效果，因此唯一的运动方法就是移动整体的UV；
+移动整体的UV会导致粒子的运动过于单一，可改进的方法为使用多层粒子叠加，这样不同层的移动效果不一样，倒是会增加一点真实感~
+shader范例：</description></item><item><title> ShaderToy Bloom Effect</title><link>/posts/shadertoy-bloom-effect/</link><pubDate>Sat, 11 Jan 2020 14:29:03 +0000</pubDate><guid>/posts/shadertoy-bloom-effect/</guid><description>bloom效果的实现，在已知距离场的情况下，使用距离的倒数能渲染出接近bloom的效果
+shader范例：</description></item></channel></rss>

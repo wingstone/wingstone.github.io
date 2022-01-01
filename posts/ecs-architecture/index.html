@@ -1,0 +1,94 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>ECS Architecture | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+</head>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/>Home</a></li>
+<li><a href=/about/>About</a></li>
+<li><a href=/categories/>Categories</a></li>
+<li><a href=/tags/>Tags</a></li>
+<li><a href=/index.xml>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h1><span class=title>ECS Architecture</span></h1>
+<h2 class=date>2020/09/10</h2>
+</div>
+<main>
+<p>ECS架构介绍</p>
+<h2 id=ecs架构介绍>ECS架构介绍</h2>
+<p><strong>ECS</strong> ，即 <strong>Entity-Component-System（实体-组件-系统）</strong> 的缩写，其模式遵循 <strong>组合优于继承</strong> 原则，游戏内的每一个基本单元都是一个 <strong>实体</strong> ，每个 <strong>实体</strong> 又由一个或多个 <strong>组件</strong> 构成，每个 <strong>组件</strong> 仅仅包含代表其特性的 <strong>数据（即在组件中没有任何方法）</strong> ，<strong>系统</strong> 便是来处理拥有一个或多个相同组件的实体集合的工具，其只拥有 <strong>行为（即在系统中没有任何数据）</strong> 。</p>
+<p><strong>实体与组件是一个一对多的关系</strong> ，实体拥有怎样的能力，完全是取决于其拥有哪些组件，通过动态添加或删除组件，可以在（游戏）运行时改变实体的行为。</p>
+<h2 id=ecs详解>ECS详解</h2>
+<h3 id=实体>实体</h3>
+<p>实体是游戏中的一个独特物体，使用一个ID进行表示和标记；</p>
+<h3 id=组件>组件</h3>
+<p>一个组件是一个数据的集合，不存在任何方法；一个经典的实现是使用 <strong>继承（或实现）同一个基类（或接口）</strong> ，这样就可以在运行时动态的添加和移除；</p>
+<p>根据设计需求，有时在全局上下文中只有一个特殊的组件，这种组件一般称之为 <strong>Singleton Component（单例组件）</strong> ；</p>
+<h3 id=系统>系统</h3>
+<p>系统便是ECS架构中用来 <strong>处理游戏逻辑</strong> 的部分。一个系统就是对拥有一个或多个相同组件的实体集合进行操作的工具，它只有行为，没有状态，即不存放任何数据。OW差不多拥有上百个系统；</p>
+<p>由于代码逻辑分布于各个系统中，各个系统之间为了解耦又不能互相访问，那么如果有多个系统希望运行同样的逻辑，该如何解决，总不能把代码复制 N 份，放到各个系统之中。 <strong>UtilityFunction（实用函数）</strong> 便是用来解决这一问题的，它将被多个系统调用的方法单独提取出来，放到统一的地方，同系统一样， <strong>UtilityFunction</strong> 中不能存放状态，它应该是拥有各个方法的纯净集合。</p>
+<h2 id=ecs架构优点>ECS架构优点</h2>
+<ol>
+<li>性能优势：ECS带来的两大性能优势，就是cache友好，以及易于做多线程并行。</li>
+<li>数据与行为分离：修改方便，逻辑清晰；</li>
+</ol>
+<h2 id=oop面向对象架构>OOP（面向对象）架构</h2>
+<p>传统的很多游戏引擎是基于 <strong>面向对象</strong> 来设计的，游戏中的东西都是对象，每个对象有一个叫做 <strong>Update</strong> 的方法，框架 <strong>遍历所有的对象</strong> ，依次调用其 <strong>Update</strong> 方法。有些引擎甚至定义了多种 <strong>Update</strong> 方法，在同一帧的不同时机去调用。</p>
+<h2 id=unity引擎的架构>Unity引擎的架构</h2>
+<p>Unity的设计思想为 <strong>基于组件</strong> 的对象模型；<strong>基于组件</strong> 的对象模型就是把所有需要提供给游戏对象的基础功能都独立成单独的 <strong>组件模块(Component)</strong> ，一个具体的游戏对象可以将它需要的功能模块组合到一起使用。所有 <strong>功能</strong> 不再是父类中的接口，而变成子对象实例，为游戏对象提供服务。</p>
+<p>在Unity中， <strong>GameObject</strong> 除了作为 <strong>Component</strong> 的容器之外，基本上没有其他功能。所有需要的功能都要通过 <strong>组合Component</strong> 来实现。虽然这些 <strong>Component</strong> 在物理上是完全并列的关系，但是他们之间还是会有一定的层次关系的。在设计一个游戏对象的具体功能时，组件一般会被分为三个层次。</p>
+<ol>
+<li><strong>引擎的基础组件</strong>：Unity本身提供的各种内部功能组件。比如渲染组件，物理组件，声音组件等等。</li>
+<li><strong>模块功能脚本组件</strong>：通过脚本实现的一些相对独立的通用模块功能的组件。这类组件的设计是脚本可重用的关键，需要仔细分析游戏对象中哪些功能可以被独立出来成为一个可重用的功能模块组件，并且在实现上应该尽量降低与其他组件的耦合性。</li>
+<li><strong>高层的胶水代码脚本</strong>：这些脚本用来真正将引擎基础组件和模块功能组件组合到一起实现最终游戏对象逻辑。用“胶水代码”来形容这些脚本非常的贴切，就是把所有这些子功能“粘”在一起。</li>
+</ol>
+<h3 id=unity的架构与ecs架构的区别>Unity的架构与ECS架构的区别</h3>
+<p>可以看出Unity的架构与ECS架构并不一样，虽然在组件-实体这一部分有很大的相似性；</p>
+<ol>
+<li>Unity的每个组件含有相应的方法，数据与行为并没有实现完全的解耦；</li>
+<li>Unity没有那么多系统（毕竟Unity只提供最基本的功能而已），系统也并不是只提供行为而已；</li>
+</ol>
+<h3 id=unity所带的ecs插件包>Unity所带的ECS插件包</h3>
+<ol>
+<li><a href=https://github.com/sschmid/Entitas-CSharp>Entitas插件系统</a></li>
+<li>UnityPackages Managers下的Entities插件包</li>
+</ol>
+<blockquote>
+<p>注意：实际上，使用哪种架构模式还是得根据具体情况；ECS并不是万能的，局限性<a href=https://www.zhihu.com/question/286963885/answer/456710929>参考这里</a></p>
+</blockquote>
+<h2 id=reference>Reference</h2>
+<ol>
+<li>
+<p><a href=https://www.gdcvault.com/play/1024001/-Overwatch-Gameplay-Architecture-and>守望先锋GDC源视频分享连接</a>（视频）</p>
+</li>
+<li>
+<p><a href=https://gameinstitute.qq.com/community/detail/114516>守望先锋GDC源视频中文翻译</a>（文章）</p>
+</li>
+<li>
+<p><a href=https://zhuanlan.zhihu.com/p/30538626>一个ECS系统的介绍及简易实现</a>（文章）</p>
+</li>
+<li>
+<p><a href=https://blog.codingnow.com/2017/06/overwatch_ecs.html>一个关于ECS系统的深入理解</a>（文章）</p>
+</li>
+<li>
+<p><a href=https://www.cnblogs.com/zhibolife/p/3620440.html>Unity3D引擎架构设计</a>（文章）</p>
+</li>
+</ol>
+</main>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+</footer>
+</body>
+</html>

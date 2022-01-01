@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>pipeline on wingstone's blog</title><link>/tags/pipeline/</link><description>Recent content in pipeline on wingstone's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 14 Sep 2020 14:51:39 +0000</lastBuildDate><atom:link href="/tags/pipeline/index.xml" rel="self" type="application/rss+xml"/><item><title>Pipeline——Render Pipeline/Path（渲染管线/路径）</title><link>/posts/xuan-ran-guan-xian/</link><pubDate>Mon, 14 Sep 2020 14:51:39 +0000</pubDate><guid>/posts/xuan-ran-guan-xian/</guid><description>Render Path称之为渲染路径更为合适，实际上指渲染一帧所要走的流程，这个流程主要用来处理光照，以及后处理等；常见的有Forward/Deferred Rendering；以及其改版Forward+、Tiled Based Deferred Rendering、Clustered Shading；以及更灵活的Frame Graph（寒霜引擎）、SRP（Unity引擎）；
+注意：在render之前，一般还会有一个Application stage，用以在CPU上运行一些必要的前置任务：如碰撞检测、全局加速算法（视锥剔除、遮挡剔除）、物理模拟、动画效果等等；处理完这些后，才能进行高效合理的渲染；
+Forward Rendering 总的来说，前向渲染绘制次数为光源个数乘以物体个数，通常在一个pass中处理一个光源；然后多个pass处理多个光源，并在pass中通过blend add相加得到总的光照效果；
+DC复杂度为O(num(obj)*num(light))，通常会限制light的数量来减少DC；
+更甚者，会将限制光源数量（一般附加光源数量为4），并将所有的光照写进一个Uber Shader，通过传递光照参数来实现；
+Z-Prepass避免overdraw问题 具体来说，在实际渲染之前，加入了一个称之为z prepass的流程，这个流程关闭了color buffer的写入，同时pixel shader极为简单或者索性为空，可以非常快速的执行完毕并且获得场景中的z buffer；紧接着，我们再关闭z buffer的写入，改depth test function为equal。这样就只绘制我们所能看到的像素了（当然只针对于不透明问题）；
+Deferred Rendering 得益于MRT的支持，我们可以发展处延迟渲染，它的核心技术是 第一阶段 在绘制物体时将光照所需要的的basecolor、normal、smoothness等信息存储于G-buffer中，而不进行真正的光照；待物体绘制完后， 第二阶段 再重新使用G-buffer进行光照的计算（及将光照的计算进行推迟）；
+传统的延迟渲染在G-Buffer生成之后，会根据光源的形状（light volume），对每个光源执行一次draw call，如果某个像素被light volume覆盖到了，我们就在该像素的位置执行一次当前光源的lighting计算。
+需要注意的是，为了防止同一像素被光源正反面计算两次，我们需要在绘制light volume的时候使用单面渲染，如果摄像机在光源内，则需要开启正面剔除，并且将depth test设置为farOrEqual，如果摄像机在光源之外，则开启背面剔除，并且将depth test设置为nearOrEqual。
+DC的复杂度为O(num(obj)+num(light))；num(obj)为前期绘制物体的数量，num(light)为后期光照时光源的数量；在光照渲染时，同样通过blend add来实现多光源效果的叠加；
+一种简单但耗费资源的做法：可以直接将所有光源信息传至一个shader，在这一个shader中进行所有光源的计算与累积，由于是在整个屏幕中进行计算，也就导致会产生多余的光照计算（光源照不到区域也进行了计算）；优点是只有O(1)的复杂度进行光照计算；
+另外，G-Buffer除了用于直接照明外，还能够被用于一些间接照明的效果，比如SSAO，SSR；也正是G-Buffer概念的提出，使得近十年来越来越多的算法从world space向screen space的演进；
+Light Pre-Pass Light Pre-Pass是Deferred Rendering的一个变种，它将整个渲染流程分为三个阶段：
+只在G-Buffer中存储Z值和Normal值。对比Deferred Render，少了Diffuse Color， Specular Color以及对应位置的材质索引值。 在FS阶段（对应于普通Deferred Rendering的light volume绘制阶段）利用上面的G-Buffer计算出所必须的light properties，比如Normal*LightDir,LightColor,Specular等light properties。将这些计算出的光照进行blend add并存入LightBuffer（就是用来存储light properties的buffer）。 最后将结果送到forward rendering渲染方式计算最后的光照效果；采用Front to Back的绘制顺序，以及前面的LightBuffer进行光照计算； 可以看到光照相关的light properties已经在第二阶段计算过了，第三阶段更多是光照成分的组合，因此又称之为Light Pre-Pass；总体的DC复杂度为O(num(obj)+num(light)+num(obj))，分别对应第一二三阶段；</description></item><item><title>Pipeline——GPU Graphic Pipeline（图形管线）</title><link>/posts/gpu-graphic-pipeline/</link><pubDate>Sun, 13 Sep 2020 09:14:06 +0000</pubDate><guid>/posts/gpu-graphic-pipeline/</guid><description>管线介绍 所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程Graphic Pipeline（图形管线）；针对实际应用来说，渲染一帧画面也需要一个渲染流程Render Pipeline/Path（渲染管线/路径）；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；
+GPU Graphic Pipeline 具体的管线流程要看实际的硬件驱动，Direct3D每一个版本都有很大的改动，这里以Direct3D11为例进行介绍；具体的文章参考可以看这里：Direct3D 11 Graphics Pipeline，Direct3D 12 Graphics Pipeline；
+Input-Assembler Stage（图元装配阶段） 这一阶段主要进行图元的装配，先从用户填充的缓冲中读取数据，然后将数据装配成图元；此阶段可装配成不同的图元类型（如 line lists, triangle strips, or primitives with adjacency）
+Vertex Shader Stage（顶点着色阶段） 一个可编程shader阶段，此阶段主要处理IA阶段输入的顶点，执行每顶点的处理（如变换、蒙皮、变形，顶点光照等）；VS阶段总是处理单一顶点，并输出单一顶点；VS阶段必须处于激活状态，VS必须提供；
+Tessellation Stages（细分阶段） 该阶段实际上有三个小阶段来完成图元的细分；通过硬件实现细分，GPU Graphic Pipeline能将低细节的模型转换为高细节模型进行渲染；
+Hull-Shader Stage（壳着色阶段） 一个可编程shader阶段，用来生成一个patch（和patch constants），每个patch对应一个输入的patch（quad, triangle, or line）；有点像一个基本的图元类型；
+Tessellator Stage 一个固定处理阶段，用来生成简单格式的域，一个域代表一个geometry patch并用来生成更小物体的集合（triangles, points, or lines），通过连接domain sample来实现；
+Domain-Shader Stage（域着色阶段） 一个可编程shader阶段，用来计算每个domain sample的顶点的位置，
+Geometry Shader Stage（几何着色阶段） 一个可编程shader阶段，该阶段同样以顶点作为输入，以顶点作为输出；但与VS有很大不同；
+输入顶点数不一定为一，输入顶点数刚好可以可组成一完整图元（two vertices for lines, three vertices for triangles, or single vertex for point）；并且可以携带邻接的图元顶点数据（an additional two vertices for a line, an additional three for a triangle）； 输出顶点数不一定为一，输出的顶点数目可以形成特定的拓扑结构即可，输出的拓扑结构可选（GS stage output topologies available are: tristrip, linestrip, and pointlist）； Stream-Output Stage（流输出阶段） 该阶段的目的在于能够从不断的GS阶段输出顶点数据，至一个或多个缓存中；</description></item></channel></rss>

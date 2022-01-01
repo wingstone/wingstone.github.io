@@ -1,0 +1,58 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>软阴影技术——PCF、ESM、VSM、CSM、PCSS | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+</head>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/>Home</a></li>
+<li><a href=/about/>About</a></li>
+<li><a href=/categories/>Categories</a></li>
+<li><a href=/tags/>Tags</a></li>
+<li><a href=/index.xml>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h1><span class=title>软阴影技术——PCF、ESM、VSM、CSM、PCSS</span></h1>
+<h2 class=date>2020/09/30</h2>
+</div>
+<main>
+<h2 id=pcfpercentage-closer-filtering>PCF（Percentage-Closer Filtering）</h2>
+<p>就是对阴影结果进行滤波，这里的阴影结果指阴影测试函数所得的结果；一般采用双线性滤波，此时可以使用硬件PCF来进行插值；</p>
+<h3 id=实现要求>实现要求</h3>
+<p>Depth格式的shadow map或者ShadowMap格式的shadow map；</p>
+<h2 id=esmexponential-shadow-maps>ESM（Exponential Shadow Maps）</h2>
+<p>PCF方法对阴影结果进行滤波，无法集成到阴影测试函数中；因此可以采用其他的阴影测试函数来进行实现软阴影效果；</p>
+<p>ESM采用指数空间下的深度测试函数来代替传统的深度测试函数；</p>
+<p>采用ESM方法，存储的为指数空间下的阴影数值，支持预滤波，这样就可以对shadowmap进行blur，将滤波与测试函数进行分离；</p>
+<p>传统shadowmap存储的为深度z，而在ESM中存储的为<code>exp(c*z)</code>，即深度值的指数形式；其中c表示指数常数，对于32位存储格式，极限值为88；</p>
+<p>而阴影测试函数，传统的shadowmap为<code>step(d, z)</code>，而ESM的阴影测试函数则变为<code>exp(-cd)*tz</code>；其中tz表示采样的指数深度值，即<code>exp(c*z)</code>，这样原来的<code>z-d</code>转变为了<code>exp(c(z-d))</code>；</p>
+<h3 id=所带来的问题有>所带来的问题有：</h3>
+<ol>
+<li>计算出来的阴影值与shadow caseter、shadow receiver之间的距离有关，距离越远，阴影越黑，越近，阴影越接近于无；</li>
+<li>多重阴影下，肯会由于shadow map精度问题产生瑕疵；</li>
+<li>对rt精度要求比较高；</li>
+</ol>
+<h3 id=实现需求>实现需求</h3>
+<p>一张Depth格式的shadow map即可，需要手动对其进行模糊；</p>
+<h2 id=renference>Renference</h2>
+<ol>
+<li>《实时阴影技术》 艾森曼努；</li>
+<li><a href=https://zhuanlan.zhihu.com/p/26853641>实时渲染中的软阴影技术</a></li>
+<li><a href=http://www.klayge.org/2013/10/07/%e5%88%87%e6%8d%a2%e5%88%b0esm/>切换到esm</a></li>
+</ol>
+</main>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+</footer>
+</body>
+</html>
