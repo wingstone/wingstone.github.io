@@ -24,7 +24,6 @@
 </div>
 <main>
 <p>本文主要讲述PBR在Unreal中的实现思路，主要涉及Material Model、Shading Model、Lighting Model的背后原理与经验总结；在文章最后，添加了我个人的理解与实现过程中的相关参考；</p>
-<h1 id=real-shading-in-unreal-engine-4>Real Shading in Unreal Engine 4</h1>
 <h2 id=介绍>介绍</h2>
 <p>想要切换到pbr工作流的原因：可以渲染出更加真实的照片，同时能极大地改善美术工作人员的工作流与工作质量。</p>
 <p>受迪士尼的以前<a href=http://blog.selfshadow.com/publications/s2012-shading-course/>Physically-Based Shading at Disney</a>的启发 ，unreal制定了自己的pbr所要达成的目标：</p>
@@ -77,53 +76,52 @@ $$</p>
 \int_H {L_i(L)f(l,v)cos\theta_l} ,{\rm d}l= \frac{1}{N}\sum_{k=1}^N \frac{L_i(l_k)f(l,v)cos\theta_l}{p(l_k, v)} \quad
 $$</p>
 <p>代码为：</p>
-<pre><code class=language-c++>float3 ImportanceSampleGGX( float2 Xi, float Roughness, float3 N )
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>ImportanceSampleGGX</span>( float2 Xi, <span style=color:#66d9ef>float</span> Roughness, float3 N )
 {
-    float a = Roughness * Roughness;
-    float Phi = 2 * PI * Xi.x;
-    float CosTheta = sqrt( (1 - Xi.y) / ( 1 + (a*a - 1) * Xi.y ) );
-    float SinTheta = sqrt( 1 - CosTheta * CosTheta );
+    <span style=color:#66d9ef>float</span> a <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> Roughness;
+    <span style=color:#66d9ef>float</span> Phi <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> PI <span style=color:#f92672>*</span> Xi.x;
+    <span style=color:#66d9ef>float</span> CosTheta <span style=color:#f92672>=</span> sqrt( (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Xi.y) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> (a<span style=color:#f92672>*</span>a <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> Xi.y ) );
+    <span style=color:#66d9ef>float</span> SinTheta <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> CosTheta <span style=color:#f92672>*</span> CosTheta );
     float3 H;
-    H.x = SinTheta * cos( Phi );
-    H.y = SinTheta * sin( Phi );
-    H.z = CosTheta;
-    float3 UpVector = abs(N.z) &lt; 0.999 ? float3(0,0,1) : float3(1,0,0);
-    float3 TangentX = normalize( cross( UpVector, N ) );
-    float3 TangentY = cross( N, TangentX );
-    // Tangent to world space
-    return TangentX * H.x + TangentY * H.y + N * H.z;
+    H.x <span style=color:#f92672>=</span> SinTheta <span style=color:#f92672>*</span> cos( Phi );
+    H.y <span style=color:#f92672>=</span> SinTheta <span style=color:#f92672>*</span> sin( Phi );
+    H.z <span style=color:#f92672>=</span> CosTheta;
+    float3 UpVector <span style=color:#f92672>=</span> abs(N.z) <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0.999</span> <span style=color:#f92672>?</span> float3(<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>1</span>) <span style=color:#f92672>:</span> float3(<span style=color:#ae81ff>1</span>,<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span>);
+    float3 TangentX <span style=color:#f92672>=</span> normalize( cross( UpVector, N ) );
+    float3 TangentY <span style=color:#f92672>=</span> cross( N, TangentX );
+    <span style=color:#75715e>// Tangent to world space
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> TangentX <span style=color:#f92672>*</span> H.x <span style=color:#f92672>+</span> TangentY <span style=color:#f92672>*</span> H.y <span style=color:#f92672>+</span> N <span style=color:#f92672>*</span> H.z;
 }
 
-float3 SpecularIBL( float3 SpecularColor , float Roughness, float3 N, float3 V )
+float3 <span style=color:#a6e22e>SpecularIBL</span>( float3 SpecularColor , <span style=color:#66d9ef>float</span> Roughness, float3 N, float3 V )
 {
-    float3 SpecularLighting = 0;
-    const uint NumSamples = 1024;
-    for( uint i = 0; i &lt; NumSamples; i++ )
+    float3 SpecularLighting <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
+    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
     {
-        float2 Xi = Hammersley( i, NumSamples );
-        float3 H = ImportanceSampleGGX( Xi, Roughness, N );
-        float3 L = 2 * dot( V, H ) * H - V;
-        float NoV = saturate( dot( N, V ) );
-        float NoL = saturate( dot( N, L ) );
-        float NoH = saturate( dot( N, H ) );
-        float VoH = saturate( dot( V, H ) );
-        if( NoL &gt; 0 )
+        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
+        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
+        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
+        <span style=color:#66d9ef>float</span> NoV <span style=color:#f92672>=</span> saturate( dot( N, V ) );
+        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( dot( N, L ) );
+        <span style=color:#66d9ef>float</span> NoH <span style=color:#f92672>=</span> saturate( dot( N, H ) );
+        <span style=color:#66d9ef>float</span> VoH <span style=color:#f92672>=</span> saturate( dot( V, H ) );
+        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
         {
-            float3 SampleColor = EnvMap.SampleLevel( EnvMapSampler , L, 0 ).rgb;
-            float G = G_Smith( Roughness, NoV, NoL );
-            float Fc = pow( 1 - VoH, 5 );
-            float3 F = (1 - Fc) * SpecularColor + Fc;
-            // Incident light = SampleColor * NoL
-            // Microfacet specular = D*G*F / (4*NoL*NoV)
-            // pdf = D * NoH / (4 * VoH)
-            SpecularLighting += SampleColor * F * G * VoH / (NoH * NoV);
+            float3 SampleColor <span style=color:#f92672>=</span> EnvMap.SampleLevel( EnvMapSampler , L, <span style=color:#ae81ff>0</span> ).rgb;
+            <span style=color:#66d9ef>float</span> G <span style=color:#f92672>=</span> G_Smith( Roughness, NoV, NoL );
+            <span style=color:#66d9ef>float</span> Fc <span style=color:#f92672>=</span> pow( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> VoH, <span style=color:#ae81ff>5</span> );
+            float3 F <span style=color:#f92672>=</span> (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Fc) <span style=color:#f92672>*</span> SpecularColor <span style=color:#f92672>+</span> Fc;
+            <span style=color:#75715e>// Incident light = SampleColor * NoL
+</span><span style=color:#75715e></span>            <span style=color:#75715e>// Microfacet specular = D*G*F / (4*NoL*NoV)
+</span><span style=color:#75715e></span>            <span style=color:#75715e>// pdf = D * NoH / (4 * VoH)
+</span><span style=color:#75715e></span>            SpecularLighting <span style=color:#f92672>+=</span> SampleColor <span style=color:#f92672>*</span> F <span style=color:#f92672>*</span> G <span style=color:#f92672>*</span> VoH <span style=color:#f92672>/</span> (NoH <span style=color:#f92672>*</span> NoV);
         }
     }
-    return SpecularLighting / NumSamples;
+    <span style=color:#66d9ef>return</span> SpecularLighting <span style=color:#f92672>/</span> NumSamples;
 }
 
-</code></pre>
-<p>就算使用重要性采样，使用mipmap来加速收敛，仍至少需要16次采样才能满足效果，再考虑到反射采样之间的blend（各种反射探针），实际上采样一次才能满足性能要求；</p>
+</code></pre></div><p>就算使用重要性采样，使用mipmap来加速收敛，仍至少需要16次采样才能满足效果，再考虑到反射采样之间的blend（各种反射探针），实际上采样一次才能满足性能要求；</p>
 <h3 id=split-sum-approximation>Split Sum Approximation</h3>
 <p>将积分进行分离即可达到预结算的效果，同时满足性能要求；</p>
 <p>$$
@@ -131,75 +129,73 @@ float3 SpecularIBL( float3 SpecularColor , float Roughness, float3 N, float3 V )
 $$</p>
 <h3 id=pre-filtered-environment-map>Pre-Filtered Environment Map</h3>
 <p>对于light部分，我们采用GGX来进行filter，将不同粗糙度下的filter结果存放到mipmap level中；同时假设$n=v=l$，引入的误差，在filter过程中使用$cos\theta_{l_k}$来加权得到更好的效果；</p>
-<pre><code class=language-c++>float3 PrefilterEnvMap( float Roughness, float3 R )
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>PrefilterEnvMap</span>( <span style=color:#66d9ef>float</span> Roughness, float3 R )
 {
-    float3 N = R;
-    float3 V = R;
-    float3 PrefilteredColor = 0;
-    const uint NumSamples = 1024;
-    for( uint i = 0; i &lt; NumSamples; i++ )
+    float3 N <span style=color:#f92672>=</span> R;
+    float3 V <span style=color:#f92672>=</span> R;
+    float3 PrefilteredColor <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
+    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
     {
-        float2 Xi = Hammersley( i, NumSamples );
-        float3 H = ImportanceSampleGGX( Xi, Roughness, N );
-        float3 L = 2 * dot( V, H ) * H - V;
-        float NoL = saturate( dot( N, L ) );
-        if( NoL &gt; 0 )
+        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
+        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
+        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
+        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( dot( N, L ) );
+        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
         {
-            PrefilteredColor += EnvMap.SampleLevel( EnvMapSampler , L, 0 ).rgb * NoL;
-            TotalWeight += NoL;
+            PrefilteredColor <span style=color:#f92672>+=</span> EnvMap.SampleLevel( EnvMapSampler , L, <span style=color:#ae81ff>0</span> ).rgb <span style=color:#f92672>*</span> NoL;
+            TotalWeight <span style=color:#f92672>+=</span> NoL;
         }
     }
-    return PrefilteredColor / TotalWeight;
+    <span style=color:#66d9ef>return</span> PrefilteredColor <span style=color:#f92672>/</span> TotalWeight;
 }
-</code></pre>
-<h3 id=environment-brdf>Environment BRDF</h3>
+</code></pre></div><h3 id=environment-brdf>Environment BRDF</h3>
 <p>第二项积分，可以认为是均匀白光下，对Specular brdf的积分，即$L_i(l_k)=1$；对于菲涅尔项，使用Schlick的形式：$F(v,h)=F_0+(1-F_0)(1-v\cdot h)^5$，我们可以发现，积分中$F_0$可以提取出来，即</p>
 <p>$$
 \int_H {f(l,v)cos\theta_l} ,{\rm d}l= F_0\int_H {\frac{f(l,v)}{F(v,h)}(1-(1-v\cdot h)^5)cos\theta_l} ,{\rm d}l + \int_H {\frac{f(l,v)}{F(v,h)}(1-v\cdot h)^5cos\theta_l} ,{\rm d}l
 $$</p>
 <p>最后的积分公式只需要Roughness与$cos\theta_v$作为输入，$F_0$的scale与bias作为输出。由于输入为0到1的范围，可以很容易的使用2dlut来存储积分结果。</p>
 <p>Unreal使用R16G16float的存储格式来存储，因为测试发现精度起着非常重要的作用。</p>
-<pre><code class=language-c++>// 积分代码
-float2 IntegrateBRDF( float Roughness, float NoV )
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 积分代码
+</span><span style=color:#75715e></span>float2 <span style=color:#a6e22e>IntegrateBRDF</span>( <span style=color:#66d9ef>float</span> Roughness, <span style=color:#66d9ef>float</span> NoV )
 {
     float3 V;
-    V.x = sqrt( 1.0f - NoV * NoV ); // sin
-    V.y = 0;
-    V.z = NoV; // cos
-    float A = 0;
-    float B = 0;
-    const uint NumSamples = 1024;
-    for( uint i = 0; i &lt; NumSamples; i++ )
+    V.x <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1.0f</span> <span style=color:#f92672>-</span> NoV <span style=color:#f92672>*</span> NoV ); <span style=color:#75715e>// sin
+</span><span style=color:#75715e></span>    V.y <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    V.z <span style=color:#f92672>=</span> NoV; <span style=color:#75715e>// cos
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> A <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>float</span> B <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
+    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
     {
-        float2 Xi = Hammersley( i, NumSamples );
-        float3 H = ImportanceSampleGGX( Xi, Roughness, N );
-        float3 L = 2 * dot( V, H ) * H - V;
-        float NoL = saturate( L.z );
-        float NoH = saturate( H.z );
-        float VoH = saturate( dot( V, H ) );
-        if( NoL &gt; 0 )
+        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
+        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
+        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
+        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( L.z );
+        <span style=color:#66d9ef>float</span> NoH <span style=color:#f92672>=</span> saturate( H.z );
+        <span style=color:#66d9ef>float</span> VoH <span style=color:#f92672>=</span> saturate( dot( V, H ) );
+        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
         {
-            float G = G_Smith( Roughness, NoV, NoL );
-            float G_Vis = G * VoH / (NoH * NoV);
-            float Fc = pow( 1 - VoH, 5 );
-            A += (1 - Fc) * G_Vis;
-            B += Fc * G_Vis;
+            <span style=color:#66d9ef>float</span> G <span style=color:#f92672>=</span> G_Smith( Roughness, NoV, NoL );
+            <span style=color:#66d9ef>float</span> G_Vis <span style=color:#f92672>=</span> G <span style=color:#f92672>*</span> VoH <span style=color:#f92672>/</span> (NoH <span style=color:#f92672>*</span> NoV);
+            <span style=color:#66d9ef>float</span> Fc <span style=color:#f92672>=</span> pow( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> VoH, <span style=color:#ae81ff>5</span> );
+            A <span style=color:#f92672>+=</span> (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Fc) <span style=color:#f92672>*</span> G_Vis;
+            B <span style=color:#f92672>+=</span> Fc <span style=color:#f92672>*</span> G_Vis;
         }
     }
-    return float2( A, B ) / NumSamples;
+    <span style=color:#66d9ef>return</span> float2( A, B ) <span style=color:#f92672>/</span> NumSamples;
 }
 
-// 实时计算代码
-float3 ApproximateSpecularIBL( float3 SpecularColor, float Roughness, float3 N, float3 V )
+<span style=color:#75715e>// 实时计算代码
+</span><span style=color:#75715e></span>float3 <span style=color:#a6e22e>ApproximateSpecularIBL</span>( float3 SpecularColor, <span style=color:#66d9ef>float</span> Roughness, float3 N, float3 V )
 {
-    float NoV = saturate( dot( N, V ) );
-    float3 R = 2 * dot( V, N ) * N - V;
-    float3 PrefilteredColor = PrefilterEnvMap( Roughness, R );
-    float2 EnvBRDF = IntegrateBRDF( Roughness, NoV );
-    return PrefilteredColor * ( SpecularColor * EnvBRDF.x + EnvBRDF.y );
+    <span style=color:#66d9ef>float</span> NoV <span style=color:#f92672>=</span> saturate( dot( N, V ) );
+    float3 R <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, N ) <span style=color:#f92672>*</span> N <span style=color:#f92672>-</span> V;
+    float3 PrefilteredColor <span style=color:#f92672>=</span> PrefilterEnvMap( Roughness, R );
+    float2 EnvBRDF <span style=color:#f92672>=</span> IntegrateBRDF( Roughness, NoV );
+    <span style=color:#66d9ef>return</span> PrefilteredColor <span style=color:#f92672>*</span> ( SpecularColor <span style=color:#f92672>*</span> EnvBRDF.x <span style=color:#f92672>+</span> EnvBRDF.y );
 }
-</code></pre>
-<p>很多其他的研究使用了跟unreal一样或接近的的方式来计算lut，其中<a href=http://blog.selfshadow.com/publications/s2013-shading-course/>Getting More Physical in Call of Duty: Black Ops II</a>更近一步，使用解析拟合的方式来逼近积分。</p>
+</code></pre></div><p>很多其他的研究使用了跟unreal一样或接近的的方式来计算lut，其中<a href=http://blog.selfshadow.com/publications/s2013-shading-course/>Getting More Physical in Call of Duty: Black Ops II</a>更近一步，使用解析拟合的方式来逼近积分。</p>
 <h2 id=material-model>Material Model</h2>
 <p>对于unreal的延迟管线来说，限制参数范围非常重要，这样可以优化gbuffer空间以及texture的存储及获取。
 Unreal使用的参数为：</p>

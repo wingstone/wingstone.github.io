@@ -34,19 +34,18 @@
 <h2 id=computershader下的postprocess>ComputerShader下的PostProcess</h2>
 <p>ComputerShader（简称CS）下的UV获取比较特殊，因为CS并不走正常的GPU绘制流水线，只是单纯的用多线程进行并行计算，所以我们在CS中获取UV值一般是由ThreadID除以屏幕分辨率来获取；</p>
 <p>简易CS Example：</p>
-<pre><code class=language-C>#pragma kernel CSMain
-
-RWTexture2D&lt;float4&gt; _Result;
-float4 _Size;   //(1/width, 1/height,  width, height)
-
-[numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C><span style=color:#75715e>#pragma kernel CSMain
+</span><span style=color:#75715e></span>
+RWTexture2D<span style=color:#f92672>&lt;</span>float4<span style=color:#f92672>&gt;</span> _Result;
+float4 _Size;   <span style=color:#75715e>//(1/width, 1/height,  width, height)
+</span><span style=color:#75715e></span>
+[numthreads(<span style=color:#ae81ff>8</span>,<span style=color:#ae81ff>8</span>,<span style=color:#ae81ff>1</span>)]
+<span style=color:#66d9ef>void</span> CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float2 uv = id.xy/_Size.zw;
-    _Result[id.xy] = uv.x;
+    float2 uv <span style=color:#f92672>=</span> id.xy<span style=color:#f92672>/</span>_Size.zw;
+    _Result[id.xy] <span style=color:#f92672>=</span> uv.x;
 }
-</code></pre>
-<p>threadID即为我们分配的线程ID，每个线程有唯一值，对于图片处理，一般范围为(0~width-1,0~height-1)，那么算下来，CS里的UV范围应该为 <strong>(0~1-_Size.x, 0~1-_Size.y)</strong> ；</p>
+</code></pre></div><p>threadID即为我们分配的线程ID，每个线程有唯一值，对于图片处理，一般范围为(0~width-1,0~height-1)，那么算下来，CS里的UV范围应该为 <strong>(0~1-_Size.x, 0~1-_Size.y)</strong> ；</p>
 <p>下图为10x10分辨率下的UV灰度图：
 ![](<a href=https://wingstone.github.io/post-images/1623342423558.jpg>https://wingstone.github.io/post-images/1623342423558.jpg</a> =200x200)</p>
 </main>

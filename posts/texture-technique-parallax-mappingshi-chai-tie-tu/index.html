@@ -28,92 +28,88 @@
 <p>在实际的使用过程中，一般使用 <strong>深度图来代替高度图</strong> ，两种互为反相；</p>
 <h2 id=parallax-mapping>Parallax mapping</h2>
 <p>最原始视差贴图方法就叫Parallax mapping，其大概原理是：在切线空间下，当前采样坐标获得的高度作为V向量偏移的长度，然后偏移后的长度在切平面的投影即为坐标的偏移量</p>
-<pre><code class=language-C++>//_ParallaxHeight为一控制参数
-uv -= tex2D(_HightMap, uv)*TV.xy*_ParallaxHeight;     //V向量为切空间下的向量
-</code></pre>
-<p>在高度图变化比较剧烈的地方，采用这种方法会有很对问题；因此又发展出了Steep Parallax Mapping（陡峭视差贴图）；</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#75715e>//_ParallaxHeight为一控制参数
+</span><span style=color:#75715e></span>uv <span style=color:#f92672>-=</span> tex2D(_HightMap, uv)<span style=color:#f92672>*</span>TV.xy<span style=color:#f92672>*</span>_ParallaxHeight;     <span style=color:#75715e>//V向量为切空间下的向量
+</span></code></pre></div><p>在高度图变化比较剧烈的地方，采用这种方法会有很对问题；因此又发展出了Steep Parallax Mapping（陡峭视差贴图）；</p>
 <h2 id=steep-parallax-mapping>Steep Parallax Mapping</h2>
 <p>对于高度变化剧烈地方，其实很难通过一步就定位到偏移后的位置，陡峭视差贴图方法实际上就是ray matching方法，使用此方法可以更精确的定位到偏移后位置；但由于ray matching算法的性质，在计算量不足的情况下，容易出现分层的痕迹；针对分层问题，后面提出了Parallax Occlusion Mapping(视差遮蔽映射)方法；</p>
 <p>该算法首先将深度值进行分层，每一步递进一层；若当前步所获取深度值与步进深度值的差值的符号，与前一步相反，则可定位当前层深度即为偏移深度；分层数量越多，计算量越大，计算结果越精细；</p>
-<pre><code class=language-C++>float numLayers = 10;
-float depthStep = 1.0 / numLayers;
-float currentDepth = 0.0;
-float2 uvStep = TV.xy * _ParallaxHeight/ numLayers; 
-float currentDepthMapValue = tex2D(_DepthTex, uv).r;
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#66d9ef>float</span> numLayers <span style=color:#f92672>=</span> <span style=color:#ae81ff>10</span>;
+<span style=color:#66d9ef>float</span> depthStep <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>/</span> numLayers;
+<span style=color:#66d9ef>float</span> currentDepth <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.0</span>;
+float2 uvStep <span style=color:#f92672>=</span> TV.xy <span style=color:#f92672>*</span> _ParallaxHeight<span style=color:#f92672>/</span> numLayers; 
+<span style=color:#66d9ef>float</span> currentDepthMapValue <span style=color:#f92672>=</span> tex2D(_DepthTex, uv).r;
 
-for(int i = 0; i&lt; 10; i++)
+<span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i<span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>10</span>; i<span style=color:#f92672>++</span>)
 {
-    if(currentDepth &gt; currentDepthMapValue)
-        break;
-    uv -= uvStep;
-    currentDepthMapValue = tex2D(_DepthTex, uv).r;
-    currentDepth += depthStep;  
+    <span style=color:#66d9ef>if</span>(currentDepth <span style=color:#f92672>&gt;</span> currentDepthMapValue)
+        <span style=color:#66d9ef>break</span>;
+    uv <span style=color:#f92672>-=</span> uvStep;
+    currentDepthMapValue <span style=color:#f92672>=</span> tex2D(_DepthTex, uv).r;
+    currentDepth <span style=color:#f92672>+=</span> depthStep;  
 }
-</code></pre>
-<h2 id=parallax-occlusion-mapping>Parallax Occlusion Mapping</h2>
+</code></pre></div><h2 id=parallax-occlusion-mapping>Parallax Occlusion Mapping</h2>
 <p>视差遮蔽贴图与陡峭视差贴图类似，区别仅在于最后深度的选择；陡峭视差贴图最终的深度为步进深度的倍数，并且最终深度大于此位置的采样深度，而前一步的深度小于前一步位置的采样深度；针对此现象，我们可以在两者之间进行深度插值，这样最终采样深度就是一个连续的分布了；</p>
 <p>插值的根本原理就是相似三角形原理；代码如下，示意图请看参考引用；</p>
-<pre><code class=language-C++>float numLayers = 10;
-float depthStep = 1.0 / numLayers;
-float currentDepth = 0.0;
-float2 uvStep = TV.xy * _ParallaxHeight/ numLayers; 
-float currentDepthMapValue = tex2D(_DepthTex, uv).r;
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#66d9ef>float</span> numLayers <span style=color:#f92672>=</span> <span style=color:#ae81ff>10</span>;
+<span style=color:#66d9ef>float</span> depthStep <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>/</span> numLayers;
+<span style=color:#66d9ef>float</span> currentDepth <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.0</span>;
+float2 uvStep <span style=color:#f92672>=</span> TV.xy <span style=color:#f92672>*</span> _ParallaxHeight<span style=color:#f92672>/</span> numLayers; 
+<span style=color:#66d9ef>float</span> currentDepthMapValue <span style=color:#f92672>=</span> tex2D(_DepthTex, uv).r;
 
-float preDiff = 1e-5;       //防止除0
-for(int i = 0; i&lt; 10; i++)
+<span style=color:#66d9ef>float</span> preDiff <span style=color:#f92672>=</span> <span style=color:#ae81ff>1e-5</span>;       <span style=color:#75715e>//防止除0
+</span><span style=color:#75715e></span><span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i<span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>10</span>; i<span style=color:#f92672>++</span>)
 {
-    if(currentDepth &gt;= currentDepthMapValue)
+    <span style=color:#66d9ef>if</span>(currentDepth <span style=color:#f92672>&gt;=</span> currentDepthMapValue)
     {
-        float curDiff = currentDepth-currentDepthMapValue;
-        uv -= uvStep*preDiff/(curDiff+preDiff);
-        break;
+        <span style=color:#66d9ef>float</span> curDiff <span style=color:#f92672>=</span> currentDepth<span style=color:#f92672>-</span>currentDepthMapValue;
+        uv <span style=color:#f92672>-=</span> uvStep<span style=color:#f92672>*</span>preDiff<span style=color:#f92672>/</span>(curDiff<span style=color:#f92672>+</span>preDiff);
+        <span style=color:#66d9ef>break</span>;
     }
-    else
-        preDiff = currentDepthMapValue - currentDepth;
-    uv -= uvStep;
-    currentDepthMapValue = tex2D(_DepthTex, uv).r;
-    currentDepth += depthStep; 
+    <span style=color:#66d9ef>else</span>
+        preDiff <span style=color:#f92672>=</span> currentDepthMapValue <span style=color:#f92672>-</span> currentDepth;
+    uv <span style=color:#f92672>-=</span> uvStep;
+    currentDepthMapValue <span style=color:#f92672>=</span> tex2D(_DepthTex, uv).r;
+    currentDepth <span style=color:#f92672>+=</span> depthStep; 
 }
-</code></pre>
-<h2 id=relief-mapping>Relief Mapping</h2>
+</code></pre></div><h2 id=relief-mapping>Relief Mapping</h2>
 <p>视差遮蔽贴图在最后的一步采用插值进行计算，本质上是采用线性分布模拟步进深度中的非线性深度分布；因此最好的方法就是采用更细的步进深度进行测试，但这样就要求需要有大量的步进运算；因此可采用二分法方法来进行步进，这样可以更快定位到相交的深度；但是二分法要求单调性，实际的深度分布不可能是但单调分布的，因此最佳的步进方法为，先进行大步进深度的传统线性步进，再进行二分步进，这就是Relief Mapping的中心思想；</p>
-<pre><code class=language-C++>//linear rematching
-float numLayers = 10;
-float depthStep = 1.0 / numLayers;
-float currentDepth = 0.0;
-float2 uvStep = TV.xy * _ParallaxHeight/ numLayers; 
-float currentDepthMapValue = tex2D(_DepthTex, uv).r;
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#75715e>//linear rematching
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> numLayers <span style=color:#f92672>=</span> <span style=color:#ae81ff>10</span>;
+<span style=color:#66d9ef>float</span> depthStep <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>/</span> numLayers;
+<span style=color:#66d9ef>float</span> currentDepth <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.0</span>;
+float2 uvStep <span style=color:#f92672>=</span> TV.xy <span style=color:#f92672>*</span> _ParallaxHeight<span style=color:#f92672>/</span> numLayers; 
+<span style=color:#66d9ef>float</span> currentDepthMapValue <span style=color:#f92672>=</span> tex2D(_DepthTex, uv).r;
 
-for(int i = 0; i&lt; 10; i++)
+<span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i<span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>10</span>; i<span style=color:#f92672>++</span>)
 {
-    if(currentDepth &gt; currentDepthMapValue)
+    <span style=color:#66d9ef>if</span>(currentDepth <span style=color:#f92672>&gt;</span> currentDepthMapValue)
     {
-        break;
+        <span style=color:#66d9ef>break</span>;
     }
-    uv -= uvStep;
-    currentDepthMapValue = tex2D(_DepthTex, uv).r;
-    currentDepth += depthStep;  
+    uv <span style=color:#f92672>-=</span> uvStep;
+    currentDepthMapValue <span style=color:#f92672>=</span> tex2D(_DepthTex, uv).r;
+    currentDepth <span style=color:#f92672>+=</span> depthStep;  
 }
 
-//binary rematching
-for(int i = 0; i&lt; 8; i++)
+<span style=color:#75715e>//binary rematching
+</span><span style=color:#75715e></span><span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i<span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>8</span>; i<span style=color:#f92672>++</span>)
 {
-    uvStep *= 0.5;
-    depthStep *= 0.5;
-    currentDepthMapValue = tex2D(_DepthTex, uv).r;
-    if(currentDepth &lt; currentDepthMapValue)
+    uvStep <span style=color:#f92672>*=</span> <span style=color:#ae81ff>0.5</span>;
+    depthStep <span style=color:#f92672>*=</span> <span style=color:#ae81ff>0.5</span>;
+    currentDepthMapValue <span style=color:#f92672>=</span> tex2D(_DepthTex, uv).r;
+    <span style=color:#66d9ef>if</span>(currentDepth <span style=color:#f92672>&lt;</span> currentDepthMapValue)
     {
-        uv -= uvStep;
-        currentDepth += depthStep;
+        uv <span style=color:#f92672>-=</span> uvStep;
+        currentDepth <span style=color:#f92672>+=</span> depthStep;
     }
-    else
+    <span style=color:#66d9ef>else</span>
     {
-        uv += uvStep;
-        currentDepth -= depthStep;
+        uv <span style=color:#f92672>+=</span> uvStep;
+        currentDepth <span style=color:#f92672>-=</span> depthStep;
     }
 }
-</code></pre>
-<p>实际上，深度图的使用原理，与地形及其类似；确定好视线与深度相交点后，就可以沿光源方向进行阴影计算，<a href=https://shintaroiguchidotcom.files.wordpress.com/2016/01/relief-mapping-in-a-pixel-shader-using-binary-search.pdf>PDF：Relief Mapping</a>这篇文章也提到了使用深度图进行自投影的计算；</p>
+</code></pre></div><p>实际上，深度图的使用原理，与地形及其类似；确定好视线与深度相交点后，就可以沿光源方向进行阴影计算，<a href=https://shintaroiguchidotcom.files.wordpress.com/2016/01/relief-mapping-in-a-pixel-shader-using-binary-search.pdf>PDF：Relief Mapping</a>这篇文章也提到了使用深度图进行自投影的计算；</p>
 <p>关于使用raymatching方法进行地形的渲染，可以参考<a href=https://www.iquilezles.org/www/articles/terrainmarching/terrainmarching.htm>iq：raymarching terrains</a>，读完后相应对于视差贴图的理解可以更深一步；</p>
 <h2 id=个人思考>个人思考</h2>
 <p>从结果上来看，确实算法越来越精确了，但是都要有一个严重的问题：如下图所示：

@@ -26,41 +26,40 @@
 <h2 id=c语言中的static关键字>C语言中的static关键字</h2>
 <h3 id=修饰全局变量全局函数>修饰全局变量，全局函数</h3>
 <p>将限制该变量及函数的作用域为本文，不能实现连接时的跨文本使用；</p>
-<pre><code class=language-C++>//file1.c
-static int a = 10;      //变量作用范围限制在本文本作用域中
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#75715e>//file1.c
+</span><span style=color:#75715e></span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> a <span style=color:#f92672>=</span> <span style=color:#ae81ff>10</span>;      <span style=color:#75715e>//变量作用范围限制在本文本作用域中
+</span><span style=color:#75715e></span>
+<span style=color:#75715e>//file2.c
+</span><span style=color:#75715e></span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;iostream&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span>
+<span style=color:#66d9ef>using</span> <span style=color:#66d9ef>namespace</span> std;
 
-//file2.c
-#include &lt;iostream&gt;
-
-using namespace std;
-
-extern int a;   //无法使用file1.c中的a变量
-
-int main()
+<span style=color:#66d9ef>extern</span> <span style=color:#66d9ef>int</span> a;   <span style=color:#75715e>//无法使用file1.c中的a变量
+</span><span style=color:#75715e></span>
+<span style=color:#66d9ef>int</span> <span style=color:#a6e22e>main</span>()
 {
-    cout &lt;&lt; &quot;a = &quot; &lt;&lt; a &lt;&lt;endl;
+    cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;a = &#34;</span> <span style=color:#f92672>&lt;&lt;</span> a <span style=color:#f92672>&lt;&lt;</span>endl;
 
-    return 0;
+    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
 }
 
-</code></pre>
-<h3 id=修饰局部变量>修饰局部变量</h3>
+</code></pre></div><h3 id=修饰局部变量>修饰局部变量</h3>
 <p>在用static修饰局部变量后，该变量只在初次运行时进行初始化工作，且只进行一次；且该变量便存放在静态数据区，其生命周期一直持续到整个程序执行结束。</p>
-<pre><code class=language-c++>#include&lt;stdio.h&gt;
-
-void fun()
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>#include</span><span style=color:#75715e>&lt;stdio.h&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span>
+<span style=color:#66d9ef>void</span> <span style=color:#a6e22e>fun</span>()
 {
-    static int a=1;
-    a++;
+    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> a<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>;
+    a<span style=color:#f92672>++</span>;
 }
 
-int main(void)
+<span style=color:#66d9ef>int</span> <span style=color:#a6e22e>main</span>(<span style=color:#66d9ef>void</span>)
 {
-    fun();  //这里运行时，a会进行初始化，随后a++
-    fun();  //这里运行时，只会运行a++
-    return 0;
+    fun();  <span style=color:#75715e>//这里运行时，a会进行初始化，随后a++
+</span><span style=color:#75715e></span>    fun();  <span style=color:#75715e>//这里运行时，只会运行a++
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
 }
-</code></pre>
+</code></pre></div>
 </main>
 <footer>
 <script defer src=//yihui.org/js/math-code.js></script>

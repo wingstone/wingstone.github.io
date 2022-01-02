@@ -33,164 +33,156 @@
 <li><strong>采样屏幕颜色，转换至亮度；</strong>
 Nvidia建议使用red以及green通道来计算亮度进行优化，人眼对这两种颜色最为敏感；亮度计算方法如下：</li>
 </ol>
-<pre><code class=language-c++>float FxaaLuma(float3 rgb) {return rgb.y * (0.587/0.299) + rgb.x; }
-</code></pre>
-<ol start=2>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>FxaaLuma</span>(float3 rgb) {<span style=color:#66d9ef>return</span> rgb.y <span style=color:#f92672>*</span> (<span style=color:#ae81ff>0.587</span><span style=color:#f92672>/</span><span style=color:#ae81ff>0.299</span>) <span style=color:#f92672>+</span> rgb.x; }
+</code></pre></div><ol start=2>
 <li><strong>根据亮度来计算对比度，用对比度来作为边缘检测的标准；</strong>
 一般边缘检测都会使用<strong>当前像素</strong>，以及<strong>上下左右四个像素</strong>来进行对比度的计算；当对比度大于某个阈值时，认为当前点处于边缘位置；</li>
 </ol>
-<pre><code class=language-c++>float3 rgbN  = FxaaTextureOffset(tex, pos.xy, FxaaInt2( 0,-1)).xyz;
-float3 rgbW  = FxaaTextureOffset(tex, pos.xy, FxaaInt2(-1, 0)).xyz;
-float3 rgbM  = FxaaTextureOffset(tex, pos.xy, FxaaInt2( 0, 0)).xyz;
-float3 rgbE  = FxaaTextureOffset(tex, pos.xy, FxaaInt2( 1, 0)).xyz;
-float3 rgbS  = FxaaTextureOffset(tex, pos.xy, FxaaInt2( 0, 1)).xyz;
-float lumaN  = FxaaLuma(rgbN);
-float lumaW  = FxaaLuma(rgbW);
-float lumaM  = FxaaLuma(rgbM);
-float lumaE  = FxaaLuma(rgbE);
-float lumaS  = FxaaLuma(rgbS);
-float rangeMin = min(lumaM, min(min(lumaN, lumaW), min(lumaS, lumaE)));
-float rangeMax = max(lumaM, max(max(lumaN, lumaW), max(lumaS, lumaE)));
-float range = rangeMax -rangeMin;
-if(range &lt; max(FXAA_EDGE_THRESHOLD_MIN, rangeMax * XAA_EDGE_THRESHOLD))           {return FxaaFilterReturn(rgbM); }
-</code></pre>
-<ol start=3>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 rgbN  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>,<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)).xyz;
+float3 rgbW  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0</span>)).xyz;
+float3 rgbM  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>0</span>)).xyz;
+float3 rgbE  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0</span>)).xyz;
+float3 rgbS  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span>)).xyz;
+<span style=color:#66d9ef>float</span> lumaN  <span style=color:#f92672>=</span> FxaaLuma(rgbN);
+<span style=color:#66d9ef>float</span> lumaW  <span style=color:#f92672>=</span> FxaaLuma(rgbW);
+<span style=color:#66d9ef>float</span> lumaM  <span style=color:#f92672>=</span> FxaaLuma(rgbM);
+<span style=color:#66d9ef>float</span> lumaE  <span style=color:#f92672>=</span> FxaaLuma(rgbE);
+<span style=color:#66d9ef>float</span> lumaS  <span style=color:#f92672>=</span> FxaaLuma(rgbS);
+<span style=color:#66d9ef>float</span> rangeMin <span style=color:#f92672>=</span> min(lumaM, min(min(lumaN, lumaW), min(lumaS, lumaE)));
+<span style=color:#66d9ef>float</span> rangeMax <span style=color:#f92672>=</span> max(lumaM, max(max(lumaN, lumaW), max(lumaS, lumaE)));
+<span style=color:#66d9ef>float</span> range <span style=color:#f92672>=</span> rangeMax <span style=color:#f92672>-</span>rangeMin;
+<span style=color:#66d9ef>if</span>(range <span style=color:#f92672>&lt;</span> max(FXAA_EDGE_THRESHOLD_MIN, rangeMax <span style=color:#f92672>*</span> XAA_EDGE_THRESHOLD))           {<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>FxaaFilterReturn</span>(rgbM); }
+</code></pre></div><ol start=3>
 <li><strong>边缘的横纵向检测，用于后续抗拒齿处理；</strong>
 边缘进行光栅化之后，在比较小的维度上，只有横向边缘与纵向边缘之分；检测出来横向与纵向，可以便于后续沿边缘进行延伸；</li>
 </ol>
-<pre><code class=language-c++>float edgeVert = abs((0.25 * lumaNW) + (-0.5 * lumaN) + (0.25 * lumaNE)) +abs((0.50 * lumaW ) + (-1.0 * lumaM) + (0.50 * lumaE )) +abs((0.25 * lumaSW) + (-0.5 * lumaS) + (0.25 * lumaSE));
-float edgeHorz = abs((0.25 * lumaNW) + (-0.5 * lumaW) + (0.25 * lumaSW)) +abs((0.50 * lumaN ) + (-1.0 * lumaM) + (0.50 * lumaS )) +abs((0.25 * lumaNE) + (-0.5 * lumaE) + (0.25 * lumaSE));
-bool horzSpan = edgeHorz &gt;= edgeVert;   //判断当前像素位于横向边缘还是纵向边缘
-</code></pre>
-<p>4.** 判断真正的边缘边界位置，并将当前点定位到真正的边缘边界处；**
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> edgeVert <span style=color:#f92672>=</span> abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaN) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNE)) <span style=color:#f92672>+</span>abs((<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaW ) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span> <span style=color:#f92672>*</span> lumaM) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaE )) <span style=color:#f92672>+</span>abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaS) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSE));
+<span style=color:#66d9ef>float</span> edgeHorz <span style=color:#f92672>=</span> abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaW) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSW)) <span style=color:#f92672>+</span>abs((<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaN ) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span> <span style=color:#f92672>*</span> lumaM) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaS )) <span style=color:#f92672>+</span>abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNE) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaE) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSE));
+<span style=color:#66d9ef>bool</span> horzSpan <span style=color:#f92672>=</span> edgeHorz <span style=color:#f92672>&gt;=</span> edgeVert;   <span style=color:#75715e>//判断当前像素位于横向边缘还是纵向边缘
+</span></code></pre></div><p>4.** 判断真正的边缘边界位置，并将当前点定位到真正的边缘边界处；**
 检测出横向还是纵向后，需要定位边缘边界是在上横向还是下横向，左横向还是右横向；
 当前点是在像素中心，定位出边缘边界（位于两个像素的交接处）后，即可将当前点移动到边缘边界；</p>
-<pre><code class=language-c++>// 梯度最大处作为边缘边界的位置；
-float luma1 = isHorizontal ? lumaDown : lumaLeft;
-float luma2 = isHorizontal ? lumaUp : lumaRight;
-float gradient1 = luma1 - lumaCenter;
-float gradient2 = luma2 - lumaCenter;
-bool is1Steepest = abs(gradient1) &gt;= abs(gradient2);
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 梯度最大处作为边缘边界的位置；
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> luma1 <span style=color:#f92672>=</span> isHorizontal <span style=color:#f92672>?</span> lumaDown : lumaLeft;
+<span style=color:#66d9ef>float</span> luma2 <span style=color:#f92672>=</span> isHorizontal <span style=color:#f92672>?</span> lumaUp : lumaRight;
+<span style=color:#66d9ef>float</span> gradient1 <span style=color:#f92672>=</span> luma1 <span style=color:#f92672>-</span> lumaCenter;
+<span style=color:#66d9ef>float</span> gradient2 <span style=color:#f92672>=</span> luma2 <span style=color:#f92672>-</span> lumaCenter;
+<span style=color:#66d9ef>bool</span> is1Steepest <span style=color:#f92672>=</span> abs(gradient1) <span style=color:#f92672>&gt;=</span> abs(gradient2);
 
-// 我也不清楚此处为什么要用0.25来进行normalize，感觉就是一个简单的factor；
-float gradientScaled = 0.25*max(abs(gradient1),abs(gradient2));
+<span style=color:#75715e>// 我也不清楚此处为什么要用0.25来进行normalize，感觉就是一个简单的factor；
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> gradientScaled <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.25</span><span style=color:#f92672>*</span>max(abs(gradient1),abs(gradient2));
 
-float stepLength = isHorizontal ? inverseScreenSize.y : inverseScreenSize.x;
+<span style=color:#66d9ef>float</span> stepLength <span style=color:#f92672>=</span> isHorizontal <span style=color:#f92672>?</span> inverseScreenSize.y : inverseScreenSize.x;
 
-//边缘边界处（计算像素相交处）的亮度平均值
-float lumaLocalAverage = 0.0;
-if(is1Steepest){
-    stepLength = - stepLength;
-    lumaLocalAverage = 0.5*(luma1 + lumaCenter);
-} else {
-    lumaLocalAverage = 0.5*(luma2 + lumaCenter);
+<span style=color:#75715e>//边缘边界处（计算像素相交处）的亮度平均值
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> lumaLocalAverage <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.0</span>;
+<span style=color:#66d9ef>if</span>(is1Steepest){
+    stepLength <span style=color:#f92672>=</span> <span style=color:#f92672>-</span> stepLength;
+    lumaLocalAverage <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.5</span><span style=color:#f92672>*</span>(luma1 <span style=color:#f92672>+</span> lumaCenter);
+} <span style=color:#66d9ef>else</span> {
+    lumaLocalAverage <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.5</span><span style=color:#f92672>*</span>(luma2 <span style=color:#f92672>+</span> lumaCenter);
 }
 
-// 将uv移动半个像素，定位到边缘边界处（像素相交处）.
-vec2 currentUv = In.uv;
-if(isHorizontal){
-    currentUv.y += stepLength * 0.5;
-} else {
-    currentUv.x += stepLength * 0.5;
+<span style=color:#75715e>// 将uv移动半个像素，定位到边缘边界处（像素相交处）.
+</span><span style=color:#75715e></span>vec2 currentUv <span style=color:#f92672>=</span> In.uv;
+<span style=color:#66d9ef>if</span>(isHorizontal){
+    currentUv.y <span style=color:#f92672>+=</span> stepLength <span style=color:#f92672>*</span> <span style=color:#ae81ff>0.5</span>;
+} <span style=color:#66d9ef>else</span> {
+    currentUv.x <span style=color:#f92672>+=</span> stepLength <span style=color:#f92672>*</span> <span style=color:#ae81ff>0.5</span>;
 }
-</code></pre>
-<ol start=5>
+</code></pre></div><ol start=5>
 <li>定位到边界处，需要沿边缘方向（横向或纵向）进行搜索，来计算当前边缘的长度；
 之所以计算边缘的长度，是因为锯齿一般都出现在边缘端点处；离端点越远，越不容易产生锯齿；我们需要计算当前边缘边界距边缘端点的距离，用来计算锯齿的强弱程度；</li>
 </ol>
-<pre><code class=language-c++>// 第一步迭代
-vec2 offset = isHorizontal ? vec2(inverseScreenSize.x,0.0) : vec2(0.0,inverseScreenSize.y);
-vec2 uv1 = currentUv - offset;
-vec2 uv2 = currentUv + offset;
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 第一步迭代
+</span><span style=color:#75715e></span>vec2 offset <span style=color:#f92672>=</span> isHorizontal <span style=color:#f92672>?</span> vec2(inverseScreenSize.x,<span style=color:#ae81ff>0.0</span>) <span style=color:#f92672>:</span> vec2(<span style=color:#ae81ff>0.0</span>,inverseScreenSize.y);
+vec2 uv1 <span style=color:#f92672>=</span> currentUv <span style=color:#f92672>-</span> offset;
+vec2 uv2 <span style=color:#f92672>=</span> currentUv <span style=color:#f92672>+</span> offset;
 
-float lumaEnd1 = rgb2luma(texture(screenTexture,uv1).rgb);
-float lumaEnd2 = rgb2luma(texture(screenTexture,uv2).rgb);
-lumaEnd1 -= lumaLocalAverage;
-lumaEnd2 -= lumaLocalAverage;
+<span style=color:#66d9ef>float</span> lumaEnd1 <span style=color:#f92672>=</span> rgb2luma(texture(screenTexture,uv1).rgb);
+<span style=color:#66d9ef>float</span> lumaEnd2 <span style=color:#f92672>=</span> rgb2luma(texture(screenTexture,uv2).rgb);
+lumaEnd1 <span style=color:#f92672>-=</span> lumaLocalAverage;
+lumaEnd2 <span style=color:#f92672>-=</span> lumaLocalAverage;
 
-bool reached1 = abs(lumaEnd1) &gt;= gradientScaled;
-bool reached2 = abs(lumaEnd2) &gt;= gradientScaled;
-bool reachedBoth = reached1 &amp;&amp; reached2;
+<span style=color:#66d9ef>bool</span> reached1 <span style=color:#f92672>=</span> abs(lumaEnd1) <span style=color:#f92672>&gt;=</span> gradientScaled;
+<span style=color:#66d9ef>bool</span> reached2 <span style=color:#f92672>=</span> abs(lumaEnd2) <span style=color:#f92672>&gt;=</span> gradientScaled;
+<span style=color:#66d9ef>bool</span> reachedBoth <span style=color:#f92672>=</span> reached1 <span style=color:#f92672>&amp;&amp;</span> reached2;
 
-if(!reached1){
-    uv1 -= offset;
+<span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>reached1){
+    uv1 <span style=color:#f92672>-=</span> offset;
 }
-if(!reached2){
-    uv2 += offset;
+<span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>reached2){
+    uv2 <span style=color:#f92672>+=</span> offset;
 }  
 
-// 继续后面的迭代
-if(!reachedBoth){
+<span style=color:#75715e>// 继续后面的迭代
+</span><span style=color:#75715e></span><span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>reachedBoth){
 
-    for(int i = 2; i &lt; ITERATIONS; i++){
-        if(!reached1){
-            lumaEnd1 = rgb2luma(texture(screenTexture, uv1).rgb);
-            lumaEnd1 = lumaEnd1 - lumaLocalAverage;
+    <span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>; i <span style=color:#f92672>&lt;</span> ITERATIONS; i<span style=color:#f92672>++</span>){
+        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>reached1){
+            lumaEnd1 <span style=color:#f92672>=</span> rgb2luma(texture(screenTexture, uv1).rgb);
+            lumaEnd1 <span style=color:#f92672>=</span> lumaEnd1 <span style=color:#f92672>-</span> lumaLocalAverage;
         }
-        if(!reached2){
-            lumaEnd2 = rgb2luma(texture(screenTexture, uv2).rgb);
-            lumaEnd2 = lumaEnd2 - lumaLocalAverage;
+        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>reached2){
+            lumaEnd2 <span style=color:#f92672>=</span> rgb2luma(texture(screenTexture, uv2).rgb);
+            lumaEnd2 <span style=color:#f92672>=</span> lumaEnd2 <span style=color:#f92672>-</span> lumaLocalAverage;
         }
-        reached1 = abs(lumaEnd1) &gt;= gradientScaled;
-        reached2 = abs(lumaEnd2) &gt;= gradientScaled;
-        reachedBoth = reached1 &amp;&amp; reached2;
+        reached1 <span style=color:#f92672>=</span> abs(lumaEnd1) <span style=color:#f92672>&gt;=</span> gradientScaled;
+        reached2 <span style=color:#f92672>=</span> abs(lumaEnd2) <span style=color:#f92672>&gt;=</span> gradientScaled;
+        reachedBoth <span style=color:#f92672>=</span> reached1 <span style=color:#f92672>&amp;&amp;</span> reached2;
 
-        // 此处QUALITY为迭代步进的缩放系数，一般前5步为1，后面可逐渐递增
-        if(!reached1){
-            uv1 -= offset * QUALITY(i);
+        <span style=color:#75715e>// 此处QUALITY为迭代步进的缩放系数，一般前5步为1，后面可逐渐递增
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>reached1){
+            uv1 <span style=color:#f92672>-=</span> offset <span style=color:#f92672>*</span> QUALITY(i);
         }
-        if(!reached2){
-            uv2 += offset * QUALITY(i);
+        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>reached2){
+            uv2 <span style=color:#f92672>+=</span> offset <span style=color:#f92672>*</span> QUALITY(i);
         }
 
-        if(reachedBoth){ break;}
+        <span style=color:#66d9ef>if</span>(reachedBoth){ <span style=color:#66d9ef>break</span>;}
     }
 }
-</code></pre>
-<ol start=6>
+</code></pre></div><ol start=6>
 <li>偏移（此偏移量作用于最初uv，用于最终采样）估算
 前面说到越靠近边缘终点，锯齿越严重，那么最终像素输出采样点的偏移量越大；与此相反，越靠近边缘中点，输出采样点的偏移量越小；算法如下：</li>
 </ol>
-<pre><code class=language-c++>// 使用边缘边界点与边缘终点的距离处于边缘的长度来计算offset
-float distance1 = isHorizontal ? (In.uv.x - uv1.x) : (In.uv.y - uv1.y);
-float distance2 = isHorizontal ? (uv2.x - In.uv.x) : (uv2.y - In.uv.y);
-bool isDirection1 = distance1 &lt; distance2;
-float distanceFinal = min(distance1, distance2);
-float edgeThickness = (distance1 + distance2);
-float pixelOffset = - distanceFinal / edgeThickness + 0.5;
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 使用边缘边界点与边缘终点的距离处于边缘的长度来计算offset
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> distance1 <span style=color:#f92672>=</span> isHorizontal <span style=color:#f92672>?</span> (In.uv.x <span style=color:#f92672>-</span> uv1.x) <span style=color:#f92672>:</span> (In.uv.y <span style=color:#f92672>-</span> uv1.y);
+<span style=color:#66d9ef>float</span> distance2 <span style=color:#f92672>=</span> isHorizontal <span style=color:#f92672>?</span> (uv2.x <span style=color:#f92672>-</span> In.uv.x) <span style=color:#f92672>:</span> (uv2.y <span style=color:#f92672>-</span> In.uv.y);
+<span style=color:#66d9ef>bool</span> isDirection1 <span style=color:#f92672>=</span> distance1 <span style=color:#f92672>&lt;</span> distance2;
+<span style=color:#66d9ef>float</span> distanceFinal <span style=color:#f92672>=</span> min(distance1, distance2);
+<span style=color:#66d9ef>float</span> edgeThickness <span style=color:#f92672>=</span> (distance1 <span style=color:#f92672>+</span> distance2);
+<span style=color:#66d9ef>float</span> pixelOffset <span style=color:#f92672>=</span> <span style=color:#f92672>-</span> distanceFinal <span style=color:#f92672>/</span> edgeThickness <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.5</span>;
 
-// 添加额外的判断，来保证端点处的走势（gradient）与中心处的一致
-bool isLumaCenterSmaller = lumaCenter &lt; lumaLocalAverage;
-bool correctVariation = ((isDirection1 ? lumaEnd1 : lumaEnd2) &lt; 0.0) != isLumaCenterSmaller;
-float finalOffset = correctVariation ? pixelOffset : 0.0;
-</code></pre>
-<ol start=7>
+<span style=color:#75715e>// 添加额外的判断，来保证端点处的走势（gradient）与中心处的一致
+</span><span style=color:#75715e></span><span style=color:#66d9ef>bool</span> isLumaCenterSmaller <span style=color:#f92672>=</span> lumaCenter <span style=color:#f92672>&lt;</span> lumaLocalAverage;
+<span style=color:#66d9ef>bool</span> correctVariation <span style=color:#f92672>=</span> ((isDirection1 <span style=color:#f92672>?</span> lumaEnd1 : lumaEnd2) <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0.0</span>) <span style=color:#f92672>!=</span> isLumaCenterSmaller;
+<span style=color:#66d9ef>float</span> finalOffset <span style=color:#f92672>=</span> correctVariation <span style=color:#f92672>?</span> pixelOffset : <span style=color:#ae81ff>0.0</span>;
+</code></pre></div><ol start=7>
 <li>子像素抗拒齿处理
 使用额外的步骤即可处理子像素抗拒齿（即细线引起的锯齿，或点引起的锯齿，我也不知道为啥叫做子像素锯齿==）；
 基本思路是计算中心点与周围点的差值，然后计算此差值与局部差值的比值来计算子像素抗拒齿的偏移量；最终选择较大偏移量作为最终采样值；</li>
 </ol>
-<pre><code class=language-c++>float lumaAverage = (1.0/12.0) * (2.0 * (lumaDownUp + lumaLeftRight) + lumaLeftCorners + lumaRightCorners);
-float subPixelOffset1 = clamp(abs(lumaAverage - lumaCenter)/lumaRange,0.0,1.0);
-float subPixelOffset2 = (-2.0 * subPixelOffset1 + 3.0) * subPixelOffset1 * subPixelOffset1;
-float subPixelOffsetFinal = subPixelOffset2 * subPixelOffset2 * SUBPIXEL_QUALITY;
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> lumaAverage <span style=color:#f92672>=</span> (<span style=color:#ae81ff>1.0</span><span style=color:#f92672>/</span><span style=color:#ae81ff>12.0</span>) <span style=color:#f92672>*</span> (<span style=color:#ae81ff>2.0</span> <span style=color:#f92672>*</span> (lumaDownUp <span style=color:#f92672>+</span> lumaLeftRight) <span style=color:#f92672>+</span> lumaLeftCorners <span style=color:#f92672>+</span> lumaRightCorners);
+<span style=color:#66d9ef>float</span> subPixelOffset1 <span style=color:#f92672>=</span> clamp(abs(lumaAverage <span style=color:#f92672>-</span> lumaCenter)<span style=color:#f92672>/</span>lumaRange,<span style=color:#ae81ff>0.0</span>,<span style=color:#ae81ff>1.0</span>);
+<span style=color:#66d9ef>float</span> subPixelOffset2 <span style=color:#f92672>=</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>2.0</span> <span style=color:#f92672>*</span> subPixelOffset1 <span style=color:#f92672>+</span> <span style=color:#ae81ff>3.0</span>) <span style=color:#f92672>*</span> subPixelOffset1 <span style=color:#f92672>*</span> subPixelOffset1;
+<span style=color:#66d9ef>float</span> subPixelOffsetFinal <span style=color:#f92672>=</span> subPixelOffset2 <span style=color:#f92672>*</span> subPixelOffset2 <span style=color:#f92672>*</span> SUBPIXEL_QUALITY;
 
-// Pick the biggest of the two offsets.
-finalOffset = max(finalOffset,subPixelOffsetFinal);
-</code></pre>
-<ol start=8>
+<span style=color:#75715e>// Pick the biggest of the two offsets.
+</span><span style=color:#75715e></span>finalOffset <span style=color:#f92672>=</span> max(finalOffset,subPixelOffsetFinal);
+</code></pre></div><ol start=8>
 <li>使用最终偏移量进行采样;</li>
 </ol>
-<pre><code class=language-c++>vec2 finalUv = In.uv;
-if(isHorizontal){
-    finalUv.y += finalOffset * stepLength;
-} else {
-    finalUv.x += finalOffset * stepLength;
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>vec2 finalUv <span style=color:#f92672>=</span> In.uv;
+<span style=color:#66d9ef>if</span>(isHorizontal){
+    finalUv.y <span style=color:#f92672>+=</span> finalOffset <span style=color:#f92672>*</span> stepLength;
+} <span style=color:#66d9ef>else</span> {
+    finalUv.x <span style=color:#f92672>+=</span> finalOffset <span style=color:#f92672>*</span> stepLength;
 }
 
-vec3 finalColor = texture(screenTexture,finalUv).rgb;
-fragColor = finalColor;
-</code></pre>
-<p>注意点：FXAA运行在sRGB空间；直接作用于linear、hdr数据，会出现闪烁问题；</p>
+vec3 finalColor <span style=color:#f92672>=</span> texture(screenTexture,finalUv).rgb;
+fragColor <span style=color:#f92672>=</span> finalColor;
+</code></pre></div><p>注意点：FXAA运行在sRGB空间；直接作用于linear、hdr数据，会出现闪烁问题；</p>
 </main>
 <footer>
 <script defer src=//yihui.org/js/math-code.js></script>

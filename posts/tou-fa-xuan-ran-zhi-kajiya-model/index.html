@@ -48,19 +48,17 @@
 </ol>
 <p>模拟两层高光比较简单，只需要计算两次高光即可；</p>
 <p>如何模拟高光的切变流向，即一个位置偏向发梢，一个偏向发根；因为我们使用模型的T来计算的高光，要想改变高光位置，只能从T下手；AMD提供的方法为，使用N（这里是多边形几何的法线，不是法线平面中的法线N1）对T进行偏移；偏移量可以从贴图中进行采样，计算公式如下：</p>
-<pre><code class=language-C++>float ShiftTangent(float3 T, float3 N, float shift)
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>ShiftTangent</span>(float3 T, float3 N, <span style=color:#66d9ef>float</span> shift)
 {
-    float3 shiftedT = T + shift * N;
-    return normalize(shiftedT);
+    float3 shiftedT <span style=color:#f92672>=</span> T <span style=color:#f92672>+</span> shift <span style=color:#f92672>*</span> N;
+    <span style=color:#66d9ef>return</span> normalize(shiftedT);
 }
-</code></pre>
-<p>如下图：T&rsquo;与T'&lsquo;是切变后的切向量；
+</code></pre></div><p>如下图：T&rsquo;与T'&lsquo;是切变后的切向量；
 <img src=https://wingstone.github.io/post-images/1600414455694.jpg alt></p>
 <p>T表示发丝的方向，那么当发丝方向发生变化时，N（多边形对应法线）自然而然也同样产生变化，偏移后的N为：</p>
-<pre><code class=language-C++>float3 B = cross(N, T);
-N = cross(T, B);
-</code></pre>
-<blockquote>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++>float3 B <span style=color:#f92672>=</span> cross(N, T);
+N <span style=color:#f92672>=</span> cross(T, B);
+</code></pre></div><blockquote>
 <p>实质上，N对T的偏移，是模拟头发的起伏，即发丝方向突出多边形平面或凹陷多边形平面；</p>
 </blockquote>
 <p>次高光的闪烁效果模拟比较简单，只需要使用一个噪音纹理与次高光相乘即可；</p>
