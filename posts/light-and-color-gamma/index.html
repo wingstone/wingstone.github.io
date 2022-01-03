@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>[Light and Color] Gamma | wingstone's blog</title>
+<title>Gamma | wingstone's blog</title>
 <link rel=stylesheet href=/css/style.css>
 <link rel=stylesheet href=/css/fonts.css>
 <link rel=icon href=/icons/16.png>
@@ -20,7 +20,7 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>[Light and Color] Gamma</span></h1>
+<h1><span class=title>Gamma</span></h1>
 <h2 class=date>2021/06/26</h2>
 </div>
 <main>
@@ -28,7 +28,7 @@
 <h1 id=前言>前言</h1>
 <p>在图形开发中，总绕不开的一个名词，Gamma，这里会对Gamma进行一个粗暴但是通俗的讲解；便于理清图形开发中理解Gamma的一切；</p>
 <h1 id=一gamma是什么>一、Gamma是什么？</h1>
-<p>Gamma是什么，Gamma FAQ<a href=#refer-anchor><sup>[1]</sup></a>中有解释：在传统的CRT显示器中，屏幕显示的Luminance与电压并不是成正比的关系，而是成一个幂次方的关系，即$L = V^\gamma$，其中的幂就是我们通说所说的Gamma；
+<p>Gamma是什么，Gamma FAQ<a href=#refer-anchor><sup>[1]</sup></a>中有解释：在传统的CRT显示器中，屏幕显示的Luminance与电压并不是成正比的关系，而是成一个幂次方的关系，即<code>$L = V^\gamma$</code>，其中的幂就是我们通说所说的Gamma；
 ![Gamma变换](<a href="https://img-blog.csdnimg.cn/20210623234248419.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM1ODE3NzAw,size_16,color_FFFFFF,t_70#pic_center">https://img-blog.csdnimg.cn/20210623234248419.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM1ODE3NzAw,size_16,color_FFFFFF,t_70#pic_center</a> =256x256)</p>
 <center>显示器的Gamma变换</center>
 <h1 id=二gamma-correction>二、Gamma Correction</h1>

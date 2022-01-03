@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>Unity中序列化Asset的修改 | wingstone's blog</title>
+<title>Light&Color | wingstone's blog</title>
 <link rel=stylesheet href=/css/style.css>
 <link rel=stylesheet href=/css/fonts.css>
 <link rel=icon href=/icons/16.png>
@@ -19,18 +19,17 @@
 </ul>
 <hr>
 </nav>
-<div class=article-meta>
-<h1><span class=title>Unity中序列化Asset的修改</span></h1>
-<h2 class=date>2021/02/28</h2>
-</div>
-<main>
-<p>代码片段事例：</p>
-<pre tabindex=0><code>        Object obj = new Object();
-        SerializedObject so = new SerializedObject(obj);     //这里obj为要进行序列化操作的asset对象
-        SerializedProperty sp = so.FindProperty(&quot;property&quot;);    //这里property为要进行操作的property，需要查看asset文件获取
-        sp.boolValue = true;
-</code></pre>
-</main>
+<h1>Light&Color</h1>
+<ul>
+<li>
+<span class=date>2021/06/26</span>
+<a href=/posts/light-and-color-color-space/>Color Space</a>
+</li>
+<li>
+<span class=date>2021/06/26</span>
+<a href=/posts/light-and-color-gamma/>Gamma</a>
+</li>
+</ul>
 <footer>
 <script defer src=//yihui.org/js/math-code.js></script>
 <script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>

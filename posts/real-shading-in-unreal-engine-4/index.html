@@ -354,7 +354,7 @@ $$</p>
 	<span style=color:#66d9ef>return</span> NoL;
 }
 </code></pre></div><ol start=3>
-<li>能量守恒同样只针对于Speculer部分，对于normalize需要的 $$\alpha \prime$$ 的计算，源码中给出了不一样的计算方法，与modified D distribution方法中的计算方式不同；</li>
+<li>能量守恒同样只针对于Speculer部分，对于normalize需要的 <code>$\alpha \prime$</code> 的计算，源码中给出了不一样的计算方法，与modified D distribution方法中的计算方式不同；</li>
 </ol>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// Engine/Shaders/Private/ShadingModels.ush
 </span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>New_a2</span>( <span style=color:#66d9ef>float</span> a2, <span style=color:#66d9ef>float</span> SinAlpha, <span style=color:#66d9ef>float</span> VoH )
@@ -530,7 +530,7 @@ half <span style=color:#a6e22e>EnvBRDFApproxNonmetal</span>( half Roughness, hal
 	half2 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
 	<span style=color:#66d9ef>return</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
 }
-</code></pre></div><p>Unity针对移动平台的性能要求，提供了更为简化的EnvBRDF公式，此外Unity还提供了ggx brdf在移动平台的简化版，参考文章为<a href=%5Bhttps://%5D(https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/moving-mobile-graphics)>Moving Mobile Graphics</a>中的Optimizing PBR演讲；</p>
+</code></pre></div><p>Unity针对移动平台的性能要求，提供了更为简化的EnvBRDF公式，此外Unity还提供了ggx brdf在移动平台的简化版，参考文章为<a href=https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/moving-mobile-graphics>Moving Mobile Graphics</a>中的Optimizing PBR演讲；</p>
 <p>而unity在buildin管线及urp管线中，实际使用的EnvBRDF代码与以上代码并不一致，网上也找不到相应的文章参考，实际的代码实现为：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>inline</span> half3 <span style=color:#a6e22e>FresnelLerp</span> (half3 F0, half3 F90, half cosA)
 {

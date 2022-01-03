@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>[Thingking] PostProcess关于UV的思考 | wingstone's blog</title>
+<title>PostProcess关于UV的思考 | wingstone's blog</title>
 <link rel=stylesheet href=/css/style.css>
 <link rel=stylesheet href=/css/fonts.css>
 <link rel=icon href=/icons/16.png>
@@ -20,7 +20,7 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>[Thingking] PostProcess关于UV的思考</span></h1>
+<h1><span class=title>PostProcess关于UV的思考</span></h1>
 <h2 class=date>2021/06/10</h2>
 </div>
 <main>
@@ -29,12 +29,9 @@
 <p>但是最近在做后处理时，对这件事重新进行了思考，其实Shader中使用的uv肯定是经过光栅化后的数据，既然是光栅化后的数据，那么UV坐标应该是像素中心的UV坐标；</p>
 <p>后期一般都是通过DrawMesh来实现的，Mesh里的UV值为0-1，而此时的Mesh肯定需要覆盖整个屏幕，那么可以得到屏幕的最左侧uv.x = 0，最右侧uv.x = 1；而最左侧对应于最左列像素的左边，最右侧对应于最右列像素的右边；</p>
 <p>由此可见，对于Vertex Shader，其UV是 <strong>0-1</strong> 范围内的；
-对于FragmentSahder，其UV范围是最左列像素坐标到最右侧像素坐标的，令_Size = float4(1/ScreenWidth, 1/ScreenHeight, ScreenWidth, ScreenHeight)，则UV范围为 <strong>(0.5*_Size.x~1-0.5*_Size.x, 0.5*_Size.y~1-0.5*_Size.y)</strong> ；</p>
-<p>下图为10x10分辨率下的UV灰度图：
-![](<a href=https://wingstone.github.io/post-images/1623341545976.jpg>https://wingstone.github.io/post-images/1623341545976.jpg</a> =200x200)
-可以看到最左列的灰度值并不为0，看来我们的思考是对的；</p>
+对于FragmentSahder，其UV范围是最左列像素坐标到最右侧像素坐标的，令_Size = float4(1/ScreenWidth, 1/ScreenHeight, ScreenWidth, ScreenHeight)，则UV范围应为 <strong>(0.5*_Size.x~1-0.5*_Size.x, 0.5*_Size.y~1-0.5*_Size.y)</strong> ；</p>
 <h2 id=computershader下的postprocess>ComputerShader下的PostProcess</h2>
-<p>ComputerShader（简称CS）下的UV获取比较特殊，因为CS并不走正常的GPU绘制流水线，只是单纯的用多线程进行并行计算，所以我们在CS中获取UV值一般是由ThreadID除以屏幕分辨率来获取；</p>
+<p>ComputerShader（简称CS）下的UV获取比较特殊，因为CS并不走正常的GPU绘制流水线，只是单纯的用多线程进行并行计算，所以我们在CS中获取UV值一般是由ThreadID除以贴图分辨率来获取；</p>
 <p>简易CS Example：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C><span style=color:#75715e>#pragma kernel CSMain
 </span><span style=color:#75715e></span>
@@ -48,8 +45,14 @@ float4 _Size;   <span style=color:#75715e>//(1/width, 1/height,  width, height)
     _Result[id.xy] <span style=color:#f92672>=</span> uv.x;
 }
 </code></pre></div><p>threadID即为我们分配的线程ID，每个线程有唯一值，对于图片处理，一般范围为(0~width-1,0~height-1)，那么算下来，CS里的UV范围应该为 <strong>(0~1-_Size.x, 0~1-_Size.y)</strong> ；</p>
-<p>下图为10x10分辨率下的UV灰度图：
-![](<a href=https://wingstone.github.io/post-images/1623342423558.jpg>https://wingstone.github.io/post-images/1623342423558.jpg</a> =200x200)</p>
+<h2 id=总结>总结</h2>
+<p>之所以写下这篇文章，是因为在CS中，我们有时候需要使用采样器来采贴图，即：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>Texture2D<span style=color:#f92672>&lt;</span>float4<span style=color:#f92672>&gt;</span> myTexture;
+SamplerState linearClampSampler;
+float4 color <span style=color:#f92672>=</span> myTexture.SampleLevel(linearClampSampler, uv, <span style=color:#ae81ff>0</span>);
+</code></pre></div><p>这个时候我们的采样uv就不能是简单地ThreadID除以贴图分辨率来获取，还要转化为正常光栅化流程下的uv坐标，这时的采样结果才是正确的；即：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float2 uv <span style=color:#f92672>=</span> id.xy<span style=color:#f92672>/</span>_Size.zw <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.5</span><span style=color:#f92672>*</span>_Size.xy;
+</code></pre></div>
 </main>
 <footer>
 <script defer src=//yihui.org/js/math-code.js></script>
