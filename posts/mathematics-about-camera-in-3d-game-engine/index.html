@@ -20,9 +20,37 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>Mathematics about camera in graphics（图形学中关于相机的数学）</span></h1>
-<h2 class=date>2020/06/18</h2>
-</div>
+<h2><span class=title>Mathematics about camera in graphics（图形学中关于相机的数学）</span></h2>
+<h3 class=date>2020/06/18</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#观察矩阵>观察矩阵</a></li>
+<li><a href=#投影矩阵>投影矩阵</a></li>
+<li><a href=#相机中非线性0-1的深度转为线性0-1深度>相机中非线性0-1的深度转为线性0-1深度</a></li>
+<li><a href=#第一人称视角相机的实现>第一人称视角相机的实现</a>
+<ul>
+<li><a href=#相机的移动实现>相机的移动实现</a></li>
+<li><a href=#相机的旋转实现>相机的旋转实现</a></li>
+</ul>
+</li>
+<li><a href=#绕固定物体的第三人称相机的实现>绕固定物体的第三人称相机的实现</a>
+<ul>
+<li><a href=#绕固定物体相机的旋转实现>绕固定物体相机的旋转实现</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><a href=#透视相机针孔相机pin-hole>透视相机/针孔相机（Pin Hole）</a></li>
+<li><a href=#正交相机>正交相机</a></li>
+<li><a href=#环境相机>环境相机</a></li>
+<li><a href=#薄透镜相机thin-lens>薄透镜相机（Thin Lens）</a></li>
+<li><a href=#猫眼效应cats-eye-effect与暗角vignette>猫眼效应（Cat&rsquo;s Eye Effect）与暗角（vignette）</a></li>
+<li><a href=#任意形状的虚化光斑>任意形状的虚化光斑</a></li>
+<li><a href=#鱼眼镜头fisheye-lens>鱼眼镜头（Fisheye Lens）</a></li>
+<li><a href=#参考文章>参考文章</a></li>
+</ul>
+</nav>
 <main>
 <p>以OpenGL中的右手坐标系为例，介绍引擎中和各种应用中跟相机有关的数学；</p>
 <h1 id=实现渲染中的相机>实现渲染中的相机</h1>

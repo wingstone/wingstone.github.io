@@ -20,9 +20,19 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>景深的实现技术</span></h1>
-<h2 class=date>2020/10/20</h2>
-</div>
+<h2><span class=title>景深的实现技术</span></h2>
+<h3 class=date>2020/10/20</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#基于光线追踪的景深效果离线>基于光线追踪的景深效果（离线）</a></li>
+<li><a href=#基于累积贴图的景深效果实时>基于累积贴图的景深效果（实时）</a></li>
+<li><a href=#基于分层绘制的景深效果实时>基于分层绘制的景深效果（实时）</a></li>
+<li><a href=#基于前向映射的z-buffer的景深效果实时>基于前向映射的Z-buffer的景深效果（实时）</a></li>
+<li><a href=#基于反向映射的z-buffer的景深效果实时>基于反向映射的Z-buffer的景深效果（实时）</a></li>
+<li><a href=#reference>Reference</a></li>
+</ul>
+</nav>
 <main>
 <p>景深的实现技术有很多，针对不同的使用场景，可以使用不同的方法；</p>
 <h2 id=基于光线追踪的景深效果离线>基于光线追踪的景深效果（离线）</h2>

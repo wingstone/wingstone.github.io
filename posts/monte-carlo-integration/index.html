@@ -20,9 +20,53 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>Monte Carlo Integration</span></h1>
-<h2 class=date>2020/09/06</h2>
-</div>
+<h2><span class=title>Monte Carlo Integration</span></h2>
+<h3 class=date>2020/09/06</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#概率部分定义>概率部分定义</a>
+<ul>
+<li><a href=#期望定义>期望定义</a></li>
+<li><a href=#方差定义>方差定义</a></li>
+</ul>
+</li>
+<li><a href=#蒙特卡洛积分>蒙特卡洛积分</a>
+<ul>
+<li><a href=#一维均匀分布下的积分>一维均匀分布下的积分</a></li>
+<li><a href=#一维任意分布下的积分>一维任意分布下的积分</a></li>
+</ul>
+</li>
+<li><a href=#mc积分的方差分析>MC积分的方差分析</a>
+<ul>
+<li><a href=#优点>优点</a></li>
+</ul>
+</li>
+<li><a href=#已知px生成符合概率分布的采样>已知p(x)，生成符合概率分布的采样</a>
+<ul>
+<li><a href=#逆推法>逆推法</a></li>
+<li><a href=#舍选法>舍选法</a></li>
+<li><a href=#metropolis-sampling>Metropolis Sampling</a></li>
+</ul>
+</li>
+<li><a href=#概率密度分布变换>概率密度分布变换</a>
+<ul>
+<li><a href=#极坐标系>极坐标系</a></li>
+<li><a href=#球坐标系>球坐标系</a></li>
+</ul>
+</li>
+<li><a href=#二维随机采样>二维随机采样</a>
+<ul>
+<li><a href=#随机单位半球面采样>随机单位半球面采样</a></li>
+<li><a href=#随机单位球面采样>随机单位球面采样</a></li>
+<li><a href=#随机单位圆盘采样>随机单位圆盘采样</a></li>
+<li><a href=#单位半球面余弦权重采样>单位半球面余弦权重采样</a></li>
+</ul>
+</li>
+<li><a href=#俄罗斯轮盘赌>俄罗斯轮盘赌</a></li>
+<li><a href=#分割划分机制>分割(划分机制)</a></li>
+</ul>
+</nav>
 <main>
 <p>蒙特卡洛积分的简短介绍，以及PBRT中常用的函数分布；</p>
 <h2 id=概率部分定义>概率部分定义</h2>

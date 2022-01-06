@@ -20,9 +20,19 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>贴图技术——Parallax Mapping（视差贴图）</span></h1>
-<h2 class=date>2020/09/30</h2>
-</div>
+<h2><span class=title>贴图技术——Parallax Mapping（视差贴图）</span></h2>
+<h3 class=date>2020/09/30</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#parallax-mapping>Parallax mapping</a></li>
+<li><a href=#steep-parallax-mapping>Steep Parallax Mapping</a></li>
+<li><a href=#parallax-occlusion-mapping>Parallax Occlusion Mapping</a></li>
+<li><a href=#relief-mapping>Relief Mapping</a></li>
+<li><a href=#个人思考>个人思考</a></li>
+<li><a href=#参考>参考</a></li>
+</ul>
+</nav>
 <main>
 <p>视差贴图属于位移贴图(Displacement Mapping)技术的一种，它对根据储存在纹理中的几何信息对顶点进行位移或偏移。一般使用位移贴图之前，需要对模型进行细分（细分着色器），然后进行顶点位移；</p>
 <p>位移贴图要想有好的效果，需要大量顶点支持，而使用视差贴图即可省去大量的顶点使用；</p>

@@ -20,9 +20,26 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>Pipeline——GPU Graphic Pipeline（图形管线）</span></h1>
-<h2 class=date>2020/09/13</h2>
-</div>
+<h2><span class=title>Pipeline——GPU Graphic Pipeline（图形管线）</span></h2>
+<h3 class=date>2020/09/13</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#管线介绍>管线介绍</a></li>
+<li><a href=#gpu-graphic-pipeline>GPU Graphic Pipeline</a>
+<ul>
+<li><a href=#input-assembler-stage图元装配阶段>Input-Assembler Stage（图元装配阶段）</a></li>
+<li><a href=#vertex-shader-stage顶点着色阶段>Vertex Shader Stage（顶点着色阶段）</a></li>
+<li><a href=#tessellation-stages细分阶段>Tessellation Stages（细分阶段）</a></li>
+<li><a href=#geometry-shader-stage几何着色阶段>Geometry Shader Stage（几何着色阶段）</a></li>
+<li><a href=#stream-output-stage流输出阶段>Stream-Output Stage（流输出阶段）</a></li>
+<li><a href=#rasterizer-stage光栅化阶段>Rasterizer Stage（光栅化阶段）</a></li>
+<li><a href=#pixel-shader-stage像素着色器阶段>Pixel Shader Stage（像素着色器阶段）</a></li>
+<li><a href=#output-merger-stage输出合并阶段>Output-Merger Stage（输出合并阶段）</a></li>
+</ul>
+</li>
+</ul>
+</nav>
 <main>
 <h2 id=管线介绍>管线介绍</h2>
 <p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程<strong>Graphic Pipeline（图形管线）</strong>；针对实际应用来说，渲染一帧画面也需要一个渲染流程<strong>Render Pipeline/Path（渲染管线/路径）</strong>；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；</p>

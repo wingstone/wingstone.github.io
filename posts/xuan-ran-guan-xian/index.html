@@ -20,9 +20,29 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>Pipeline——Render Pipeline/Path（渲染管线/路径）</span></h1>
-<h2 class=date>2020/09/14</h2>
-</div>
+<h2><span class=title>Pipeline——Render Pipeline/Path（渲染管线/路径）</span></h2>
+<h3 class=date>2020/09/14</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#forward-rendering>Forward Rendering</a>
+<ul>
+<li><a href=#z-prepass避免overdraw问题>Z-Prepass避免overdraw问题</a></li>
+</ul>
+</li>
+<li><a href=#deferred-rendering>Deferred Rendering</a></li>
+<li><a href=#light-pre-pass>Light Pre-Pass</a></li>
+<li><a href=#tiled-based-deferred-rendering--forward>Tiled Based Deferred Rendering & Forward+</a>
+<ul>
+<li><a href=#tbdr>TBDR</a></li>
+<li><a href=#forward>Forward+</a></li>
+</ul>
+</li>
+<li><a href=#clustered-shading>Clustered Shading</a></li>
+<li><a href=#unity-scriptable-render-pipelinesrp可编程渲染管线>Unity Scriptable Render Pipeline（SRP可编程渲染管线）</a></li>
+<li><a href=#frame-graph>Frame Graph</a></li>
+</ul>
+</nav>
 <main>
 <p>Render Path称之为渲染路径更为合适，实际上指渲染一帧所要走的流程，这个流程主要用来处理光照，以及后处理等；常见的有Forward/Deferred Rendering；以及其改版Forward+、Tiled Based Deferred Rendering、Clustered Shading；以及更灵活的Frame Graph（寒霜引擎）、SRP（Unity引擎）；</p>
 <p>注意：在render之前，一般还会有一个Application stage，用以在CPU上运行一些必要的前置任务：如碰撞检测、全局加速算法（视锥剔除、遮挡剔除）、物理模拟、动画效果等等；处理完这些后，才能进行高效合理的渲染；</p>

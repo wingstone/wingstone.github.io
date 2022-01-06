@@ -20,9 +20,28 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>移动GPU架构</span></h1>
-<h2 class=date>2020/09/17</h2>
-</div>
+<h2><span class=title>移动GPU架构</span></h2>
+<h3 class=date>2020/09/17</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#移动tbdr架构与桌面imr架构>移动TBDR架构与桌面IMR架构</a>
+<ul>
+<li><a href=#imr架构>IMR架构</a></li>
+<li><a href=#tbdr架构>TBDR架构</a></li>
+<li><a href=#对比>对比</a></li>
+</ul>
+</li>
+<li><a href=#tbdr的重要特性>TBDR的重要特性</a>
+<ul>
+<li><a href=#关于bin-buffer>关于bin buffer</a></li>
+<li><a href=#关于early-z>关于early-z</a></li>
+<li><a href=#关于blendingmsaaalpha-test>关于blending、MSAA、alpha-test</a></li>
+</ul>
+</li>
+<li><a href=#reference>Reference</a></li>
+</ul>
+</nav>
 <main>
 <p>移动GPU架构经常被称之为TBDR（Tiled Based Deferred Rendering），我们这里也以TBDR代称；移动架构有TBR与TBDR两种，但实际上两者之间差别没那么大，所以这里拿TBDR来做统一介绍；</p>
 <h2 id=移动tbdr架构与桌面imr架构>移动TBDR架构与桌面IMR架构</h2>

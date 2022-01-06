@@ -20,9 +20,24 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>头发渲染——Kajiya model</span></h1>
-<h2 class=date>2020/09/16</h2>
-</div>
+<h2><span class=title>头发渲染——Kajiya model</span></h2>
+<h3 class=date>2020/09/16</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#采用多边形建模>采用多边形建模</a></li>
+<li><a href=#高光计算>高光计算</a></li>
+<li><a href=#模拟真正的头发高光>模拟真正的头发高光</a></li>
+<li><a href=#渲染排序问题>渲染排序问题</a>
+<ul>
+<li><a href=#模型内部排序>模型内部排序</a></li>
+<li><a href=#渲染时的pass设置>渲染时的pass设置</a></li>
+</ul>
+</li>
+<li><a href=#使用方案>使用方案</a></li>
+<li><a href=#reference>Reference</a></li>
+</ul>
+</nav>
 <main>
 <p>关键点：采用多边形建模，进行深度排序修正渲染顺序（因为半透问题），AO去模拟自阴影，两层高光，采用Tangent向量代替N进行高光计算；</p>
 <h2 id=采用多边形建模>采用多边形建模</h2>

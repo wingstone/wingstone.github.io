@@ -20,10 +20,46 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h1><span class=title>Real Shading in Unreal Engine 4</span></h1>
-<h2 class=author>wingstone</h2>
-<h2 class=date>2022/01/01</h2>
-</div>
+<h2><span class=title>Real Shading in Unreal Engine 4</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/01/01</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#介绍>介绍</a></li>
+<li><a href=#shading-model>Shading Model</a>
+<ul>
+<li><a href=#diffuse-brdf>Diffuse BRDF</a></li>
+<li><a href=#microfacet-specular-brdf>Microfacet Specular BRDF</a></li>
+<li><a href=#image-based-lighting>Image-Based Lighting</a></li>
+</ul>
+</li>
+<li><a href=#material-model>Material Model</a>
+<ul>
+<li><a href=#experience>Experience</a></li>
+<li><a href=#material-layer>Material layer</a></li>
+</ul>
+</li>
+<li><a href=#lighting-model>Lighting model</a>
+<ul>
+<li><a href=#area-lights>Area lights</a></li>
+<li><a href=#billboard-reflections>Billboard Reflections</a></li>
+<li><a href=#cone-intersection>Cone Intersection</a></li>
+<li><a href=#specular-d-modification>Specular D Modification</a></li>
+<li><a href=#representative-point>Representative Point</a></li>
+<li><a href=#sphere-lights>Sphere Lights</a></li>
+<li><a href=#tube-lights>Tube Lights</a></li>
+</ul>
+</li>
+<li><a href=#总结>总结</a></li>
+<li><a href=#实现细节>实现细节</a>
+<ul>
+<li><a href=#area-light>Area light</a></li>
+<li><a href=#shading-model-1>shading model</a></li>
+</ul>
+</li>
+</ul>
+</nav>
 <main>
 <p>本文主要讲述PBR在Unreal中的实现思路，涉及Material Model、Shading Model、Lighting Model的背后原理与经验总结，来自演讲<a href=https://de45xmedrsdbp.cloudfront.net/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf>Real Shading in Unreal Engine 4</a>；在文章最后，添加了我个人的理解与实现细节扩展；</p>
 <h2 id=介绍>介绍</h2>
