@@ -21,6 +21,7 @@
 </nav>
 <div class=article-meta>
 <h2><span class=title>Color Space</span></h2>
+<h3 class=author>wingstone</h3>
 <h3 class=date>2021/06/26</h3>
 </div><h2>目录</h2>
 <nav id=TableOfContents>
@@ -61,8 +62,7 @@
 </ul>
 </nav>
 <main>
-<p>颜色空间介绍</p>
-<h1 id=color-space>Color Space</h1>
+<p>颜色空间作为渲染领域的理论基础，掌握后才能保证渲染显示结果的正确性；这里介绍了基础的颜色空间知识，并介绍一些常用的颜色空间；</p>
 <h2 id=physical-basis-of-color颜色的物理基础>Physical Basis of Color（颜色的物理基础）</h2>
 <p>说道颜色，首先得从光说起，因为光具有真实的物理属性；</p>
 <ul>
@@ -164,25 +164,26 @@ LogC最大的优点是维持更多的动态范围信息，甚至是超过人眼�
 <p>注意：实际上真正的物理渲染应该使用SPD来进行光照的计算与积分，即入射光使用SPD，brdf使用Spectral Reflectance Curve（）SRC，两者的积分与使用RGB直接计算得到结果会存在差异；但多数情况下，这种差异可以忽略，特别是在实时渲染；
 正确的渲染过程应该是光照的整个积分与计算都是用SPD和SRC来进行，只在最后输出的时候才转换成RGB显示；</p>
 </blockquote>
-<div id=refer-anchor></div>
 <h2 id=references>References</h2>
-<p>[1] <a href=http://poynton.ca/notes/colour_and_gamma/ColorFAQ.html>Color FAQ</a>
-[2] <a href=https://www.cg.tuwien.ac.at/research/theses/matkovic/node14.html>Colorimetry</a>
-[3] <a href=http://www.brucelindbloom.com/>brucelindbloom</a>
-[4] <a href=https://www.richardlackey.com/choosing-video-color-space/>How to Choose the Right Video Color Space</a>
-[5] <a href=https://www.richardlackey.com/what-is-a-video-color-space/>What Is A Video Color Space?</a>
-[6] <a href=https://hg2dc.com/>hitchhikers guide to digital color</a>
-[7] <a href=https://color2.psych.upenn.edu/brainard/papers/Brainard_Stockman_Colorimetry.pdf>COLORIMETRY</a>
-[8] <a href=https://research.activision.com/publications/archives/hdr-in-call-of-duty>HDR in Call of Duty</a>
-[9] <a href=http://www.cvrl.org/>Colour & Vision Research laboratory</a>
-[10] <a href=https://en.wikipedia.org/wiki/White_point>White Point</a>
-[11] <a href=https://en.wikipedia.org/wiki/Black_body>Black Body</a>
-[12] <a href=https://pomfort.com/article/an-in-depth-look-at-asc-cdl-based-color-controls/>AN IN-DEPTH LOOK AT ASC-CDL BASED COLOR CONTROLS</a>
-[13] <a href=https://cinematiccolor.org/>Cinematic Color</a>
-[14] <a href=https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@7.1/manual/Post-Processing-Lift-Gamma-Gain.html>Lift Gamma Gain</a>
-[15] <a href=https://z-fx.nl/ColorspACES.pdf>ACES pdf</a>
-[16] <a href=https://acescolorspace.com/>ACES Space</a>
-[17] <a href=https://chrisbrejon.com/cg-cinematography/chapter-1-5-academy-color-encoding-system-aces/>Color system</a></p>
+<ol>
+<li><a href=http://poynton.ca/notes/colour_and_gamma/ColorFAQ.html>Color FAQ</a></li>
+<li><a href=https://www.cg.tuwien.ac.at/research/theses/matkovic/node14.html>Colorimetry</a></li>
+<li><a href=http://www.brucelindbloom.com/>brucelindbloom</a></li>
+<li><a href=https://www.richardlackey.com/choosing-video-color-space/>How to Choose the Right Video Color Space</a></li>
+<li><a href=https://www.richardlackey.com/what-is-a-video-color-space/>What Is A Video Color Space?</a></li>
+<li><a href=https://hg2dc.com/>hitchhikers guide to digital color</a></li>
+<li><a href=https://color2.psych.upenn.edu/brainard/papers/Brainard_Stockman_Colorimetry.pdf>COLORIMETRY</a></li>
+<li><a href=https://research.activision.com/publications/archives/hdr-in-call-of-duty>HDR in Call of Duty</a></li>
+<li><a href=http://www.cvrl.org/>Colour & Vision Research laboratory</a></li>
+<li><a href=https://en.wikipedia.org/wiki/White_point>White Point</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Black_body>Black Body</a></li>
+<li><a href=https://pomfort.com/article/an-in-depth-look-at-asc-cdl-based-color-controls/>AN IN-DEPTH LOOK AT ASC-CDL BASED COLOR CONTROLS</a></li>
+<li><a href=https://cinematiccolor.org/>Cinematic Color</a></li>
+<li><a href=https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@7.1/manual/Post-Processing-Lift-Gamma-Gain.html>Lift Gamma Gain</a></li>
+<li><a href=https://z-fx.nl/ColorspACES.pdf>ACES pdf</a></li>
+<li><a href=https://acescolorspace.com/>ACES Space</a></li>
+<li><a href=https://chrisbrejon.com/cg-cinematography/chapter-1-5-academy-color-encoding-system-aces/>Color system</a></li>
+</ol>
 </main>
 <footer>
 <script defer src=//yihui.org/js/math-code.js></script>

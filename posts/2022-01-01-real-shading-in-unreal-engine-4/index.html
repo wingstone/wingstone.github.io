@@ -111,7 +111,7 @@ $$</p>
 <h3 id=image-based-lighting>Image-Based Lighting</h3>
 <p>我们使用前面的Shading Model来处理IBL，正常情况下要使用重要性采样来进行；积分公式为：</p>
 <p>$$
-\int_H {L_i(L)f(l,v)cos\theta_l} ,{\rm d}l= \frac{1}{N}\sum_{k=1}^N \frac{L_i(l_k)f(l,v)cos\theta_l}{p(l_k, v)} \quad
+\int_H {L_i(L)f(l,v)cos\theta_l} {\rm d}l= \frac{1}{N}\sum_{k=1}^N \frac{L_i(l_k)f(l,v)cos\theta_l}{p(l_k, v)} \quad
 $$</p>
 <p>代码为：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>ImportanceSampleGGX</span>( float2 Xi, <span style=color:#66d9ef>float</span> Roughness, float3 N )
@@ -190,7 +190,7 @@ $$</p>
 </code></pre></div><h4 id=environment-brdf>Environment BRDF</h4>
 <p>第二项积分，可以认为是均匀白光下，对Specular brdf的积分，即<code>$L_i(l_k)=1$</code>；对于菲涅尔项，使用Schlick的形式：<code>$F(v,h)=F_0+(1-F_0)(1-v\cdot h)^5$</code>，我们可以发现，积分中<code>$F_0$</code>可以提取出来，即</p>
 <p>$$
-\int_H {f(l,v)cos\theta_l} ,{\rm d}l= F_0\int_H {\frac{f(l,v)}{F(v,h)}(1-(1-v\cdot h)^5)cos\theta_l} ,{\rm d}l + \int_H {\frac{f(l,v)}{F(v,h)}(1-v\cdot h)^5cos\theta_l} ,{\rm d}l
+\int_H {f(l,v)cos\theta_l} {\rm d}l= F_0\int_H {\frac{f(l,v)}{F(v,h)}(1-(1-v\cdot h)^5)cos\theta_l} {\rm d}l + \int_H {\frac{f(l,v)}{F(v,h)}(1-v\cdot h)^5cos\theta_l} {\rm d}l
 $$</p>
 <p>最后的积分公式只需要Roughness与<code>$cos\theta_v$</code>作为输入，<code>$F_0$</code>的scale与bias作为输出。由于输入为0到1的范围，可以很容易的使用2dlut来存储积分结果。</p>
 <p>Unreal使用R16G16float的存储格式来存储，因为测试发现精度起着非常重要的作用。</p>
@@ -314,16 +314,16 @@ $$</p>
 <p>如果球形光源在着色平面之上，来自球形光源的Irradiance等价于来自于着色平面之上的点光源；这意味着我们只需要计算Specular lighting部分即可；</p>
 <p>我们可以光源上计算离反射光线最小角度的点，通过计算离反射光线最近点的方式：</p>
 <p>$$
-centerToRay = L-(L\cdot r)r \
+centerToRay = L-(L\cdot r)r \\
 closestPoint = L + centerToRay*saturate(\frac{sourceRadius}{|centerToRay|})
 $$</p>
 <p>其中L表示着色点到光源中心的矢量，r表示反射方向；若反射方向与光源相交，则求出来的是反射光线上距光源中心最近的点；</p>
 <p>通过移动光源位置到光源表面，我们实际上会拓宽specular分布至光源对应的cone angle；使用归一化的Phong分布来表示的话，点光源与球光源的分布分别为：</p>
 <p>$$
-I_point = \frac{p+2}{2\pi} cos^p\phi_r \
+I_point = \frac{p+2}{2\pi} cos^p\phi_r \\
 I_{sphere}
 \begin{cases}
-\frac{p+2}{2\pi} &if\phi_r &lt; \phi_a \
+\frac{p+2}{2\pi} &if\phi_r &lt; \phi_a \\
 \frac{p+2}{2\pi} cos^p(\phi_r-\phi_a) &if\phi_r > \phi_a
 \end{cases}
 $$</p>
@@ -335,7 +335,7 @@ $$</p>
 <h3 id=tube-lights>Tube Lights</h3>
 <p>首先减少光源半径为0，如此便可认为光源为linear light，linear light上理反射最小angle的近似点为：</p>
 <p>$$
-t = \frac{(r\cdot L_0)(r\cdot L_d) - (L_0\cdot L_d)}{|L_d|^2-(r\cdot L_d)^2} \
+t = \frac{(r\cdot L_0)(r\cdot L_d) - (L_0\cdot L_d)}{|L_d|^2-(r\cdot L_d)^2} \\
 l = ||L_0+saturate(t)L_d||
 $$</p>
 <p>为了保证能量守恒，使用类似于针对球形光源的方法，Specular的分布是由光源拓宽的，而linear light是一维的，因此我们可以使用anisotropic GGX的归一化因子<code>$\frac{1}{\pi \alpha_x\alpha_y}$</code>，这里<code>$\alpha_x=\alpha_y=\alpha$</code>，因此Representative Point的归一化为：</p>
@@ -349,162 +349,162 @@ $$</p>
 <h2 id=实现细节>实现细节</h2>
 <h3 id=area-light>Area light</h3>
 <p>对于球形光源的着色过程，阅读unreal源码后，发现有一些文章中没有提到的细节：</p>
-<ol>
+<ul>
 <li>Representative point方法主要用来计算面光源情况下的Specular BRDF，不会影响Irradiance的计算，因此NoL的计算直接使用光源中心即可，不需要使用Representative point计算得来的光照方向来计算NoL；</li>
 <li>NoL的计算需要考虑光源与水平面相交的特殊情况，对此情况的处理，Unreal使用近似的方式来计算NoL的wrap，并给出了解析算法的代码；</li>
-</ol>
+</ul>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// Engine/Shaders/Private/CapsuleLight.ush
 </span><span style=color:#75715e>// Alpha is half of angle of spherical cap
 </span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>SphereHorizonCosWrap</span>( <span style=color:#66d9ef>float</span> NoL, <span style=color:#66d9ef>float</span> SinAlphaSqr )
 {
 <span style=color:#75715e>#if 1
-</span><span style=color:#75715e></span>	<span style=color:#66d9ef>float</span> SinAlpha <span style=color:#f92672>=</span> sqrt( SinAlphaSqr );
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> SinAlpha <span style=color:#f92672>=</span> sqrt( SinAlphaSqr );
 
-	<span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&lt;</span> SinAlpha )
-	{
-		NoL <span style=color:#f92672>=</span> max( NoL, <span style=color:#f92672>-</span>SinAlpha );
+    <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&lt;</span> SinAlpha )
+    {
+        NoL <span style=color:#f92672>=</span> max( NoL, <span style=color:#f92672>-</span>SinAlpha );
 <span style=color:#75715e>#if 0</span><span style=color:#75715e>
-</span><span style=color:#75715e>		// Accurate sphere irradiance
-</span><span style=color:#75715e>		float CosBeta = NoL;
-</span><span style=color:#75715e>		float SinBeta = sqrt( 1 - CosBeta * CosBeta );
-</span><span style=color:#75715e>		float TanBeta = SinBeta / CosBeta;
+</span><span style=color:#75715e>        // Accurate sphere irradiance
+</span><span style=color:#75715e>        float CosBeta = NoL;
+</span><span style=color:#75715e>        float SinBeta = sqrt( 1 - CosBeta * CosBeta );
+</span><span style=color:#75715e>        float TanBeta = SinBeta / CosBeta;
 </span><span style=color:#75715e>
-</span><span style=color:#75715e>		float x = sqrt( 1 / SinAlphaSqr - 1 );
-</span><span style=color:#75715e>		float y = -x / TanBeta;
-</span><span style=color:#75715e>		float z = SinBeta * sqrt(1 - y*y);
+</span><span style=color:#75715e>        float x = sqrt( 1 / SinAlphaSqr - 1 );
+</span><span style=color:#75715e>        float y = -x / TanBeta;
+</span><span style=color:#75715e>        float z = SinBeta * sqrt(1 - y*y);
 </span><span style=color:#75715e>
-</span><span style=color:#75715e>		NoL = NoL * acos(y) - x * z + atan( z / x ) / SinAlphaSqr;
-</span><span style=color:#75715e>		NoL /= PI;
+</span><span style=color:#75715e>        NoL = NoL * acos(y) - x * z + atan( z / x ) / SinAlphaSqr;
+</span><span style=color:#75715e>        NoL /= PI;
 </span><span style=color:#75715e></span><span style=color:#75715e>#else
-</span><span style=color:#75715e></span>		<span style=color:#75715e>// Hermite spline approximation
-</span><span style=color:#75715e></span>		<span style=color:#75715e>// Fairly accurate with SinAlpha &lt; 0.8
-</span><span style=color:#75715e></span>		<span style=color:#75715e>// y=0 and dy/dx=0 at -SinAlpha
-</span><span style=color:#75715e></span>		<span style=color:#75715e>// y=SinAlpha and dy/dx=1 at SinAlpha
-</span><span style=color:#75715e></span>		NoL <span style=color:#f92672>=</span> Pow2( SinAlpha <span style=color:#f92672>+</span> NoL ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>4</span> <span style=color:#f92672>*</span> SinAlpha );
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// Hermite spline approximation
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// Fairly accurate with SinAlpha &lt; 0.8
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// y=0 and dy/dx=0 at -SinAlpha
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// y=SinAlpha and dy/dx=1 at SinAlpha
+</span><span style=color:#75715e></span>        NoL <span style=color:#f92672>=</span> Pow2( SinAlpha <span style=color:#f92672>+</span> NoL ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>4</span> <span style=color:#f92672>*</span> SinAlpha );
 <span style=color:#75715e>#endif
-</span><span style=color:#75715e></span>	}
+</span><span style=color:#75715e></span>    }
 <span style=color:#75715e>#else
-</span><span style=color:#75715e></span>	NoL <span style=color:#f92672>=</span> saturate( ( NoL <span style=color:#f92672>+</span> SinAlphaSqr ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> SinAlphaSqr ) );
+</span><span style=color:#75715e></span>    NoL <span style=color:#f92672>=</span> saturate( ( NoL <span style=color:#f92672>+</span> SinAlphaSqr ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> SinAlphaSqr ) );
 <span style=color:#75715e>#endif
 </span><span style=color:#75715e></span>
-	<span style=color:#66d9ef>return</span> NoL;
+    <span style=color:#66d9ef>return</span> NoL;
 }
-</code></pre></div><ol start=3>
+</code></pre></div><ul>
 <li>能量守恒同样只针对于Speculer部分，对于normalize需要的 <code>$\alpha \prime$</code> 的计算，源码中给出了不一样的计算方法，与modified D distribution方法中的计算方式不同；</li>
-</ol>
+</ul>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// Engine/Shaders/Private/ShadingModels.ush
 </span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>New_a2</span>( <span style=color:#66d9ef>float</span> a2, <span style=color:#66d9ef>float</span> SinAlpha, <span style=color:#66d9ef>float</span> VoH )
 {
-	<span style=color:#66d9ef>return</span> a2 <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> SinAlpha <span style=color:#f92672>*</span> (<span style=color:#ae81ff>3.0</span> <span style=color:#f92672>*</span> sqrtFast(a2) <span style=color:#f92672>+</span> SinAlpha) <span style=color:#f92672>/</span> ( VoH <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.001</span> );
-	<span style=color:#75715e>//return a2 + 0.25 * SinAlpha * ( saturate(12 * a2 + 0.125) + SinAlpha ) / ( VoH + 0.001 );
-</span><span style=color:#75715e></span>	<span style=color:#75715e>//return a2 + 0.25 * SinAlpha * ( a2 * 2 + 1 + SinAlpha ) / ( VoH + 0.001 );
+    <span style=color:#66d9ef>return</span> a2 <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> SinAlpha <span style=color:#f92672>*</span> (<span style=color:#ae81ff>3.0</span> <span style=color:#f92672>*</span> sqrtFast(a2) <span style=color:#f92672>+</span> SinAlpha) <span style=color:#f92672>/</span> ( VoH <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.001</span> );
+    <span style=color:#75715e>//return a2 + 0.25 * SinAlpha * ( saturate(12 * a2 + 0.125) + SinAlpha ) / ( VoH + 0.001 );
+</span><span style=color:#75715e></span>    <span style=color:#75715e>//return a2 + 0.25 * SinAlpha * ( a2 * 2 + 1 + SinAlpha ) / ( VoH + 0.001 );
 </span><span style=color:#75715e></span>}
 <span style=color:#66d9ef>float</span> <span style=color:#a6e22e>EnergyNormalization</span>( inout <span style=color:#66d9ef>float</span> a2, <span style=color:#66d9ef>float</span> VoH, FAreaLight AreaLight )
 {
-	<span style=color:#66d9ef>if</span>( AreaLight.SphereSinAlphaSoft <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-	{
-		<span style=color:#75715e>// Modify Roughness
-</span><span style=color:#75715e></span>		a2 <span style=color:#f92672>=</span> saturate( a2 <span style=color:#f92672>+</span> Pow2( AreaLight.SphereSinAlphaSoft ) <span style=color:#f92672>/</span> ( VoH <span style=color:#f92672>*</span> <span style=color:#ae81ff>3.6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.4</span> ) );
-	}
+    <span style=color:#66d9ef>if</span>( AreaLight.SphereSinAlphaSoft <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+    {
+        <span style=color:#75715e>// Modify Roughness
+</span><span style=color:#75715e></span>        a2 <span style=color:#f92672>=</span> saturate( a2 <span style=color:#f92672>+</span> Pow2( AreaLight.SphereSinAlphaSoft ) <span style=color:#f92672>/</span> ( VoH <span style=color:#f92672>*</span> <span style=color:#ae81ff>3.6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.4</span> ) );
+    }
 
-	<span style=color:#66d9ef>float</span> Sphere_a2 <span style=color:#f92672>=</span> a2;
-	<span style=color:#66d9ef>float</span> Energy <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
-	<span style=color:#66d9ef>if</span>( AreaLight.SphereSinAlpha <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-	{
-		Sphere_a2 <span style=color:#f92672>=</span> New_a2( a2, AreaLight.SphereSinAlpha, VoH );
-		Energy <span style=color:#f92672>=</span> a2 <span style=color:#f92672>/</span> Sphere_a2;
-	}
+    <span style=color:#66d9ef>float</span> Sphere_a2 <span style=color:#f92672>=</span> a2;
+    <span style=color:#66d9ef>float</span> Energy <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+    <span style=color:#66d9ef>if</span>( AreaLight.SphereSinAlpha <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+    {
+        Sphere_a2 <span style=color:#f92672>=</span> New_a2( a2, AreaLight.SphereSinAlpha, VoH );
+        Energy <span style=color:#f92672>=</span> a2 <span style=color:#f92672>/</span> Sphere_a2;
+    }
 
-	<span style=color:#66d9ef>if</span>( AreaLight.LineCosSubtended <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>1</span> )
-	{
+    <span style=color:#66d9ef>if</span>( AreaLight.LineCosSubtended <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>1</span> )
+    {
 <span style=color:#75715e>#if 1
-</span><span style=color:#75715e></span>		<span style=color:#66d9ef>float</span> LineCosTwoAlpha <span style=color:#f92672>=</span> AreaLight.LineCosSubtended;
-		<span style=color:#66d9ef>float</span> LineTanAlpha <span style=color:#f92672>=</span> sqrt( ( <span style=color:#ae81ff>1.0001</span> <span style=color:#f92672>-</span> LineCosTwoAlpha ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> LineCosTwoAlpha ) );
-		<span style=color:#66d9ef>float</span> Line_a2 <span style=color:#f92672>=</span> New_a2( Sphere_a2, LineTanAlpha, VoH );
-		Energy <span style=color:#f92672>*=</span> sqrt( Sphere_a2 <span style=color:#f92672>/</span> Line_a2 );
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>float</span> LineCosTwoAlpha <span style=color:#f92672>=</span> AreaLight.LineCosSubtended;
+        <span style=color:#66d9ef>float</span> LineTanAlpha <span style=color:#f92672>=</span> sqrt( ( <span style=color:#ae81ff>1.0001</span> <span style=color:#f92672>-</span> LineCosTwoAlpha ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> LineCosTwoAlpha ) );
+        <span style=color:#66d9ef>float</span> Line_a2 <span style=color:#f92672>=</span> New_a2( Sphere_a2, LineTanAlpha, VoH );
+        Energy <span style=color:#f92672>*=</span> sqrt( Sphere_a2 <span style=color:#f92672>/</span> Line_a2 );
 <span style=color:#75715e>#else
-</span><span style=color:#75715e></span>		<span style=color:#66d9ef>float</span> LineCosTwoAlpha <span style=color:#f92672>=</span> AreaLight.LineCosSubtended;
-		<span style=color:#66d9ef>float</span> LineSinAlpha <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> LineCosTwoAlpha );
-		<span style=color:#66d9ef>float</span> Line_a2 <span style=color:#f92672>=</span> New_a2( Sphere_a2, LineSinAlpha, VoH );
-		Energy <span style=color:#f92672>*=</span> Sphere_a2 <span style=color:#f92672>/</span> Line_a2;
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>float</span> LineCosTwoAlpha <span style=color:#f92672>=</span> AreaLight.LineCosSubtended;
+        <span style=color:#66d9ef>float</span> LineSinAlpha <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> LineCosTwoAlpha );
+        <span style=color:#66d9ef>float</span> Line_a2 <span style=color:#f92672>=</span> New_a2( Sphere_a2, LineSinAlpha, VoH );
+        Energy <span style=color:#f92672>*=</span> Sphere_a2 <span style=color:#f92672>/</span> Line_a2;
 <span style=color:#75715e>#endif
-</span><span style=color:#75715e></span>	}
+</span><span style=color:#75715e></span>    }
 
-	<span style=color:#66d9ef>return</span> Energy;
+    <span style=color:#66d9ef>return</span> Energy;
 }
 
-</code></pre></div><ol start=4>
+</code></pre></div><ul>
 <li>在计算Specular BRDF是时候，unreal参考了Decima Engine演讲<a href=http://advances.realtimerendering.com/s2017/DecimaSiggraph2017.pdf>Decima Engine: Advances in Lighting and AA</a>中的做法，来计算NoH的最大值，代码为：</li>
-</ol>
+</ul>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// Engine/Shaders/Private/BRDF.ush
 </span><span style=color:#75715e>// [ de Carpentier 2017, &#34;Decima Engine: Advances in Lighting and AA&#34; ]
 </span><span style=color:#75715e></span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SphereMaxNoH</span>( inout BxDFContext Context, <span style=color:#66d9ef>float</span> SinAlpha, <span style=color:#66d9ef>bool</span> bNewtonIteration )
 {
-	<span style=color:#66d9ef>if</span>( SinAlpha <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-	{
-		<span style=color:#66d9ef>float</span> CosAlpha <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Pow2( SinAlpha ) );
-	
-		<span style=color:#66d9ef>float</span> RoL <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoL <span style=color:#f92672>*</span> Context.NoV <span style=color:#f92672>-</span> Context.VoL;
-		<span style=color:#66d9ef>if</span>( RoL <span style=color:#f92672>&gt;=</span> CosAlpha )
-		{
-			Context.NoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
-			Context.XoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-			Context.YoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-			Context.VoH <span style=color:#f92672>=</span> abs( Context.NoV );
-		}
-		<span style=color:#66d9ef>else</span>
-		{
-			<span style=color:#66d9ef>float</span> rInvLengthT <span style=color:#f92672>=</span> SinAlpha <span style=color:#f92672>*</span> rsqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> RoL<span style=color:#f92672>*</span>RoL );
-			<span style=color:#66d9ef>float</span> NoTr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> ( Context.NoV <span style=color:#f92672>-</span> RoL <span style=color:#f92672>*</span> Context.NoL );
+    <span style=color:#66d9ef>if</span>( SinAlpha <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+    {
+        <span style=color:#66d9ef>float</span> CosAlpha <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Pow2( SinAlpha ) );
+    
+        <span style=color:#66d9ef>float</span> RoL <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoL <span style=color:#f92672>*</span> Context.NoV <span style=color:#f92672>-</span> Context.VoL;
+        <span style=color:#66d9ef>if</span>( RoL <span style=color:#f92672>&gt;=</span> CosAlpha )
+        {
+            Context.NoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+            Context.XoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+            Context.YoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+            Context.VoH <span style=color:#f92672>=</span> abs( Context.NoV );
+        }
+        <span style=color:#66d9ef>else</span>
+        {
+            <span style=color:#66d9ef>float</span> rInvLengthT <span style=color:#f92672>=</span> SinAlpha <span style=color:#f92672>*</span> rsqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> RoL<span style=color:#f92672>*</span>RoL );
+            <span style=color:#66d9ef>float</span> NoTr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> ( Context.NoV <span style=color:#f92672>-</span> RoL <span style=color:#f92672>*</span> Context.NoL );
 <span style=color:#75715e>// Enable once anisotropic materials support area lights
 </span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
-</span><span style=color:#75715e>			float XoTr = rInvLengthT * ( Context.XoV - RoL * Context.XoL );
-</span><span style=color:#75715e>			float YoTr = rInvLengthT * ( Context.YoV - RoL * Context.YoL );
+</span><span style=color:#75715e>            float XoTr = rInvLengthT * ( Context.XoV - RoL * Context.XoL );
+</span><span style=color:#75715e>            float YoTr = rInvLengthT * ( Context.YoV - RoL * Context.YoL );
 </span><span style=color:#75715e></span><span style=color:#75715e>#endif
-</span><span style=color:#75715e></span>			<span style=color:#66d9ef>float</span> VoTr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> ( <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoV<span style=color:#f92672>*</span>Context.NoV <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> RoL <span style=color:#f92672>*</span> Context.VoL );
+</span><span style=color:#75715e></span>            <span style=color:#66d9ef>float</span> VoTr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> ( <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoV<span style=color:#f92672>*</span>Context.NoV <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> RoL <span style=color:#f92672>*</span> Context.VoL );
 
-			<span style=color:#66d9ef>if</span> (bNewtonIteration)
-			{
-				<span style=color:#75715e>// dot( cross(N,L), V )
-</span><span style=color:#75715e></span>				<span style=color:#66d9ef>float</span> NxLoV <span style=color:#f92672>=</span> sqrt( saturate( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Pow2(Context.NoL) <span style=color:#f92672>-</span> Pow2(Context.NoV) <span style=color:#f92672>-</span> Pow2(Context.VoL) <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoL <span style=color:#f92672>*</span> Context.NoV <span style=color:#f92672>*</span> Context.VoL ) );
+            <span style=color:#66d9ef>if</span> (bNewtonIteration)
+            {
+                <span style=color:#75715e>// dot( cross(N,L), V )
+</span><span style=color:#75715e></span>                <span style=color:#66d9ef>float</span> NxLoV <span style=color:#f92672>=</span> sqrt( saturate( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Pow2(Context.NoL) <span style=color:#f92672>-</span> Pow2(Context.NoV) <span style=color:#f92672>-</span> Pow2(Context.VoL) <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoL <span style=color:#f92672>*</span> Context.NoV <span style=color:#f92672>*</span> Context.VoL ) );
 
-				<span style=color:#66d9ef>float</span> NoBr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> NxLoV;
-				<span style=color:#66d9ef>float</span> VoBr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> NxLoV <span style=color:#f92672>*</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoV;
+                <span style=color:#66d9ef>float</span> NoBr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> NxLoV;
+                <span style=color:#66d9ef>float</span> VoBr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> NxLoV <span style=color:#f92672>*</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoV;
 
-				<span style=color:#66d9ef>float</span> NoLVTr <span style=color:#f92672>=</span> Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> Context.NoV <span style=color:#f92672>+</span> NoTr;
-				<span style=color:#66d9ef>float</span> VoLVTr <span style=color:#f92672>=</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>   <span style=color:#f92672>+</span> VoTr;
+                <span style=color:#66d9ef>float</span> NoLVTr <span style=color:#f92672>=</span> Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> Context.NoV <span style=color:#f92672>+</span> NoTr;
+                <span style=color:#66d9ef>float</span> VoLVTr <span style=color:#f92672>=</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>   <span style=color:#f92672>+</span> VoTr;
 
-				<span style=color:#66d9ef>float</span> p <span style=color:#f92672>=</span> NoBr   <span style=color:#f92672>*</span> VoLVTr;
-				<span style=color:#66d9ef>float</span> q <span style=color:#f92672>=</span> NoLVTr <span style=color:#f92672>*</span> VoLVTr;
-				<span style=color:#66d9ef>float</span> s <span style=color:#f92672>=</span> VoBr   <span style=color:#f92672>*</span> NoLVTr;
+                <span style=color:#66d9ef>float</span> p <span style=color:#f92672>=</span> NoBr   <span style=color:#f92672>*</span> VoLVTr;
+                <span style=color:#66d9ef>float</span> q <span style=color:#f92672>=</span> NoLVTr <span style=color:#f92672>*</span> VoLVTr;
+                <span style=color:#66d9ef>float</span> s <span style=color:#f92672>=</span> VoBr   <span style=color:#f92672>*</span> NoLVTr;
 
-				<span style=color:#66d9ef>float</span> xNum <span style=color:#f92672>=</span> q <span style=color:#f92672>*</span> ( <span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> p <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> VoBr <span style=color:#f92672>*</span> NoLVTr );
-				<span style=color:#66d9ef>float</span> xDenom <span style=color:#f92672>=</span> p<span style=color:#f92672>*</span>p <span style=color:#f92672>+</span> s <span style=color:#f92672>*</span> (s <span style=color:#f92672>-</span> <span style=color:#ae81ff>2</span><span style=color:#f92672>*</span>p) <span style=color:#f92672>+</span> NoLVTr <span style=color:#f92672>*</span> ( (Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> Context.NoV) <span style=color:#f92672>*</span> Pow2(VoLVTr) <span style=color:#f92672>+</span> q <span style=color:#f92672>*</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> (VoLVTr <span style=color:#f92672>+</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha) <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.5</span>) );
-				<span style=color:#66d9ef>float</span> TwoX1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> xNum <span style=color:#f92672>/</span> ( Pow2(xDenom) <span style=color:#f92672>+</span> Pow2(xNum) );
-				<span style=color:#66d9ef>float</span> SinTheta <span style=color:#f92672>=</span> TwoX1 <span style=color:#f92672>*</span> xDenom;
-				<span style=color:#66d9ef>float</span> CosTheta <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span> TwoX1 <span style=color:#f92672>*</span> xNum;
-				NoTr <span style=color:#f92672>=</span> CosTheta <span style=color:#f92672>*</span> NoTr <span style=color:#f92672>+</span> SinTheta <span style=color:#f92672>*</span> NoBr;
-				VoTr <span style=color:#f92672>=</span> CosTheta <span style=color:#f92672>*</span> VoTr <span style=color:#f92672>+</span> SinTheta <span style=color:#f92672>*</span> VoBr;
-			}
+                <span style=color:#66d9ef>float</span> xNum <span style=color:#f92672>=</span> q <span style=color:#f92672>*</span> ( <span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> p <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> VoBr <span style=color:#f92672>*</span> NoLVTr );
+                <span style=color:#66d9ef>float</span> xDenom <span style=color:#f92672>=</span> p<span style=color:#f92672>*</span>p <span style=color:#f92672>+</span> s <span style=color:#f92672>*</span> (s <span style=color:#f92672>-</span> <span style=color:#ae81ff>2</span><span style=color:#f92672>*</span>p) <span style=color:#f92672>+</span> NoLVTr <span style=color:#f92672>*</span> ( (Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> Context.NoV) <span style=color:#f92672>*</span> Pow2(VoLVTr) <span style=color:#f92672>+</span> q <span style=color:#f92672>*</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> (VoLVTr <span style=color:#f92672>+</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha) <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.5</span>) );
+                <span style=color:#66d9ef>float</span> TwoX1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> xNum <span style=color:#f92672>/</span> ( Pow2(xDenom) <span style=color:#f92672>+</span> Pow2(xNum) );
+                <span style=color:#66d9ef>float</span> SinTheta <span style=color:#f92672>=</span> TwoX1 <span style=color:#f92672>*</span> xDenom;
+                <span style=color:#66d9ef>float</span> CosTheta <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span> TwoX1 <span style=color:#f92672>*</span> xNum;
+                NoTr <span style=color:#f92672>=</span> CosTheta <span style=color:#f92672>*</span> NoTr <span style=color:#f92672>+</span> SinTheta <span style=color:#f92672>*</span> NoBr;
+                VoTr <span style=color:#f92672>=</span> CosTheta <span style=color:#f92672>*</span> VoTr <span style=color:#f92672>+</span> SinTheta <span style=color:#f92672>*</span> VoBr;
+            }
 
-			Context.NoL <span style=color:#f92672>=</span> Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> NoTr; <span style=color:#75715e>// dot( N, L * CosAlpha + T * SinAlpha )
+            Context.NoL <span style=color:#f92672>=</span> Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> NoTr; <span style=color:#75715e>// dot( N, L * CosAlpha + T * SinAlpha )
 </span><span style=color:#75715e>// Enable once anisotropic materials support area lights
 </span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
-</span><span style=color:#75715e>			Context.XoL = Context.XoL * CosAlpha + XoTr;
-</span><span style=color:#75715e>			Context.YoL = Context.YoL * CosAlpha + YoTr;
+</span><span style=color:#75715e>            Context.XoL = Context.XoL * CosAlpha + XoTr;
+</span><span style=color:#75715e>            Context.YoL = Context.YoL * CosAlpha + YoTr;
 </span><span style=color:#75715e></span><span style=color:#75715e>#endif
-</span><span style=color:#75715e></span>			Context.VoL <span style=color:#f92672>=</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> VoTr;
+</span><span style=color:#75715e></span>            Context.VoL <span style=color:#f92672>=</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> VoTr;
 
-			<span style=color:#66d9ef>float</span> InvLenH <span style=color:#f92672>=</span> rsqrt( <span style=color:#ae81ff>2</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.VoL );
-			Context.NoH <span style=color:#f92672>=</span> saturate( ( Context.NoL <span style=color:#f92672>+</span> Context.NoV ) <span style=color:#f92672>*</span> InvLenH );
+            <span style=color:#66d9ef>float</span> InvLenH <span style=color:#f92672>=</span> rsqrt( <span style=color:#ae81ff>2</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.VoL );
+            Context.NoH <span style=color:#f92672>=</span> saturate( ( Context.NoL <span style=color:#f92672>+</span> Context.NoV ) <span style=color:#f92672>*</span> InvLenH );
 <span style=color:#75715e>// Enable once anisotropic materials support area lights
 </span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
-</span><span style=color:#75715e>			Context.XoH = ((Context.XoL + Context.XoV) * InvLenH);	// dot(X, (L+V)/|L+V|)
-</span><span style=color:#75715e>			Context.YoH = ((Context.YoL + Context.YoV) * InvLenH);
+</span><span style=color:#75715e>            Context.XoH = ((Context.XoL + Context.XoV) * InvLenH);    // dot(X, (L+V)/|L+V|)
+</span><span style=color:#75715e>            Context.YoH = ((Context.YoL + Context.YoV) * InvLenH);
 </span><span style=color:#75715e></span><span style=color:#75715e>#endif
-</span><span style=color:#75715e></span>			Context.VoH <span style=color:#f92672>=</span> saturate( InvLenH <span style=color:#f92672>+</span> InvLenH <span style=color:#f92672>*</span> Context.VoL );
-		}
-	}
+</span><span style=color:#75715e></span>            Context.VoH <span style=color:#f92672>=</span> saturate( InvLenH <span style=color:#f92672>+</span> InvLenH <span style=color:#f92672>*</span> Context.VoL );
+        }
+    }
 }
 </code></pre></div><h3 id=shading-model-1>shading model</h3>
 <p>在IBL这一块unreal使用了lut来做精确计算。不过随着硬件的发展，alu比带宽性能将会更友好，在2012的SIGGRAPH上<a href=https://blog.selfshadow.com/publications/s2013-shading-course/>Getting More Physical in Call of Duty: Black Ops II</a>给出了blin-phong模型的的EnvBRDF拟合做法；<a href=https://knarkowicz.wordpress.com/2014/12/27/analytical-dfg-term-for-ibl/>Krzysztof Narkowicz</a>以此为参考，给出了ggx的enviromwnt brdf拟合公式，代码为：</p>
@@ -551,20 +551,20 @@ float3 <span style=color:#a6e22e>EnvDFGPolynomial</span>( float3 specularColor, 
 </code></pre></div><p>对于mobile平台，出于对考虑性能问题。unreal也参考COD给出了ggx的EnvBRDF拟合公式，相关发表为<a href=https://www.unrealengine.com/en-US/blog/physically-based-shading-on-mobile>Physically Based Shading on Mobile</a>，如下：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>half3 <span style=color:#a6e22e>EnvBRDFApprox</span>( half3 SpecularColor, half Roughness, half NoV )
 {
-	<span style=color:#66d9ef>const</span> half4 c0 <span style=color:#f92672>=</span> { <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0275</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.572</span>, <span style=color:#ae81ff>0.022</span> };
-	<span style=color:#66d9ef>const</span> half4 c1 <span style=color:#f92672>=</span> { <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0.0425</span>, <span style=color:#ae81ff>1.04</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.04</span> };
-	half4 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
-	half a004 <span style=color:#f92672>=</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
-	half2 AB <span style=color:#f92672>=</span> half2( <span style=color:#f92672>-</span><span style=color:#ae81ff>1.04</span>, <span style=color:#ae81ff>1.04</span> ) <span style=color:#f92672>*</span> a004 <span style=color:#f92672>+</span> r.zw;
-	<span style=color:#66d9ef>return</span> SpecularColor <span style=color:#f92672>*</span> AB.x <span style=color:#f92672>+</span> AB.y;
+    <span style=color:#66d9ef>const</span> half4 c0 <span style=color:#f92672>=</span> { <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0275</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.572</span>, <span style=color:#ae81ff>0.022</span> };
+    <span style=color:#66d9ef>const</span> half4 c1 <span style=color:#f92672>=</span> { <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0.0425</span>, <span style=color:#ae81ff>1.04</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.04</span> };
+    half4 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
+    half a004 <span style=color:#f92672>=</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
+    half2 AB <span style=color:#f92672>=</span> half2( <span style=color:#f92672>-</span><span style=color:#ae81ff>1.04</span>, <span style=color:#ae81ff>1.04</span> ) <span style=color:#f92672>*</span> a004 <span style=color:#f92672>+</span> r.zw;
+    <span style=color:#66d9ef>return</span> SpecularColor <span style=color:#f92672>*</span> AB.x <span style=color:#f92672>+</span> AB.y;
 }
 half <span style=color:#a6e22e>EnvBRDFApproxNonmetal</span>( half Roughness, half NoV )
 {
-	<span style=color:#75715e>// Same as EnvBRDFApprox( 0.04, Roughness, NoV )
-</span><span style=color:#75715e></span>	<span style=color:#66d9ef>const</span> half2 c0 <span style=color:#f92672>=</span> { <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0275</span> };
-	<span style=color:#66d9ef>const</span> half2 c1 <span style=color:#f92672>=</span> { <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0.0425</span> };
-	half2 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
-	<span style=color:#66d9ef>return</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
+    <span style=color:#75715e>// Same as EnvBRDFApprox( 0.04, Roughness, NoV )
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>const</span> half2 c0 <span style=color:#f92672>=</span> { <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0275</span> };
+    <span style=color:#66d9ef>const</span> half2 c1 <span style=color:#f92672>=</span> { <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0.0425</span> };
+    half2 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
+    <span style=color:#66d9ef>return</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
 }
 </code></pre></div><p>Unity针对移动平台的性能要求，提供了更为简化的EnvBRDF公式，此外Unity还提供了ggx brdf在移动平台的简化版，参考文章为<a href=https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/moving-mobile-graphics>Moving Mobile Graphics</a>中的Optimizing PBR演讲；</p>
 <p>而unity在buildin管线及urp管线中，实际使用的EnvBRDF代码与以上代码并不一致，网上也找不到相应的文章参考，实际的代码实现为：</p>

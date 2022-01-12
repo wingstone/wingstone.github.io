@@ -1,0 +1,108 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>个人blog构建总结 | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/>Home</a></li>
+<li><a href=/categories/>Categories</a></li>
+<li><a href=/tags/>Tags</a></li>
+<li><a href=/archives/>Archives</a></li>
+<li><a href=/about/>About</a></li>
+<li><a href=/index.xml>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>个人blog构建总结</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/01/12</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#技术方案>技术方案</a>
+<ul>
+<li><a href=#github-pages>github pages</a></li>
+<li><a href=#hugo>hugo</a></li>
+<li><a href=#xmin>xmin</a></li>
+<li><a href=#github-actions>github actions</a></li>
+</ul>
+</li>
+<li><a href=#坑点>坑点</a>
+<ul>
+<li><a href=#mathjax支持的限制>mathjax支持的限制</a></li>
+<li><a href=#代码修改失效>代码修改失效</a></li>
+<li><a href=#md中使用图片>md中使用图片</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+<main>
+<p>这篇文章记录个人blog的建立经历，包括主要的技术方案汇总，建立过程中遇到的坑点，以及对应的解决方案；</p>
+<h2 id=技术方案>技术方案</h2>
+<h3 id=github-pages>github pages</h3>
+<p>使用github pages来托管自己的个人网站，<a href=https://pages.github.com/>github pages</a>依赖于github建立，可以实现静态网站的搭建，免费，且不限制网站个数，只要建立对应的仓库即可；</p>
+<h3 id=hugo>hugo</h3>
+<p>使用hugo来构建自己的个人网站，<a href=https://gohugo.io/>hugo</a>作为静态网站生成器，可以非常快速的生产我们设计好的网站；</p>
+<p>hugo的安装与使用也非常方便，首先下载可执行文件，然后将可执行文件所在目录添加至环境变量的path中，之后我们就可以在命令行中进行网站的手动构建了；不需要再配置其它的环境，对新人非常友好；</p>
+<p>并且提供了大量的免费，供我们来使用和扩充；我们可以下载喜欢的主题，放置到themes文件夹下，然后配置对应toml文件，我们使用我们喜欢的主题，并进行模块的自由配置；</p>
+<h3 id=xmin>xmin</h3>
+<p>使用xmin主题作为基础的hugo主题选择，<a href=https://github.com/yihui/hugo-xmin>xmin</a>主题代码量非常少，只有大约150行左右，非常适合作为初学者的第一个主题，随后我们对此主题进行我们需要功能的扩充；</p>
+<p>xmin基本的功能其实已经足够作为一个简洁的个人博客来使用了；博客中常见的about、markdown、markdown公式、tag、category、个人网站链接、subscribe等功能都提供了建议的支持；只不过使用的过程中有一些坑点，值得细谈；</p>
+<h3 id=github-actions>github actions</h3>
+<p>使用github actions来自动化部署我们的网站，<a href=https://github.com/peaceiris/actions-gh-pages>github actions</a>可以在我们提交源代码工程后触发网站的构建，以及网站的发布；</p>
+<p>使用github actions来发布的方法有很多，我是通过开两个仓库来进行部署，网络上有文章分享使用两个分支来进行部署的方案，各个方法都有利弊，使用哪个看个人选择了~；</p>
+<h2 id=坑点>坑点</h2>
+<h3 id=mathjax支持的限制>mathjax支持的限制</h3>
+<p>hugo默认是没有添加mathjax的支持的，需要我们自己扩展；幸运的是，扩展mathjax的支持非常容易，xmin主题里提供了layout中foot_custom的扩展，来支持mathjax；</p>
+<p>虽然markdown中支持了mathjax，但是仍有一定的限制：</p>
+<ul>
+<li>行内公式需要使用反单引号括起来，即$xxxx$外要使用``括起来，否则无法生效；</li>
+<li>多行公式如果有换行的话，不能用\\，应该用\\\\，否则无法生效;</li>
+</ul>
+<p>hugo的内置markdownhandler为goldmark，因此goldmark的一些限制，我们只能通过geek来达到，主要是页脚的限制；</p>
+<ul>
+<li>页脚上标添加中括号，需要对主题的css文件进行更改：</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-css data-lang=css><span style=color:#f92672>a</span>.<span style=color:#a6e22e>footnote-ref</span>::<span style=color:#a6e22e>before</span> {
+  <span style=color:#66d9ef>content</span>: <span style=color:#e6db74>&#39;[&#39;</span>;
+}
+
+<span style=color:#f92672>a</span>.<span style=color:#a6e22e>footnote-ref</span>::<span style=color:#a6e22e>after</span> {
+  <span style=color:#66d9ef>content</span>: <span style=color:#e6db74>&#39;]&#39;</span>;
+}
+</code></pre></div><ul>
+<li>页脚跳转需要替换符号，需要对主题的css文件进行更改：</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-css data-lang=css>
+.<span style=color:#a6e22e>footnote-backref</span> {
+  <span style=color:#66d9ef>visibility</span>: <span style=color:#66d9ef>hidden</span>;
+}
+.<span style=color:#a6e22e>footnote-backref</span>::<span style=color:#a6e22e>before</span> {
+  <span style=color:#66d9ef>content</span>: <span style=color:#e6db74>&#39;^&#39;</span>;
+  <span style=color:#66d9ef>visibility</span>: <span style=color:#66d9ef>visible</span>;
+}
+</code></pre></div><h3 id=代码修改失效>代码修改失效</h3>
+<p>我们调整代码时，经常会遇到修改css文件后，打开重新构建的网站，发现没有变化；原因是浏览器对css进行的缓存，要想生效，需要清除浏览器的css缓存；可以去google应用商店里下载一些插件，来达到清除缓存的目的；</p>
+<h3 id=md中使用图片>md中使用图片</h3>
+<p>markdown中使用图片有诸多限制，一是图片会以原尺寸显示，二是图片会自动左对齐；</p>
+<ul>
+<li>图片尺寸问题的解决方案为，准备图片素材时，就对分辨率进行设计，就跟ui一样，保证图片的分辨率素材与显示一致；这样反而会避免md对图片缩放的影响；</li>
+<li>图片自动的左对齐的问题相对简单，因为goldmark默认为居中对齐的，刚好可以满足我们的需要；</li>
+</ul>
+</main>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+</footer>
+</body>
+</html>
