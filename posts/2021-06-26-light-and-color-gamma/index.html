@@ -49,12 +49,12 @@
 <p>在图形开发中，总绕不开的一个名词，gamma，这里会对gamma进行一个粗暴但是通俗的讲解，便于理清图形开发中关于gamma的一切；</p>
 <h2 id=一gamma是什么>一、gamma是什么？</h2>
 <p>gamma是什么，gamma faq<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>中有解释：在传统的crt显示器中，屏幕显示的luminance与电压并不是成正比的关系，而是成一个幂次方的关系，即<code>$l = v^\gamma$</code>，其中的幂就是我们通说所说的gamma；</p>
-<p><img src=/post-images/gamma/gamma.png alt=gamma变换></p>
+<p><img src=gamma.png alt=gamma变换></p>
 <center>显示器的gamma变换</center>
 <h2 id=二gamma-correction>二、gamma correction</h2>
 <h3 id=gamma-correction是什么>gamma correction是什么？</h3>
 <p>由于显示器所显示的luminance为正常展示场景亮度的gamma次方（我们称之为gamma变换），为了使显示器亮度为正常的展示场景亮度，抵消显示器gamma变换的影响，必须在显示器前对展示场景亮度做 <strong>gamma变换的逆变换</strong> ，此逆变换我们称之为 <strong>gamma correction</strong> ；</p>
-<p><img src=/post-images/gamma/gamma-correction.png alt="gamma correction"></p>
+<p><img src=gamma-correction.png alt="gamma correction"></p>
 <center>显示器的gamma correction</center>
 <p>实际上场景所在的空间，我们常称之为线性空间，即 <strong>linear space</strong> ，对应着曲线y=x；经过 <strong>gamma correction过后的空间</strong> ，我们称之为gamma空间，即 <strong>gamma space</strong> ，对应着曲线y=x的上半段；</p>
 <p>gamma correction有时也称 <strong>encode gamma</strong> ，从gamma空间转换到线性空间变换则称之为 <strong>decode gamma</strong> ；</p>
@@ -64,10 +64,10 @@
 <h3 id=关于gamma的巧合>关于gamma的巧合</h3>
 <p>实际上， <strong>人眼对亮度的感知也并不是线性的，巧合的是，人眼对亮度的感知曲线搞刚好是显示器gamma变换的逆变换的曲线（与gamma矫正类似）</strong><sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>；</p>
 <p>这样导致的结果就是：假如没有gamma correction，显示器显示一段均匀变化的亮度，人眼感知到的亮度刚好也是均匀的；因为显示器先做了gamma变换，人眼感知又做了gamma逆变换，导致人眼感知到的是均匀的；如下图所示：</p>
-<p><img src=/post-images/gamma/gradient-linear.png alt="未做gamma correction的0-1渐变图"></p>
+<p><img src=gradient-linear.png alt="未做gamma correction的0-1渐变图"></p>
 <center>未做gamma correction的0-1渐变图</center>
 <p>如果我们做了gamma correction，这个时候虽然是显示器最终显示的是均匀变化的亮度，但是人眼的感受却是不均匀的；因为先做了gamma correction（gamma逆变换），然后显示器做了gamma变换，人眼感知又做了gamma逆变换，导致人眼感知到的是gamma逆变换后的；如下图所示：</p>
-<p><img src=/post-images/gamma/gradient-gamma.png alt="gamma correction的0-1渐变图"></p>
+<p><img src=gradient-gamma.png alt="gamma correction的0-1渐变图"></p>
 <center>做了gamma correction的0-1渐变图</center>
 <p>做了gamma correction之后的渐变图就是人眼真正应该感知到的渐变图：暗部人眼感知到的亮度大于实际亮度，且相差比较大；亮部人眼感知到的亮度与实际亮度基本持平，且相差较小；</p>
 <p>之所以人眼有这样的特征，是因为为了能够在夜晚中生存，暗部或被人眼感知上提亮，这样就能够避免夜晚中不可知的危险；</p>
@@ -86,20 +86,20 @@
 <li>显示器进行gamma变换，显示为linear space下的颜色；</li>
 </ol>
 <p>下图为rtr中在现实过程中gamma的处理<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>，与我们之前所理解的一致；</p>
-<p><img src=/post-images/gamma/gamma-process.png alt="gamma process in display"></p>
+<p><img src=gamma-process.png alt="gamma process in display"></p>
 <center>gamma process in display</center>
 <h3 id=gamma使用不当会引起的问题>gamma使用不当会引起的问题</h3>
 <p>事实上，早期人们还没有意识到gamma的问题，以至于很多图形上的操作都是在gamma空间下进行的，以至于出现了很多画面上的问题，包括light fall-off、linear intensity response、linear and gamma blending等<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>；分别如下图所示：</p>
-<p><img src=/post-images/gamma/gamma-compare.png alt="light fall-off"></p>
+<p><img src=gamma-compare.png alt="light fall-off"></p>
 <center>light fall-off</center>
 <p>light fall-off影响的为光照沿平面朝向的衰减，其实是就是计算该点的irridience，在diffuse上会有明显的感受；可以看到gamma space下亮度分布更均匀，linear space下亮度分布更接近<a href=#%E5%85%B3%E4%BA%8Egamma%E7%9A%84%E5%B7%A7%E5%90%88>人眼感知</a>；</p>
-<p><img src=/post-images/gamma/gamma-compare1.png alt="linear intensity response"></p>
+<p><img src=gamma-compare1.png alt="linear intensity response"></p>
 <center>linear intensity response</center>
 <p>gamma空间下，不同光强产生的影响会更加反直觉，会非常容易产生过曝的问题，以至于在项目中美术打光很难控制光照强度；</p>
-<p><img src=/post-images/gamma/gamma-blend.png alt="linear and gamma blending"></p>
+<p><img src=gamma-blend.png alt="linear and gamma blending"></p>
 <center>linear and gamma blending</center>
 <p>gamma空间下的blend则会引起色相偏移问题（插值、叠加或其他blend方式），这在工程中对美术来说是很不友好的，特别是游戏中的特效，受此影响最为过大；在rtr4中则还提到了叠加引起的亮度感知错误问题，在5.6章节，有兴趣的可以看一下；</p>
-<p><img src=/post-images/gamma/gamma-ropping.png alt=ropping></p>
+<p><img src=gamma-ropping.png alt=ropping></p>
 <center>ropping</center>
 <p>ropping现象则是因为没有经过gamma correction引起的直线弯曲效应；不过需要在使用msaa或者ssaa的情况下才能看到，上图就是开8xaa情况下出现的问题；</p>
 <h2 id=总结>总结</h2>
