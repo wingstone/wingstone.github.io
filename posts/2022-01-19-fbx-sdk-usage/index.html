@@ -1,0 +1,174 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>fbx sdk使用总结 | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/>Home</a></li>
+<li><a href=/categories/>Categories</a></li>
+<li><a href=/tags/>Tags</a></li>
+<li><a href=/archives/>Archives</a></li>
+<li><a href=/about/>About</a></li>
+<li><a href=/index.xml>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>fbx sdk使用总结</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/01/15</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#版本问题>版本问题</a></li>
+<li><a href=#mesh的创建流程小结>mesh的创建流程小结</a></li>
+</ul>
+</nav>
+<main>
+<p>记录使用fbx sdk过程中所踩得一些坑；</p>
+<h2 id=版本问题>版本问题</h2>
+<p>不同的fbx sdk版本，要配合不同的vs studio版本使用；sdk版本对应的VS studio版本在下载时会有显示，所有的fbx sdk版本下载点击<a href=https://www.autodesk.com/developer-network/platform-technologies/fbx-sdk-archives>fbx sdk archives</a>;</p>
+<h2 id=mesh的创建流程小结>mesh的创建流程小结</h2>
+<p>vertex与index的创建流程相对固定，如下：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>FbxNode<span style=color:#f92672>*</span> <span style=color:#a6e22e>CreateTriangle</span>(FbxScene<span style=color:#f92672>*</span> pScene, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span><span style=color:#f92672>*</span> pName)
+{
+    FbxMesh<span style=color:#f92672>*</span> lMesh <span style=color:#f92672>=</span> FbxMesh<span style=color:#f92672>::</span>Create(pScene, pName);
+
+    <span style=color:#75715e>// The three vertices
+</span><span style=color:#75715e></span>    FbxVector4 lControlPoint0(<span style=color:#f92672>-</span><span style=color:#ae81ff>50</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>50</span>);
+    FbxVector4 lControlPoint1(<span style=color:#ae81ff>50</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>50</span>);
+    FbxVector4 lControlPoint2(<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>50</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>50</span>);
+
+    <span style=color:#75715e>// Create control points.
+</span><span style=color:#75715e></span>    lMesh<span style=color:#f92672>-&gt;</span>InitControlPoints(<span style=color:#ae81ff>3</span>);
+    FbxVector4<span style=color:#f92672>*</span> lControlPoints <span style=color:#f92672>=</span> lMesh<span style=color:#f92672>-&gt;</span>GetControlPoints();
+
+    <span style=color:#75715e>// 这里数组的赋值也可以预先生产好后，直接使用memcpy进行拷贝
+</span><span style=color:#75715e></span>    lControlPoints[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>=</span> lControlPoint0;
+    lControlPoints[<span style=color:#ae81ff>1</span>] <span style=color:#f92672>=</span> lControlPoint1;
+    lControlPoints[<span style=color:#ae81ff>2</span>] <span style=color:#f92672>=</span> lControlPoint2;
+
+    <span style=color:#75715e>// Create the triangle&#39;s polygon    //如果添加4个顶点就是四边形
+</span><span style=color:#75715e></span>    lMesh<span style=color:#f92672>-&gt;</span>BeginPolygon();
+    lMesh<span style=color:#f92672>-&gt;</span>AddPolygon(<span style=color:#ae81ff>0</span>); <span style=color:#75715e>// Control point 0
+</span><span style=color:#75715e></span>    lMesh<span style=color:#f92672>-&gt;</span>AddPolygon(<span style=color:#ae81ff>1</span>); <span style=color:#75715e>// Control point 1
+</span><span style=color:#75715e></span>    lMesh<span style=color:#f92672>-&gt;</span>AddPolygon(<span style=color:#ae81ff>2</span>); <span style=color:#75715e>// Control point 2
+</span><span style=color:#75715e></span>    lMesh<span style=color:#f92672>-&gt;</span>EndPolygon();
+
+    FbxNode<span style=color:#f92672>*</span> lNode <span style=color:#f92672>=</span> FbxNode<span style=color:#f92672>::</span>Create(pScene,pName);
+    lNode<span style=color:#f92672>-&gt;</span>SetNodeAttribute(lMesh);
+
+    <span style=color:#66d9ef>return</span> lNode;
+}
+</code></pre></div><p>uv、color、normal、tangent、binormal的创建会多一个环节，首先创建对应的Element，然后设置MappingMode与ReferenceMode，最后再设置对应的DirectArray与IndexArray；</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// create UVset
+</span><span style=color:#75715e></span>FbxGeometryElementUV<span style=color:#f92672>*</span> lUVElement1 <span style=color:#f92672>=</span> lMesh<span style=color:#f92672>-&gt;</span>CreateElementUV(<span style=color:#e6db74>&#34;UVSet1&#34;</span>);
+FBX_ASSERT( lUVElement1 <span style=color:#f92672>!=</span> NULL);
+lUVElement1<span style=color:#f92672>-&gt;</span>SetMappingMode(FbxGeometryElement<span style=color:#f92672>::</span>eByPolygonVertex);
+lUVElement1<span style=color:#f92672>-&gt;</span>SetReferenceMode(FbxGeometryElement<span style=color:#f92672>::</span>eIndexToDirect);
+<span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span><span style=color:#ae81ff>4</span>; i<span style=color:#f92672>++</span>)
+    lUVElement1<span style=color:#f92672>-&gt;</span>GetDirectArray().Add(FbxVector2(lUVs[i][<span style=color:#ae81ff>0</span>], lUVs[i][<span style=color:#ae81ff>1</span>]));
+
+<span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i<span style=color:#f92672>&lt;</span><span style=color:#ae81ff>24</span>; i<span style=color:#f92672>++</span>)
+    lUVElement1<span style=color:#f92672>-&gt;</span>GetIndexArray().Add(uvsId[i<span style=color:#f92672>%</span><span style=color:#ae81ff>4</span>]);
+</code></pre></div><p>MappingMode常用的为FbxGeometryElement::eByControlPoint与FbxGeometryElement::eByPolygonVertex；以uv为例，若使用FbxGeometryElement::eByControlPoint，获取顶点uv的索引，与controlpoint一致；若使用FbxGeometryElement::eByPolygonVertex，获取顶点的索引单独递增即可，与controlpoint无关；</p>
+<p>ReferenceMode常用的为FbxGeometryElement::eDirect与FbxGeometryElement::eIndexToDirect；以uv为例，若使用FbxGeometryElement::eDirect，则表示没有IndexArray，前面获取的索引可直接获取DirectArray；若使用FbxGeometryElement::eIndexToDirect，则表示有IndexArray，前面获取的索引是IndexArray的索引，从IndexArray获取的索引才可用来获取DirectArray;</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>LoadUVInformation</span>(FbxMesh<span style=color:#f92672>*</span> pMesh)
+{
+    <span style=color:#75715e>//get all UV set names
+</span><span style=color:#75715e></span>    FbxStringList lUVSetNameList;
+    pMesh<span style=color:#f92672>-&gt;</span>GetUVSetNames(lUVSetNameList);
+
+    <span style=color:#75715e>//iterating over all uv sets
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> lUVSetIndex <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; lUVSetIndex <span style=color:#f92672>&lt;</span> lUVSetNameList.GetCount(); lUVSetIndex<span style=color:#f92672>++</span>)
+    {
+        <span style=color:#75715e>//get lUVSetIndex-th uv set
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span><span style=color:#f92672>*</span> lUVSetName <span style=color:#f92672>=</span> lUVSetNameList.GetStringAt(lUVSetIndex);
+        <span style=color:#66d9ef>const</span> FbxGeometryElementUV<span style=color:#f92672>*</span> lUVElement <span style=color:#f92672>=</span> pMesh<span style=color:#f92672>-&gt;</span>GetElementUV(lUVSetName);
+
+        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>lUVElement)
+            <span style=color:#66d9ef>continue</span>;
+
+        <span style=color:#75715e>// only support mapping mode eByPolygonVertex and eByControlPoint
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>if</span>( lUVElement<span style=color:#f92672>-&gt;</span>GetMappingMode() <span style=color:#f92672>!=</span> FbxGeometryElement<span style=color:#f92672>::</span>eByPolygonVertex <span style=color:#f92672>&amp;&amp;</span>
+            lUVElement<span style=color:#f92672>-&gt;</span>GetMappingMode() <span style=color:#f92672>!=</span> FbxGeometryElement<span style=color:#f92672>::</span>eByControlPoint )
+            <span style=color:#66d9ef>return</span>;
+
+        <span style=color:#75715e>//index array, where holds the index referenced to the uv data
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>bool</span> lUseIndex <span style=color:#f92672>=</span> lUVElement<span style=color:#f92672>-&gt;</span>GetReferenceMode() <span style=color:#f92672>!=</span> FbxGeometryElement<span style=color:#f92672>::</span>eDirect;
+        <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span> lIndexCount<span style=color:#f92672>=</span> (lUseIndex) <span style=color:#f92672>?</span> lUVElement<span style=color:#f92672>-&gt;</span>GetIndexArray().GetCount() <span style=color:#f92672>:</span> <span style=color:#ae81ff>0</span>;
+
+        <span style=color:#75715e>//iterating through the data by polygon
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span> lPolyCount <span style=color:#f92672>=</span> pMesh<span style=color:#f92672>-&gt;</span>GetPolygonCount();
+
+        <span style=color:#66d9ef>if</span>( lUVElement<span style=color:#f92672>-&gt;</span>GetMappingMode() <span style=color:#f92672>==</span> FbxGeometryElement<span style=color:#f92672>::</span>eByControlPoint )
+        {
+            <span style=color:#66d9ef>for</span>( <span style=color:#66d9ef>int</span> lPolyIndex <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; lPolyIndex <span style=color:#f92672>&lt;</span> lPolyCount; <span style=color:#f92672>++</span>lPolyIndex )
+            {
+                <span style=color:#75715e>// build the max index array that we need to pass into MakePoly
+</span><span style=color:#75715e></span>                <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span> lPolySize <span style=color:#f92672>=</span> pMesh<span style=color:#f92672>-&gt;</span>GetPolygonSize(lPolyIndex);
+                <span style=color:#66d9ef>for</span>( <span style=color:#66d9ef>int</span> lVertIndex <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; lVertIndex <span style=color:#f92672>&lt;</span> lPolySize; <span style=color:#f92672>++</span>lVertIndex )
+                {
+                    FbxVector2 lUVValue;
+
+                    <span style=color:#75715e>//get the index of the current vertex in control points array
+</span><span style=color:#75715e></span>                    <span style=color:#66d9ef>int</span> lPolyVertIndex <span style=color:#f92672>=</span> pMesh<span style=color:#f92672>-&gt;</span>GetPolygonVertex(lPolyIndex,lVertIndex);
+
+                    <span style=color:#75715e>//the UV index depends on the reference mode
+</span><span style=color:#75715e></span>                    <span style=color:#66d9ef>int</span> lUVIndex <span style=color:#f92672>=</span> lUseIndex <span style=color:#f92672>?</span> lUVElement<span style=color:#f92672>-&gt;</span>GetIndexArray().GetAt(lPolyVertIndex) <span style=color:#f92672>:</span> lPolyVertIndex;
+
+                    lUVValue <span style=color:#f92672>=</span> lUVElement<span style=color:#f92672>-&gt;</span>GetDirectArray().GetAt(lUVIndex);
+
+                    <span style=color:#75715e>//User TODO:
+</span><span style=color:#75715e></span>                    <span style=color:#75715e>//Print out the value of UV(lUVValue) or log it to a file
+</span><span style=color:#75715e></span>                }
+            }
+        }
+        <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> (lUVElement<span style=color:#f92672>-&gt;</span>GetMappingMode() <span style=color:#f92672>==</span> FbxGeometryElement<span style=color:#f92672>::</span>eByPolygonVertex)
+        {
+            <span style=color:#66d9ef>int</span> lPolyIndexCounter <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+            <span style=color:#66d9ef>for</span>( <span style=color:#66d9ef>int</span> lPolyIndex <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; lPolyIndex <span style=color:#f92672>&lt;</span> lPolyCount; <span style=color:#f92672>++</span>lPolyIndex )
+            {
+                <span style=color:#75715e>// build the max index array that we need to pass into MakePoly
+</span><span style=color:#75715e></span>                <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span> lPolySize <span style=color:#f92672>=</span> pMesh<span style=color:#f92672>-&gt;</span>GetPolygonSize(lPolyIndex);
+                <span style=color:#66d9ef>for</span>( <span style=color:#66d9ef>int</span> lVertIndex <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; lVertIndex <span style=color:#f92672>&lt;</span> lPolySize; <span style=color:#f92672>++</span>lVertIndex )
+                {
+                    <span style=color:#66d9ef>if</span> (lPolyIndexCounter <span style=color:#f92672>&lt;</span> lIndexCount)
+                    {
+                        FbxVector2 lUVValue;
+
+                        <span style=color:#75715e>//the UV index depends on the reference mode
+</span><span style=color:#75715e></span>                        <span style=color:#66d9ef>int</span> lUVIndex <span style=color:#f92672>=</span> lUseIndex <span style=color:#f92672>?</span> lUVElement<span style=color:#f92672>-&gt;</span>GetIndexArray().GetAt(lPolyIndexCounter) <span style=color:#f92672>:</span> lPolyIndexCounter;
+
+                        lUVValue <span style=color:#f92672>=</span> lUVElement<span style=color:#f92672>-&gt;</span>GetDirectArray().GetAt(lUVIndex);
+
+                        <span style=color:#75715e>//User TODO:
+</span><span style=color:#75715e></span>                        <span style=color:#75715e>//Print out the value of UV(lUVValue) or log it to a file
+</span><span style=color:#75715e></span>
+                        lPolyIndexCounter<span style=color:#f92672>++</span>;
+                    }
+                }
+            }
+        }
+    }
+}
+</code></pre></div>
+</main>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
