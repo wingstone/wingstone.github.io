@@ -1,0 +1,168 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Mesh Normal Smooth | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/>Home</a></li>
+<li><a href=/categories/>Categories</a></li>
+<li><a href=/tags/>Tags</a></li>
+<li><a href=/archives/>Archives</a></li>
+<li><a href=/about/>About</a></li>
+<li><a href=/index.xml>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>Mesh Normal Smooth</span></h2>
+<h3 class=author>wingstone</h3>
+</div><h2>目录</h2>
+<nav id=TableOfContents></nav>
+<main>
+<p>Unity计算平滑法线的简单功能实现</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>using</span> UnityEngine;
+<span style=color:#66d9ef>using</span> UnityEditor;
+<span style=color:#66d9ef>using</span> System.Collections.Generic;
+
+<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> <span style=color:#f92672>:</span> EditorWindow
+{
+    [MenuItem(<span style=color:#e6db74>&#34;Window/MeshNormalSmoothWindow&#34;</span>)]
+    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
+    {
+        MeshNormalSmoothWindow window <span style=color:#f92672>=</span> (MeshNormalSmoothWindow)EditorWindow.GetWindow(typeof(MeshNormalSmoothWindow));
+        window.Show();
+    }
+
+    Mesh mesh;
+
+    <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>OnGUI</span>()
+    {
+        EditorGUILayout.BeginVertical();
+        mesh <span style=color:#f92672>=</span> EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, typeof(Mesh), true) as Mesh;
+        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
+        {
+            Vector3[] vertices <span style=color:#f92672>=</span> mesh.vertices;
+            <span style=color:#66d9ef>int</span>[] triangles <span style=color:#f92672>=</span> mesh.triangles;
+
+            <span style=color:#66d9ef>int</span> polygonNum <span style=color:#f92672>=</span> mesh.triangles.Length <span style=color:#f92672>/</span> <span style=color:#ae81ff>3</span>;
+            Vector3[] polyNormals <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Vector3[polygonNum];
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> polygonNum; i<span style=color:#f92672>++</span>)
+            {
+                <span style=color:#66d9ef>int</span> vid0 <span style=color:#f92672>=</span> triangles[i <span style=color:#f92672>*</span> <span style=color:#ae81ff>3</span>];
+                <span style=color:#66d9ef>int</span> vid1 <span style=color:#f92672>=</span> triangles[i <span style=color:#f92672>*</span> <span style=color:#ae81ff>3</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>];
+                <span style=color:#66d9ef>int</span> vid2 <span style=color:#f92672>=</span> triangles[i <span style=color:#f92672>*</span> <span style=color:#ae81ff>3</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span>];
+
+                polyNormals[i] <span style=color:#f92672>=</span> Vector3.Cross(vertices[vid2] <span style=color:#f92672>-</span> vertices[vid0], vertices[vid1] <span style=color:#f92672>-</span> vertices[vid0]).normalized;
+            }
+
+            <span style=color:#66d9ef>int</span> vertexNum <span style=color:#f92672>=</span> mesh.vertices.Length;
+            Vector3[] normals <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Vector3[vertexNum];
+            List<span style=color:#f92672>&lt;</span>Vector3<span style=color:#f92672>&gt;</span> hashvertexs <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> List<span style=color:#f92672>&lt;</span>Vector3<span style=color:#f92672>&gt;</span>();
+            List<span style=color:#f92672>&lt;</span>Vector3<span style=color:#f92672>&gt;</span> hashnormals <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> List<span style=color:#f92672>&lt;</span>Vector3<span style=color:#f92672>&gt;</span>();
+            List<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> hasnormalsNums <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> List<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span>();
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> vertexNum; i<span style=color:#f92672>++</span>)
+            {
+                normals[i] <span style=color:#f92672>=</span> Vector3.zero;
+            }
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> polygonNum; i<span style=color:#f92672>++</span>)
+            {
+
+                <span style=color:#66d9ef>int</span> vid0 <span style=color:#f92672>=</span> triangles[i <span style=color:#f92672>*</span> <span style=color:#ae81ff>3</span>];
+                <span style=color:#66d9ef>int</span> vid1 <span style=color:#f92672>=</span> triangles[i <span style=color:#f92672>*</span> <span style=color:#ae81ff>3</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>];
+                <span style=color:#66d9ef>int</span> vid2 <span style=color:#f92672>=</span> triangles[i <span style=color:#f92672>*</span> <span style=color:#ae81ff>3</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span>];
+
+                <span style=color:#66d9ef>bool</span> have0 <span style=color:#f92672>=</span> false;
+                <span style=color:#66d9ef>bool</span> have1 <span style=color:#f92672>=</span> false;
+                <span style=color:#66d9ef>bool</span> have2 <span style=color:#f92672>=</span> false;
+                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; j <span style=color:#f92672>&lt;</span> hashvertexs.Count; j<span style=color:#f92672>++</span>)
+                {
+                    <span style=color:#66d9ef>if</span> (hashvertexs[j] <span style=color:#f92672>==</span> vertices[vid0])
+                    {
+                        have0 <span style=color:#f92672>=</span> true;
+                        hasnormalsNums[j]<span style=color:#f92672>++</span>;
+                        hashnormals[j] <span style=color:#f92672>+=</span> polyNormals[i];
+                    }
+                    <span style=color:#66d9ef>if</span> (hashvertexs[j] <span style=color:#f92672>==</span> vertices[vid1])
+                    {
+                        have1 <span style=color:#f92672>=</span> true;
+                        hasnormalsNums[j]<span style=color:#f92672>++</span>;
+                        hashnormals[j] <span style=color:#f92672>+=</span> polyNormals[i];
+                    }
+                    <span style=color:#66d9ef>if</span> (hashvertexs[j] <span style=color:#f92672>==</span> vertices[vid2])
+                    {
+                        have2 <span style=color:#f92672>=</span> true;
+                        hasnormalsNums[j]<span style=color:#f92672>++</span>;
+                        hashnormals[j] <span style=color:#f92672>+=</span> polyNormals[i];
+                    }
+                }
+
+                <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>have0)
+                {
+                    hashvertexs.Add(vertices[vid0]);
+                    hashnormals.Add(polyNormals[i]);
+                    hasnormalsNums.Add(<span style=color:#ae81ff>1</span>);
+                }
+                <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>have1)
+                {
+                    hashvertexs.Add(vertices[vid1]);
+                    hashnormals.Add(polyNormals[i]);
+                    hasnormalsNums.Add(<span style=color:#ae81ff>1</span>);
+                }
+                <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>have2)
+                {
+                    hashvertexs.Add(vertices[vid2]);
+                    hashnormals.Add(polyNormals[i]);
+                    hasnormalsNums.Add(<span style=color:#ae81ff>1</span>);
+                }
+
+            }
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> hashnormals.Count; i<span style=color:#f92672>++</span>)
+            {
+                hashnormals[i] <span style=color:#f92672>/=</span> hasnormalsNums[i];
+                hashnormals[i].Normalize();
+            }
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> vertexNum; i<span style=color:#f92672>++</span>)
+            {
+                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; j <span style=color:#f92672>&lt;</span> hashvertexs.Count; j<span style=color:#f92672>++</span>)
+                {
+                    <span style=color:#66d9ef>if</span> (vertices[i] <span style=color:#f92672>==</span> hashvertexs[j])
+                        normals[i] <span style=color:#f92672>=</span> <span style=color:#f92672>-</span>hashnormals[j];
+                }
+            }
+
+
+            Mesh newmesh <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Mesh();
+            newmesh.vertices <span style=color:#f92672>=</span> mesh.vertices;
+            newmesh.triangles <span style=color:#f92672>=</span> mesh.triangles;
+            newmesh.normals <span style=color:#f92672>=</span> normals;
+            newmesh.uv <span style=color:#f92672>=</span> mesh.uv;
+            newmesh.uv2 <span style=color:#f92672>=</span> mesh.uv2;
+            newmesh.boneWeights <span style=color:#f92672>=</span> mesh.boneWeights;
+            newmesh.bindposes <span style=color:#f92672>=</span> mesh.bindposes;
+
+            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
+            AssetDatabase.Refresh();
+        }
+        EditorGUILayout.EndVertical();
+    }
+}
+</code></pre></div>
+</main>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
