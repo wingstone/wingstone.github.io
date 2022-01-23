@@ -30,7 +30,7 @@
 </ul>
 </nav>
 <main>
-<p>在ShaderToy开发过程中，使用粒子可以极高的提升粒子效果，绘制粒子可以分为<strong>粒子着色</strong>以及<strong>粒子范围的确定</strong>，这篇文章主要讨论<strong>粒子范围的确定</strong>。</p>
+<p>在ShaderToy开发过程中，使用粒子可以极高的提升粒子效果，绘制粒子可以分为<strong>粒子着色</strong>以及<strong>粒子范围的确定</strong>两部分，这篇文章主要讨论<strong>粒子范围的确定</strong>。</p>
 <h2 id=粒子范围的确定>粒子范围的确定</h2>
 <p>假如有40个粒子，最简单方法就是循环遍历四十个粒子的位置及半径，每遍历一个粒子就对一个粒子着色，这样就能绘制出一个简单的粒子系统，iq所写的<a href=https://www.shadertoy.com/view/4dl3zn>Bubble</a>就是遍历40个粒子，来模拟大量泡泡的上升效果;
 其中位置及范围确定的伪代码为：</p>

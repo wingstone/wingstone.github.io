@@ -22,128 +22,129 @@
 <div class=article-meta>
 <h2><span class=title>Terrain To Mesh</span></h2>
 <h3 class=author>wingstone</h3>
+<h3 class=date>2022/01/22</h3>
 </div><h2>目录</h2>
 <nav id=TableOfContents></nav>
 <main>
-<p>Unity转换Terrain为mesh的简单脚本实现</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>using</span> UnityEngine;
+<p>Unity转换Terrain为mesh的简单功能实现；</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>using</span> UnityEngine;
 <span style=color:#66d9ef>using</span> UnityEditor;
 
-<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>TerrainToMeshWindow</span> <span style=color:#f92672>:</span> EditorWindow
+<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>TerrainToMeshWindow</span> : EditorWindow
 {
-
-    [MenuItem(<span style=color:#e6db74>&#34;Window/TerrainToMeshWindow&#34;</span>)]
+<span style=color:#a6e22e>
+</span><span style=color:#a6e22e>    [MenuItem(&#34;Window/TerrainToMeshWindow&#34;)]</span>
     <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
     {
-        TerrainToMeshWindow window <span style=color:#f92672>=</span> (TerrainToMeshWindow)EditorWindow.GetWindow(typeof(TerrainToMeshWindow));
+        TerrainToMeshWindow window = (TerrainToMeshWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(TerrainToMeshWindow));
         window.Show();
     }
-    <span style=color:#66d9ef>int</span> row <span style=color:#f92672>=</span> <span style=color:#ae81ff>5</span>;
-    <span style=color:#66d9ef>int</span> column <span style=color:#f92672>=</span> <span style=color:#ae81ff>5</span>;
-    Terrain terrain <span style=color:#f92672>=</span> null;
+    <span style=color:#66d9ef>int</span> row = <span style=color:#ae81ff>5</span>;
+    <span style=color:#66d9ef>int</span> column = <span style=color:#ae81ff>5</span>;
+    Terrain terrain = <span style=color:#66d9ef>null</span>;
 
-    <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>OnGUI</span>()
+    <span style=color:#66d9ef>void</span> OnGUI()
     {
         EditorGUILayout.BeginVertical();
-        terrain <span style=color:#f92672>=</span> EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;terrain&#34;</span>, terrain, typeof(Terrain), true) as Terrain;
-        row <span style=color:#f92672>=</span> EditorGUILayout.IntField(<span style=color:#e6db74>&#34;row&#34;</span>, row);
-        column <span style=color:#f92672>=</span> EditorGUILayout.IntField(<span style=color:#e6db74>&#34;column&#34;</span>, column);
+        terrain = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;terrain&#34;</span>, terrain, <span style=color:#66d9ef>typeof</span>(Terrain), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Terrain;
+        row = EditorGUILayout.IntField(<span style=color:#e6db74>&#34;row&#34;</span>, row);
+        column = EditorGUILayout.IntField(<span style=color:#e6db74>&#34;column&#34;</span>, column);
         <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
         {
-            <span style=color:#66d9ef>if</span>( row <span style=color:#f92672>*</span> column <span style=color:#f92672>*</span> <span style=color:#ae81ff>6</span> <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>65535</span>)
+            <span style=color:#66d9ef>if</span>( row * column * <span style=color:#ae81ff>6</span> &gt; <span style=color:#ae81ff>65535</span>)
             {
                 Debug.LogError(<span style=color:#e6db74>&#34;row or column is too big! index buffer can&#39;t use 16 bit&#34;</span>);
                 <span style=color:#66d9ef>return</span>;
             }
 
-            TerrainData terrainData <span style=color:#f92672>=</span> terrain.terrainData;
-            <span style=color:#66d9ef>int</span> vertexCount <span style=color:#f92672>=</span> (row <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>);
+            TerrainData terrainData = terrain.terrainData;
+            <span style=color:#66d9ef>int</span> vertexCount = (row + <span style=color:#ae81ff>1</span>) * (column + <span style=color:#ae81ff>1</span>);
 
             <span style=color:#75715e>// vertex &amp;&amp; uv
-</span><span style=color:#75715e></span>            Vector3[] vertices <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Vector3[vertexCount];
-            Vector2[] uvs <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Vector2[vertexCount];
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;=</span> row; i<span style=color:#f92672>++</span>)
+</span><span style=color:#75715e></span>            Vector3[] vertices = <span style=color:#66d9ef>new</span> Vector3[vertexCount];
+            Vector2[] uvs = <span style=color:#66d9ef>new</span> Vector2[vertexCount];
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt;= row; i++)
             {
-                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; j <span style=color:#f92672>&lt;=</span> column; j<span style=color:#f92672>++</span>)
+                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt;= column; j++)
                 {
-                    <span style=color:#66d9ef>float</span> width <span style=color:#f92672>=</span> terrainData.size.x;
-                    <span style=color:#66d9ef>float</span> length <span style=color:#f92672>=</span> terrainData.size.z;
+                    <span style=color:#66d9ef>float</span> width = terrainData.size.x;
+                    <span style=color:#66d9ef>float</span> length = terrainData.size.z;
 
-                    <span style=color:#66d9ef>float</span> x <span style=color:#f92672>=</span> (<span style=color:#66d9ef>float</span>)i <span style=color:#f92672>/</span> row <span style=color:#f92672>*</span> width;
-                    <span style=color:#66d9ef>float</span> z <span style=color:#f92672>=</span> (<span style=color:#66d9ef>float</span>)j <span style=color:#f92672>/</span> column <span style=color:#f92672>*</span> length;
-                    <span style=color:#66d9ef>float</span> y <span style=color:#f92672>=</span> terrain.SampleHeight(<span style=color:#66d9ef>new</span> Vector3(x, <span style=color:#ae81ff>0</span>, z));
+                    <span style=color:#66d9ef>float</span> x = (<span style=color:#66d9ef>float</span>)i / row * width;
+                    <span style=color:#66d9ef>float</span> z = (<span style=color:#66d9ef>float</span>)j / column * length;
+                    <span style=color:#66d9ef>float</span> y = terrain.SampleHeight(<span style=color:#66d9ef>new</span> Vector3(x, <span style=color:#ae81ff>0</span>, z));
 
-                    vertices[i <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j] <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Vector3(x, y, z);
+                    vertices[i * (column + <span style=color:#ae81ff>1</span>) + j] = <span style=color:#66d9ef>new</span> Vector3(x, y, z);
 
-                    uvs[i <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j] <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Vector2((<span style=color:#66d9ef>float</span>)i <span style=color:#f92672>/</span> row, (<span style=color:#66d9ef>float</span>)j <span style=color:#f92672>/</span> column);
+                    uvs[i * (column + <span style=color:#ae81ff>1</span>) + j] = <span style=color:#66d9ef>new</span> Vector2((<span style=color:#66d9ef>float</span>)i / row, (<span style=color:#66d9ef>float</span>)j / column);
                 }
             }
 
             <span style=color:#75715e>// index
-</span><span style=color:#75715e></span>            <span style=color:#66d9ef>int</span> indexCount <span style=color:#f92672>=</span> row <span style=color:#f92672>*</span> column <span style=color:#f92672>*</span> <span style=color:#ae81ff>6</span>;
-            <span style=color:#66d9ef>int</span>[] indices <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[indexCount];
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> row; i<span style=color:#f92672>++</span>)
+</span><span style=color:#75715e></span>            <span style=color:#66d9ef>int</span> indexCount = row * column * <span style=color:#ae81ff>6</span>;
+            <span style=color:#66d9ef>int</span>[] indices = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[indexCount];
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; row; i++)
             {
-                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; j <span style=color:#f92672>&lt;</span> column; j<span style=color:#f92672>++</span>)
+                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; column; j++)
                 {
-                    indices[(i <span style=color:#f92672>*</span> column <span style=color:#f92672>+</span> j) <span style=color:#f92672>*</span> <span style=color:#ae81ff>6</span>] <span style=color:#f92672>=</span> i <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j;
-                    indices[(i <span style=color:#f92672>*</span> column <span style=color:#f92672>+</span> j) <span style=color:#f92672>*</span> <span style=color:#ae81ff>6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>] <span style=color:#f92672>=</span> i <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>;
-                    indices[(i <span style=color:#f92672>*</span> column <span style=color:#f92672>+</span> j) <span style=color:#f92672>*</span> <span style=color:#ae81ff>6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span>] <span style=color:#f92672>=</span> (i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j;
+                    indices[(i * column + j) * <span style=color:#ae81ff>6</span>] = i * (column + <span style=color:#ae81ff>1</span>) + j;
+                    indices[(i * column + j) * <span style=color:#ae81ff>6</span> + <span style=color:#ae81ff>1</span>] = i * (column + <span style=color:#ae81ff>1</span>) + j + <span style=color:#ae81ff>1</span>;
+                    indices[(i * column + j) * <span style=color:#ae81ff>6</span> + <span style=color:#ae81ff>2</span>] = (i + <span style=color:#ae81ff>1</span>) * (column + <span style=color:#ae81ff>1</span>) + j;
 
-                    indices[(i <span style=color:#f92672>*</span> column <span style=color:#f92672>+</span> j) <span style=color:#f92672>*</span> <span style=color:#ae81ff>6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>3</span>] <span style=color:#f92672>=</span> i <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>;
-                    indices[(i <span style=color:#f92672>*</span> column <span style=color:#f92672>+</span> j) <span style=color:#f92672>*</span> <span style=color:#ae81ff>6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>4</span>] <span style=color:#f92672>=</span> (i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>;
-                    indices[(i <span style=color:#f92672>*</span> column <span style=color:#f92672>+</span> j) <span style=color:#f92672>*</span> <span style=color:#ae81ff>6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>5</span>] <span style=color:#f92672>=</span> (i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j;
+                    indices[(i * column + j) * <span style=color:#ae81ff>6</span> + <span style=color:#ae81ff>3</span>] = i * (column + <span style=color:#ae81ff>1</span>) + j + <span style=color:#ae81ff>1</span>;
+                    indices[(i * column + j) * <span style=color:#ae81ff>6</span> + <span style=color:#ae81ff>4</span>] = (i + <span style=color:#ae81ff>1</span>) * (column + <span style=color:#ae81ff>1</span>) + j + <span style=color:#ae81ff>1</span>;
+                    indices[(i * column + j) * <span style=color:#ae81ff>6</span> + <span style=color:#ae81ff>5</span>] = (i + <span style=color:#ae81ff>1</span>) * (column + <span style=color:#ae81ff>1</span>) + j;
                 }
             }
 
             <span style=color:#75715e>// normal
-</span><span style=color:#75715e></span>            Vector3[] normals <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Vector3[vertexCount];
-            <span style=color:#66d9ef>int</span>[] normalcounts <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexCount];
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> vertexCount; i<span style=color:#f92672>++</span>)
+</span><span style=color:#75715e></span>            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexCount];
+            <span style=color:#66d9ef>int</span>[] normalcounts = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexCount];
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexCount; i++)
             {
-                normals[i] <span style=color:#f92672>=</span> Vector3.zero;
-                normalcounts[i] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+                normals[i] = Vector3.zero;
+                normalcounts[i] = <span style=color:#ae81ff>0</span>;
             }
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> row; i<span style=color:#f92672>++</span>)
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; row; i++)
             {
-                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; j <span style=color:#f92672>&lt;</span> column; j<span style=color:#f92672>++</span>)
+                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; column; j++)
                 {
-                    <span style=color:#66d9ef>int</span> vid0 <span style=color:#f92672>=</span> i <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j;
-                    <span style=color:#66d9ef>int</span> vid1 <span style=color:#f92672>=</span> i <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>;
-                    <span style=color:#66d9ef>int</span> vid2 <span style=color:#f92672>=</span> (i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j;
-                    <span style=color:#66d9ef>int</span> vid3 <span style=color:#f92672>=</span> (i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> (column <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>+</span> j <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>;
+                    <span style=color:#66d9ef>int</span> vid0 = i * (column + <span style=color:#ae81ff>1</span>) + j;
+                    <span style=color:#66d9ef>int</span> vid1 = i * (column + <span style=color:#ae81ff>1</span>) + j + <span style=color:#ae81ff>1</span>;
+                    <span style=color:#66d9ef>int</span> vid2 = (i + <span style=color:#ae81ff>1</span>) * (column + <span style=color:#ae81ff>1</span>) + j;
+                    <span style=color:#66d9ef>int</span> vid3 = (i + <span style=color:#ae81ff>1</span>) * (column + <span style=color:#ae81ff>1</span>) + j + <span style=color:#ae81ff>1</span>;
 
-                    Vector3 normal0 <span style=color:#f92672>=</span>Vector3.Cross(vertices[vid2]<span style=color:#f92672>-</span>vertices[vid0], vertices[vid2]<span style=color:#f92672>-</span>vertices[vid0]).normalized;
+                    Vector3 normal0 =Vector3.Cross(vertices[vid2]-vertices[vid0], vertices[vid2]-vertices[vid0]).normalized;
 
-                    Vector3 normal1 <span style=color:#f92672>=</span>Vector3.Cross(vertices[vid3]<span style=color:#f92672>-</span>vertices[vid1], vertices[vid2]<span style=color:#f92672>-</span>vertices[vid1]).normalized;
+                    Vector3 normal1 =Vector3.Cross(vertices[vid3]-vertices[vid1], vertices[vid2]-vertices[vid1]).normalized;
 
-                    normals[vid0] <span style=color:#f92672>+=</span> normal0;
-                    normals[vid1] <span style=color:#f92672>+=</span> normal0;
-                    normals[vid2] <span style=color:#f92672>+=</span> normal0;
-                    normalcounts[vid0]<span style=color:#f92672>++</span>;
-                    normalcounts[vid1]<span style=color:#f92672>++</span>;
-                    normalcounts[vid2]<span style=color:#f92672>++</span>;
+                    normals[vid0] += normal0;
+                    normals[vid1] += normal0;
+                    normals[vid2] += normal0;
+                    normalcounts[vid0]++;
+                    normalcounts[vid1]++;
+                    normalcounts[vid2]++;
 
-                    normals[vid1] <span style=color:#f92672>+=</span> normal1;
-                    normals[vid2] <span style=color:#f92672>+=</span> normal1;
-                    normals[vid3] <span style=color:#f92672>+=</span> normal1;
-                    normalcounts[vid1]<span style=color:#f92672>++</span>;
-                    normalcounts[vid2]<span style=color:#f92672>++</span>;
-                    normalcounts[vid3]<span style=color:#f92672>++</span>;
+                    normals[vid1] += normal1;
+                    normals[vid2] += normal1;
+                    normals[vid3] += normal1;
+                    normalcounts[vid1]++;
+                    normalcounts[vid2]++;
+                    normalcounts[vid3]++;
                 }
             }
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> vertexCount; i<span style=color:#f92672>++</span>)
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexCount; i++)
             {
-                normals[i] <span style=color:#f92672>/=</span> normalcounts[i];
+                normals[i] /= normalcounts[i];
                 normals[i].Normalize();
             }
 
-            Mesh mesh <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Mesh();
-            mesh.name <span style=color:#f92672>=</span> terrain.name;
-            mesh.vertices <span style=color:#f92672>=</span> vertices;
-            mesh.uv <span style=color:#f92672>=</span> uvs;
-            mesh.triangles <span style=color:#f92672>=</span> indices;
-            mesh.normals <span style=color:#f92672>=</span> normals;
+            Mesh mesh = <span style=color:#66d9ef>new</span> Mesh();
+            mesh.name = terrain.name;
+            mesh.vertices = vertices;
+            mesh.uv = uvs;
+            mesh.triangles = indices;
+            mesh.normals = normals;
 
             AssetDatabase.CreateAsset(mesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
             AssetDatabase.Refresh();
