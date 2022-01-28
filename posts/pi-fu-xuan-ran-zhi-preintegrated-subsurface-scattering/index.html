@@ -57,10 +57,10 @@ $$</p>
 <p>最终得到一个Diffusion profile在不同$\theta$角度和曲率半径下的积分分布；将$\theta$角度和曲率半径转换为NdoL和1/r，即可得到常用的预积分贴图；如下图所示：
 <img src=https://wingstone.github.io/post-images/1601283515546.jpg alt=曲率，预积分贴图></p>
 <p>其中曲率的求法可在shader中借助偏导函数计算，即：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++>float3 dn <span style=color:#f92672>=</span> fwidth(N);
-float3 dp <span style=color:#f92672>=</span> fwidth(P);
-
-<span style=color:#66d9ef>float</span> c <span style=color:#f92672>=</span> length(dn)<span style=color:#f92672>/</span>length(dp);
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span>float3 dn <span style=color:#f92672>=</span> fwidth(N);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span>float3 dp <span style=color:#f92672>=</span> fwidth(P);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span><span style=color:#66d9ef>float</span> c <span style=color:#f92672>=</span> length(dn)<span style=color:#f92672>/</span>length(dp);
 </code></pre></div><h2 id=small-surface-bumps>Small Surface Bumps</h2>
 <p>对于小的凸起以及皱纹，不能使用预积分来进行计算，但是由于可以多采样，因此可以使用预滤波的方式处理法线贴图；</p>
 <p>对于specular使用正常的normalmap，对于diffuse的rgb分别使用针对不同Diffusion profile处理后的normalmap，因此需要4张normalmap；</p>

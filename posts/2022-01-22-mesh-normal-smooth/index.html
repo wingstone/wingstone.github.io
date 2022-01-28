@@ -35,177 +35,177 @@
 <p>如果Unity中Vector3的Equals方法的实现与“==”的实现一致，那么代码将会简洁高效很多，参考<a href=https://docs.unity3d.com/ScriptReference/Vector3.Equals.html>Vector3.Equals</a>;</p>
 <h2 id=version1>Version1</h2>
 <p>只对顶点索引重叠的顶点进行法线平滑，即ReCalculateNormal：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>using</span> UnityEngine;
-<span style=color:#66d9ef>using</span> UnityEditor;
-<span style=color:#66d9ef>using</span> System.Collections.Generic;
-
-<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> : EditorWindow
-{
-<span style=color:#a6e22e>    [MenuItem(&#34;Window/MeshNormalSmoothWindow&#34;)]</span>
-    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
-    {
-        MeshNormalSmoothWindow window = (MeshNormalSmoothWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(MeshNormalSmoothWindow));
-        window.Show();
-    }
-
-    Mesh mesh;
-
-    <span style=color:#66d9ef>void</span> OnGUI()
-    {
-        EditorGUILayout.BeginVertical();
-        mesh = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, <span style=color:#66d9ef>typeof</span>(Mesh), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Mesh;
-        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
-        {
-            Vector3[] vertices = mesh.vertices;
-            <span style=color:#66d9ef>int</span>[] triangles = mesh.triangles;
-
-            <span style=color:#66d9ef>int</span> polygonNum = mesh.triangles.Length / <span style=color:#ae81ff>3</span>;
-            Vector3[] polyNormals = <span style=color:#66d9ef>new</span> Vector3[polygonNum];
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
-            {
-                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
-                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
-                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
-
-                <span style=color:#75715e>// 乘以1000避免数值过小时计算结果为0
-</span><span style=color:#75715e></span>                polyNormals[i] = Vector3.Cross((vertices[vid1] - vertices[vid0]) * <span style=color:#ae81ff>1000</span>, (vertices[vid2] - vertices[vid0]) * <span style=color:#ae81ff>1000</span>).normalized;
-            }
-
-            <span style=color:#66d9ef>int</span> vertexNum = mesh.vertices.Length;
-            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexNum];
-            <span style=color:#66d9ef>int</span>[] normalsNum = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexNum];
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
-            {
-                normals[i] = Vector3.zero;
-            }
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
-            {
-
-                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
-                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
-                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
-
-                normals[vid0] += polyNormals[i];
-                normals[vid1] += polyNormals[i];
-                normals[vid2] += polyNormals[i];
-                normalsNum[vid0]++;
-                normalsNum[vid1]++;
-                normalsNum[vid2]++;
-            }
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
-            {
-                normals[i] /= normalsNum[i];
-                normals[i].Normalize();
-            }
-
-            Mesh newmesh = <span style=color:#66d9ef>new</span> Mesh();
-            newmesh.vertices = mesh.vertices;
-            newmesh.triangles = mesh.triangles;
-            newmesh.normals = normals;
-            newmesh.uv = mesh.uv;
-            newmesh.uv2 = mesh.uv2;
-            newmesh.boneWeights = mesh.boneWeights;
-            newmesh.bindposes = mesh.bindposes;
-
-            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
-            AssetDatabase.Refresh();
-        }
-        EditorGUILayout.EndVertical();
-    }
-}
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>using</span> UnityEngine;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#66d9ef>using</span> UnityEditor;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#66d9ef>using</span> System.Collections.Generic;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> : EditorWindow
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>{
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#a6e22e>    [MenuItem(&#34;Window/MeshNormalSmoothWindow&#34;)]</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>        MeshNormalSmoothWindow window = (MeshNormalSmoothWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(MeshNormalSmoothWindow));
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        window.Show();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    Mesh mesh;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>    <span style=color:#66d9ef>void</span> OnGUI()
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        EditorGUILayout.BeginVertical();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>        mesh = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, <span style=color:#66d9ef>typeof</span>(Mesh), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Mesh;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>        {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>            Vector3[] vertices = mesh.vertices;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>            <span style=color:#66d9ef>int</span>[] triangles = mesh.triangles;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>            <span style=color:#66d9ef>int</span> polygonNum = mesh.triangles.Length / <span style=color:#ae81ff>3</span>;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>            Vector3[] polyNormals = <span style=color:#66d9ef>new</span> Vector3[polygonNum];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>            {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>                <span style=color:#75715e>// 乘以1000避免数值过小时计算结果为0
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span><span style=color:#75715e></span>                polyNormals[i] = Vector3.Cross((vertices[vid1] - vertices[vid0]) * <span style=color:#ae81ff>1000</span>, (vertices[vid2] - vertices[vid0]) * <span style=color:#ae81ff>1000</span>).normalized;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>            }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span>            <span style=color:#66d9ef>int</span> vertexNum = mesh.vertices.Length;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span>            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexNum];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span>            <span style=color:#66d9ef>int</span>[] normalsNum = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexNum];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41</span>            {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42</span>                normals[i] = Vector3.zero;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43</span>            }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45</span>            {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47</span>                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48</span>                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49</span>                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51</span>                normals[vid0] += polyNormals[i];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52</span>                normals[vid1] += polyNormals[i];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53</span>                normals[vid2] += polyNormals[i];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54</span>                normalsNum[vid0]++;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55</span>                normalsNum[vid1]++;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56</span>                normalsNum[vid2]++;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57</span>            }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59</span>            {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60</span>                normals[i] /= normalsNum[i];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61</span>                normals[i].Normalize();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62</span>            }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64</span>            Mesh newmesh = <span style=color:#66d9ef>new</span> Mesh();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65</span>            newmesh.vertices = mesh.vertices;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66</span>            newmesh.triangles = mesh.triangles;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67</span>            newmesh.normals = normals;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68</span>            newmesh.uv = mesh.uv;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69</span>            newmesh.uv2 = mesh.uv2;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70</span>            newmesh.boneWeights = mesh.boneWeights;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">71</span>            newmesh.bindposes = mesh.bindposes;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">72</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">73</span>            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">74</span>            AssetDatabase.Refresh();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">75</span>        }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">76</span>        EditorGUILayout.EndVertical();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">77</span>    }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">78</span>}
 </code></pre></div><h2 id=version2>Version2</h2>
 <p>只对顶点重叠的顶点进行法线平滑，即对Lowpoly添加光滑组：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>using</span> UnityEngine;
-<span style=color:#66d9ef>using</span> UnityEditor;
-<span style=color:#66d9ef>using</span> System.Collections.Generic;
-
-<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> : EditorWindow
-{
-<span style=color:#a6e22e>    [MenuItem(&#34;Window/MeshNormalSmoothWindow&#34;)]</span>
-    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
-    {
-        MeshNormalSmoothWindow window = (MeshNormalSmoothWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(MeshNormalSmoothWindow));
-        window.Show();
-    }
-
-    Mesh mesh;
-
-    <span style=color:#66d9ef>void</span> OnGUI()
-    {
-        EditorGUILayout.BeginVertical();
-        mesh = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, <span style=color:#66d9ef>typeof</span>(Mesh), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Mesh;
-        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
-        {
-            Vector3[] vertices = mesh.vertices;
-            <span style=color:#66d9ef>int</span>[] triangles = mesh.triangles;
-
-            <span style=color:#66d9ef>int</span> polygonNum = mesh.triangles.Length / <span style=color:#ae81ff>3</span>;
-            Vector3[] polyNormals = <span style=color:#66d9ef>new</span> Vector3[polygonNum];
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
-            {
-                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
-                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
-                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
-
-                <span style=color:#75715e>// 乘以1000避免数值过小时计算结果为0
-</span><span style=color:#75715e></span>                polyNormals[i] = Vector3.Cross((vertices[vid1] - vertices[vid0])*<span style=color:#ae81ff>1000</span>, (vertices[vid2] - vertices[vid0])*<span style=color:#ae81ff>1000</span>).normalized;
-            }
-
-            <span style=color:#66d9ef>int</span> vertexNum = mesh.vertices.Length;
-            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexNum];
-            <span style=color:#66d9ef>int</span>[] normalsNum = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexNum];
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
-            {
-                normals[i] = Vector3.zero;
-            }
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
-            {
-
-                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
-                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
-                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
-
-                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; vertexNum; j++)
-                {
-                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid0])
-                    {
-                        normals[j] += polyNormals[i];
-                        normalsNum[j]++;
-                    }
-                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid1])
-                    {
-                        normals[j] += polyNormals[i];
-                        normalsNum[j]++;
-                    }
-                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid2])
-                    {
-                        normals[j] += polyNormals[i];
-                        normalsNum[j]++;
-                    }
-                }
-
-            }
-            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
-            {
-                normals[i] /= normalsNum[i];
-                normals[i].Normalize();
-            }
-
-            Mesh newmesh = <span style=color:#66d9ef>new</span> Mesh();
-            newmesh.vertices = mesh.vertices;
-            newmesh.triangles = mesh.triangles;
-            newmesh.normals = normals;
-            newmesh.uv = mesh.uv;
-            newmesh.uv2 = mesh.uv2;
-            newmesh.boneWeights = mesh.boneWeights;
-            newmesh.bindposes = mesh.bindposes;
-
-            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
-            AssetDatabase.Refresh();
-        }
-        EditorGUILayout.EndVertical();
-    }
-}
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>using</span> UnityEngine;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#66d9ef>using</span> UnityEditor;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#66d9ef>using</span> System.Collections.Generic;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> : EditorWindow
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>{
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#a6e22e>    [MenuItem(&#34;Window/MeshNormalSmoothWindow&#34;)]</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>        MeshNormalSmoothWindow window = (MeshNormalSmoothWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(MeshNormalSmoothWindow));
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        window.Show();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    Mesh mesh;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>    <span style=color:#66d9ef>void</span> OnGUI()
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        EditorGUILayout.BeginVertical();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>        mesh = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, <span style=color:#66d9ef>typeof</span>(Mesh), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Mesh;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>        {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>            Vector3[] vertices = mesh.vertices;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>            <span style=color:#66d9ef>int</span>[] triangles = mesh.triangles;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>            <span style=color:#66d9ef>int</span> polygonNum = mesh.triangles.Length / <span style=color:#ae81ff>3</span>;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>            Vector3[] polyNormals = <span style=color:#66d9ef>new</span> Vector3[polygonNum];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>            {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>                <span style=color:#75715e>// 乘以1000避免数值过小时计算结果为0
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span><span style=color:#75715e></span>                polyNormals[i] = Vector3.Cross((vertices[vid1] - vertices[vid0])*<span style=color:#ae81ff>1000</span>, (vertices[vid2] - vertices[vid0])*<span style=color:#ae81ff>1000</span>).normalized;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>            }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span>            <span style=color:#66d9ef>int</span> vertexNum = mesh.vertices.Length;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span>            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexNum];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span>            <span style=color:#66d9ef>int</span>[] normalsNum = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexNum];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41</span>            {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42</span>                normals[i] = Vector3.zero;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43</span>            }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45</span>            {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47</span>                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48</span>                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49</span>                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51</span>                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; vertexNum; j++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52</span>                {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53</span>                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid0])
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54</span>                    {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55</span>                        normals[j] += polyNormals[i];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56</span>                        normalsNum[j]++;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57</span>                    }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58</span>                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid1])
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59</span>                    {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60</span>                        normals[j] += polyNormals[i];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61</span>                        normalsNum[j]++;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62</span>                    }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63</span>                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid2])
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64</span>                    {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65</span>                        normals[j] += polyNormals[i];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66</span>                        normalsNum[j]++;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67</span>                    }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68</span>                }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70</span>            }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">71</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">72</span>            {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">73</span>                normals[i] /= normalsNum[i];
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">74</span>                normals[i].Normalize();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">75</span>            }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">76</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">77</span>            Mesh newmesh = <span style=color:#66d9ef>new</span> Mesh();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">78</span>            newmesh.vertices = mesh.vertices;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">79</span>            newmesh.triangles = mesh.triangles;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">80</span>            newmesh.normals = normals;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">81</span>            newmesh.uv = mesh.uv;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">82</span>            newmesh.uv2 = mesh.uv2;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">83</span>            newmesh.boneWeights = mesh.boneWeights;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">84</span>            newmesh.bindposes = mesh.bindposes;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">85</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">86</span>            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">87</span>            AssetDatabase.Refresh();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">88</span>        }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">89</span>        EditorGUILayout.EndVertical();
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">90</span>    }
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">91</span>}
 </code></pre></div>
 </main>
 <footer>
