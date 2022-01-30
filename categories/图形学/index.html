@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>Posts | wingstone's blog</title>
+<title>图形学 | wingstone's blog</title>
 <link rel=stylesheet href=/css/style.css>
 <link rel=stylesheet href=/css/fonts.css>
 <link rel=icon href=/icons/16.png>
@@ -19,21 +19,16 @@
 </ul>
 <hr>
 </nav>
-<h1>Posts</h1>
+<h1>图形学</h1>
 <hr>
 <div style=height:.5em></div>
 <article class=element>
-<a href=/posts/2020-01-11-shadertoy-bloom-effect/>ShaderToy Bloom Effect</a>
+<a href=/posts/2020-09-13-gpu-graphic-pipeline/>Pipeline——GPU Graphic Pipeline（图形管线）</a>
 <div class=summary>
-<p>简单bloom效果的实现，在已知距离场的情况下，使用距离的倒数以及指数函数来模拟bloom的效果；</p>
+<h2 id=管线介绍>管线介绍</h2>
+<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程<strong>Graphic Pipeline（图形管线）</strong>；针对实际应用来说，渲染一帧画面也需要一个渲染流程<strong>Render Pipeline/Path（渲染管线/路径）</strong>；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
 </div>
 </article>
-<div class=menu>
-<a href=/posts/>1</a>
-<a href=/posts/page/2/>2</a>
-<a href=/posts/page/3/>3</a>
-<span data-total=4>4</span>
-</div>
 <footer>
 <script defer src=//yihui.org/js/math-code.js></script>
 <script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
