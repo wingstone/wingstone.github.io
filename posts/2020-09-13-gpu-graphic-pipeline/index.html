@@ -25,7 +25,6 @@
 </div><h2>目录</h2>
 <nav id=TableOfContents>
 <ul>
-<li><a href=#管线介绍>管线介绍</a></li>
 <li><a href=#gpu-graphic-pipeline>GPU Graphic Pipeline</a>
 <ul>
 <li><a href=#input-assembler-stage图元装配阶段>Input-Assembler Stage（图元装配阶段）</a></li>
@@ -41,8 +40,7 @@
 </ul>
 </nav>
 <main>
-<h2 id=管线介绍>管线介绍</h2>
-<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程<strong>Graphic Pipeline（图形管线）</strong>；针对实际应用来说，渲染一帧画面也需要一个渲染流程<strong>Render Pipeline/Path（渲染管线/路径）</strong>；Graphic Pipeline处于更加低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
+<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程<strong>Graphic Pipeline（图形管线）</strong>；Graphic Pipeline位于非常低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
 <h2 id=gpu-graphic-pipeline>GPU Graphic Pipeline</h2>
 <p>具体的管线流程要看实际的硬件驱动，Direct3D每一个版本都有很大的改动，这里以Direct3D11为例进行介绍；具体的文章参考可以看这里：<a href=https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-graphics-pipeline>Direct3D 11 Graphics Pipeline</a>，<a href=https://docs.microsoft.com/en-us/windows/win32/direct3d12/pipelines-and-shaders-with-directx-12>Direct3D 12 Graphics Pipeline</a>；</p>
 <h3 id=input-assembler-stage图元装配阶段>Input-Assembler Stage（图元装配阶段）</h3>
