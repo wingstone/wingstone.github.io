@@ -28,6 +28,23 @@
 <p>本文主要讲述PBR在Unreal中的实现思路，涉及Material Model、Shading Model、Lighting Model的背后原理与经验总结，来自演讲<a href=https://de45xmedrsdbp.cloudfront.net/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf>Real Shading in Unreal Engine 4</a>；在文章最后，添加了我个人的理解与实现细节扩展；</p>
 </div>
 </article>
+<article class=element>
+<a href=/posts/2020-09-28-preintegrated-subsurface-scattering/>Preintegrated Subsurface Scattering</a>
+<div class=summary>
+<p>预积分皮肤散射主要解决三种皮肤散射情况<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup><sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>：</p>
+<ol>
+<li>表面弯曲引起的散射（Surface Curvature）；</li>
+<li>表面小凸起引起的散射（Small Surface Bumps）；</li>
+<li>投影边缘引起的散射（Shadows）；</li>
+</ol>
+</div>
+</article>
+<article class=element>
+<a href=/posts/2020-09-16-kajiya-model/2020-09-16-kajiya-model/>头发渲染——Kajiya model</a>
+<div class=summary>
+<p>关键点：采用多边形建模，进行深度排序修正渲染顺序（因为半透问题），AO去模拟自阴影，两层高光，采用Tangent向量代替N进行高光计算；</p>
+</div>
+</article>
 <footer>
 <script defer src=//yihui.org/js/math-code.js></script>
 <script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Skin on wingstone's blog</title><link>/tags/skin/</link><description>Recent content in Skin on wingstone's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 28 Sep 2020 12:18:24 +0000</lastBuildDate><atom:link href="/tags/skin/index.xml" rel="self" type="application/rss+xml"/><item><title>Preintegrated Subsurface Scattering</title><link>/posts/2020-09-28-preintegrated-subsurface-scattering/</link><pubDate>Mon, 28 Sep 2020 12:18:24 +0000</pubDate><guid>/posts/2020-09-28-preintegrated-subsurface-scattering/</guid><description>&lt;p>预积分皮肤散射主要解决三种皮肤散射情况&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>&lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup>：&lt;/p>
+&lt;ol>
+&lt;li>表面弯曲引起的散射（Surface Curvature）；&lt;/li>
+&lt;li>表面小凸起引起的散射（Small Surface Bumps）；&lt;/li>
+&lt;li>投影边缘引起的散射（Shadows）；&lt;/li>
+&lt;/ol></description></item></channel></rss>

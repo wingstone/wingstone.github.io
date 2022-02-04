@@ -25,29 +25,40 @@
 <article class=element>
 <a href=/posts/2021-03-01-fxaa/>FXAA(Fast approximate anti-aliasing)</a>
 <div class=summary>
-<p>FXAA是非常方便且高效的抗拒齿方法，本文主要依据FXAA白皮书进行理论介绍<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，然后针对一些实现方法进行探讨；</p>
+<p>FXAA是非常方便且高效的抗拒齿方法，本文主要依据FXAA白皮书进行理论介绍<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，然后针对一些实现方法进行探讨<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>；</p>
 </div>
 </article>
 <article class=element>
-<a href=/posts/2020-09-30-texture-technique-parallax-mappingshi-chai-tie-tu/>贴图技术——Parallax Mapping（视差贴图）</a>
+<a href=/posts/2020-09-30-parallax-mapping/>Parallax Mapping（视差贴图）</a>
 <div class=summary>
 <p>视差贴图属于位移贴图(Displacement Mapping)技术的一种，它对根据储存在纹理中的几何信息对顶点进行位移或偏移。一般使用位移贴图之前，需要对模型进行细分（细分着色器），然后进行顶点位移；</p>
 </div>
 </article>
 <article class=element>
-<a href=/posts/2020-09-17-yi-dong-gpu-jia-gou/>移动GPU架构</a>
+<a href=/posts/2020-09-28-preintegrated-subsurface-scattering/>Preintegrated Subsurface Scattering</a>
+<div class=summary>
+<p>预积分皮肤散射主要解决三种皮肤散射情况<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup><sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>：</p>
+<ol>
+<li>表面弯曲引起的散射（Surface Curvature）；</li>
+<li>表面小凸起引起的散射（Small Surface Bumps）；</li>
+<li>投影边缘引起的散射（Shadows）；</li>
+</ol>
+</div>
+</article>
+<article class=element>
+<a href=/posts/2020-09-17-mobile-gpu-architecture/>移动GPU架构</a>
 <div class=summary>
 <p>移动GPU架构经常被称之为TBDR（Tiled Based Deferred Rendering），我们这里也以TBDR代称；移动架构有TBR与TBDR两种，但实际上两者之间差别没那么大，所以这里拿TBDR来做统一介绍；</p>
 </div>
 </article>
 <article class=element>
-<a href=/posts/2020-09-16-tou-fa-xuan-ran-zhi-kajiya-model/>头发渲染——Kajiya model</a>
+<a href=/posts/2020-09-16-kajiya-model/2020-09-16-kajiya-model/>头发渲染——Kajiya model</a>
 <div class=summary>
 <p>关键点：采用多边形建模，进行深度排序修正渲染顺序（因为半透问题），AO去模拟自阴影，两层高光，采用Tangent向量代替N进行高光计算；</p>
 </div>
 </article>
 <article class=element>
-<a href=/posts/2020-09-15-tu-xing-xue-zi-yuan-tui-jian/>图形学资源汇总</a>
+<a href=/posts/2020-09-15-computer-graphics-resources/>Computer Graphics Resources</a>
 <div class=summary>
 <p>图形学学习资源推荐，包含了学习网站，学习书记，开源项目等等；</p>
 </div>
@@ -68,12 +79,6 @@
 <a href=/posts/2020-09-10-opengl-vertex-interpolation/>Opengl Vertex Interpolation</a>
 <div class=summary>
 <p>OpenGL中关于插值问题</p>
-</div>
-</article>
-<article class=element>
-<a href=/posts/2020-09-07-c-static-usage/>C++ Static Usage</a>
-<div class=summary>
-<p>C++中的static关键字的一些使用细节问题</p>
 </div>
 </article>
 <div class=menu>

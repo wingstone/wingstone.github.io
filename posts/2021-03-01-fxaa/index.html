@@ -46,21 +46,30 @@
 <li><a href=#end-of-edge-search>End-of-edge Search</a></li>
 </ul>
 </li>
-<li><a href=#unity中fxaa>Unity中FXAA</a></li>
+<li><a href=#unity中fxaa>Unity中FXAA</a>
+<ul>
+<li><a href=#post-process-fxaa>Post process FXAA</a></li>
+<li><a href=#urp-fxaa>URP FXAA</a></li>
+</ul>
+</li>
 <li><a href=#references>references</a></li>
 </ul>
 </nav>
 <main>
-<p>FXAA是非常方便且高效的抗拒齿方法，本文主要依据FXAA白皮书进行理论介绍<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，然后针对一些实现方法进行探讨；</p>
+<p>FXAA是非常方便且高效的抗拒齿方法，本文主要依据FXAA白皮书进行理论介绍<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，然后针对一些实现方法进行探讨<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>；</p>
 <h2 id=fxaa特点>FXAA特点</h2>
 <ol>
 <li>可减弱明显的锯齿，同时保持画面锐利的部分；最重要的是，具有很好的实时性；</li>
-<li>可用于几何抗拒齿也可用于shading抗拒齿，具有处理single-pixel（single pixel lines）与sub-pixel锯齿（这里的sub-pixel并不是指真正意义上的sub-pixel，而是指AA中的firefly问题）的逻辑；</li>
+<li>可用于几何抗拒齿也可用于shading抗拒齿，具有处理single-pixel与sub-pixel锯齿的逻辑；</li>
 <li>使用一个pass即可实现FXAA，非常易于集成；与MSAA相比能节省大量内存；</li>
 <li>对于延迟渲染来说，相比MSAA与SSAA，可以提供优秀的性能；</li>
 </ol>
+<blockquote>
+<p>这里的single-pixel锯齿指single pixel lines问题；
+sub-pixel锯齿中的sub-pixel也不是指真正意义上的sub-pixel，而是指AA中的firefly问题，以及渲染中常用一些jitter所带来的问题；</p>
+</blockquote>
 <h2 id=fxaa官方样例>FXAA官方样例</h2>
-<p>官方Demo需要到NVIDIA官网进行下载，在<a href=https://developer.nvidia.com/gameworksdownload>这里</a>选择GAMEWORKS->Graphics Library->D3D Graphics and Compute Samples进行下载；</p>
+<p>官方Demo需要到NVIDIA官网进行下载，在<a href=https://developer.nvidia.com/gameworksdownload>这里</a>选择GAMEWORKS->Graphics Library->D3D Graphics and Compute Samples进行下载<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>；</p>
 <p>Demo中预制了不同的preset，用户可以从中获取性能与质量之间的权衡；</p>
 <h2 id=集成相关>集成相关</h2>
 <h3 id=preset-selection>Preset Selection</h3>
@@ -98,6 +107,8 @@
 <li>使用偏移后坐标重新采样贴图；</li>
 <li>最后使用低通滤波来处理sub-pixel aliasing，根据sub-pixel aliasing的程度进行blend；</li>
 </ol>
+<p><img src=fxaa_algorithm.jpg alt="fxaa algorithm"></p>
+<center>fxaa algorithm</center>
 <h3 id=luminance-conversion>Luminance Conversion</h3>
 <p>Nvidia建议使用red以及green通道来计算亮度进行优化，人眼对这两种颜色最为敏感；亮度计算方法如下：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>FxaaLuma</span>(float3 rgb) {<span style=color:#66d9ef>return</span> rgb.y <span style=color:#f92672>*</span> (<span style=color:#ae81ff>0.587</span><span style=color:#f92672>/</span><span style=color:#ae81ff>0.299</span>) <span style=color:#f92672>+</span> rgb.x; }
@@ -119,14 +130,18 @@
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span style=color:#66d9ef>if</span>(range <span style=color:#f92672>&lt;</span> max(FXAA_EDGE_THRESHOLD_MIN, rangeMax <span style=color:#f92672>*</span> FXAA_EDGE_THRESHOLD))           {<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>FxaaFilterReturn</span>(rgbM); }
 </code></pre></div><h4 id=tuning-defines>Tuning Defines</h4>
 <p>FXAA_EDGE_THRESHOLD：处理local contrast的阈值比例</p>
-<p>1/3 – too little；
-1/4 – low quality；
-1/8 – high quality；
-1/16 – overkill；</p>
+<ul>
+<li>1/3 – too little；</li>
+<li>1/4 – low quality；</li>
+<li>1/8 – high quality；</li>
+<li>1/16 – overkill；</li>
+</ul>
 <p>FXAA_EDGE_THRESHOLD_MIN：处理暗部区域的阈值；</p>
-<p>1/32 – visible limit；
-1/16 – high quality；
-1/12 – upper limit (start of visible unfiltered edges);</p>
+<ul>
+<li>1/32 – visible limit；</li>
+<li>1/16 – high quality；</li>
+<li>1/12 – upper limit (start of visible unfiltered edges);</li>
+</ul>
 <h3 id=sub-pixel-aliasing-test>Sub-pixel Aliasing Test</h3>
 <p>之前检测的最大值与最小值的差，称之为local contrast。pixel contrast使用当前pixel的luma与luma的均值（上下左右的平均值）的差来定义；pixel contrast与local contrast的比值可以用来计算sub-pixel aliasing；该值越接近于1，越表示single pixel dots的存在，越接近于0，表示对边缘的贡献越大；这个比值可以转换为最后低通滤波blend的程度；</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> lumaL <span style=color:#f92672>=</span> (lumaN <span style=color:#f92672>+</span> lumaW <span style=color:#f92672>+</span> lumaE <span style=color:#f92672>+</span> lumaS) <span style=color:#f92672>*</span> <span style=color:#ae81ff>0.25</span>;
@@ -142,20 +157,26 @@
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span>rgbL <span style=color:#f92672>+=</span> (rgbNW <span style=color:#f92672>+</span> rgbNE <span style=color:#f92672>+</span> rgbSW <span style=color:#f92672>+</span> rgbSE);
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7</span>rgbL <span style=color:#f92672>*=</span> FxaaToFloat3(<span style=color:#ae81ff>1.0</span><span style=color:#f92672>/</span><span style=color:#ae81ff>9.0</span>);
 </code></pre></div><h4 id=tuning-defines-1>Tuning Defines</h4>
-<p>FXAA_SUBPIX：控制subpix filtering的开启；
-0 – turn off；
-1 – turn on；
-2 – turn on force full (ignore FXAA_SUBPIX_TRIM and CAP)</p>
-<p>FXAA_SUBPIX_TRIM：控制sub-pixel aliasing的移除程度；
-1/2 – low removal；
-1/3 – medium removal；
-1/4 – default removal；
-1/8 – high removal；
-0 – complete removal；</p>
-<p>FXAA_SUBPIX_CAP：确保细节不会被完全抹除；
-3/4 – default amount of filtering；
-7/8 – high amount of filtering；
-1 – no capping of filtering；</p>
+<p>FXAA_SUBPIX：控制subpix filtering的开启；</p>
+<ul>
+<li>0 – turn off；</li>
+<li>1 – turn on；</li>
+<li>2 – turn on force full (ignore FXAA_SUBPIX_TRIM and CAP)</li>
+</ul>
+<p>FXAA_SUBPIX_TRIM：控制sub-pixel aliasing的移除程度；</p>
+<ul>
+<li>1/2 – low removal；</li>
+<li>1/3 – medium removal；</li>
+<li>1/4 – default removal；</li>
+<li>1/8 – high removal；</li>
+<li>0 – complete removal；</li>
+</ul>
+<p>FXAA_SUBPIX_CAP：确保细节不会被完全抹除；</p>
+<ul>
+<li>3/4 – default amount of filtering；</li>
+<li>7/8 – high amount of filtering；</li>
+<li>1 – no capping of filtering；</li>
+</ul>
 <h3 id=verticalhorizontal-edge-test>Vertical/Horizontal Edge Test</h3>
 <p>边缘检测的滤波器比如sobel不能用来检测single pixel lines，此类滤波器在pixel center会检测失效；因此FXAA将局部 3x3 邻域的行和列的高通值的加权平均幅度来评判local edge，从而得到edge的方向。</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> edgeVert <span style=color:#f92672>=</span> 
@@ -189,22 +210,39 @@
 </code></pre></div><h4 id=tuning-defines-2>Tuning Defines</h4>
 <p>FXAA_SEARCH_STEPS：控制最大查找步数；</p>
 <p>FXAA_SEARCH_ACCELERATION：控制使用anisotropic filtering加速的程度；</p>
-<p>1 – no acceleration；
-2 – skip by 2 pixels；
-3 – skip by 3 pixels；
-4 – skip by 4 pixels (hard upper limit)；</p>
+<ul>
+<li>1 – no acceleration；</li>
+<li>2 – skip by 2 pixels；</li>
+<li>3 – skip by 3 pixels；</li>
+<li>4 – skip by 4 pixels (hard upper limit)；</li>
+</ul>
 <p>FXAA_SEARCH_THRESHOLD：控制何时停止查找；</p>
-<p>1/4 – seems best quality wise；</p>
+<ul>
+<li>1/4 – seems best quality wise；</li>
+</ul>
 <h2 id=unity中fxaa>Unity中FXAA</h2>
-<p>Unity提供了两种形式的FXAA：</p>
+<p>Unity提供了两种形式的FXAA<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>：</p>
+<h3 id=post-process-fxaa>Post process FXAA</h3>
 <p>一种是PostProcess插件中的FXAA，其实现方式与NVIDIA公开的方法基本一致，直接引用了NVIDIA公开的fxaa头文件；</p>
-<p>另外一种是URP里面内置的FXAA实现，具体可以查看<a href=https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/Shaders/PostProcessing/Common.hlsl>源码</a>；能大概看出来，此FXAA移除了sub-pixel aliasing，将整个AA过程分割为两个部分，一个是dir方向的计算，一个是沿dir方向的blur，从而达到AA的效果；</p>
+<h3 id=urp-fxaa>URP FXAA</h3>
+<p>一种是URP里面内置的FXAA，具体实现可以查看<a href=https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/Shaders/PostProcessing/Common.hlsl>源码</a>；能大概看出来，此FXAA移除了sub-pixel aliasing，将整个AA过程分割为两个部分，一个是dir方向的计算，一个是沿dir方向的blur，从而达到AA的效果；</p>
+<p>其中dir的计算通过<strong>左上左下右上右下</strong>四个像素的差值来计算；blur的程度按照正常流程需要计算edge的长度来控制，URP直接沿dir方向进行四个采样，采样步长由dir控制；然后根据四个采样与中心采样的亮度比较，来决定最后使用什么程度的blur值；</p>
+<p>URP的FXAA可以说是NVIDIA FXAA的简化形式，非常适用于对性能要求极高的平台；实际上URP中的FXAA还可以加上NVIDIA提供FXAA里面的阈值检测机制，从而提前退出不必要的AA计算，得到究极高效版FXAA；</p>
 <h2 id=references>references</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
 <ol>
 <li id=fn:1 role=doc-endnote>
 <p><a href=https://developer.download.nvidia.cn/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf>FXAA_WhitePaper</a>;&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:2 role=doc-endnote>
+<p><a href=http://blog.simonrodriguez.fr/articles/30-07-2016_implementing_fxaa.html>implementing_fxaa</a>;&#160;<a href=#fnref:2 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:3 role=doc-endnote>
+<p><a href=https://developer.nvidia.com/gameworksdownload>NVIDIA Download Center</a>;&#160;<a href=#fnref:3 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:4 role=doc-endnote>
+<p><a href=https://github.com/Unity-Technologies/Graphics>Graphics</a>;&#160;<a href=#fnref:4 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
 </li>
 </ol>
 </section>
