@@ -28,6 +28,7 @@
 <li><a href=#surface-curvature>Surface Curvature</a></li>
 <li><a href=#small-surface-bumps>Small Surface Bumps</a></li>
 <li><a href=#shadows-scattering>Shadows Scattering</a></li>
+<li><a href=#extended-preintegrated-subsurface-scattering>extended preintegrated subsurface scattering</a></li>
 <li><a href=#reference>Reference</a></li>
 </ul>
 </nav>
@@ -66,8 +67,9 @@ $$</p>
 <h2 id=small-surface-bumps>Small Surface Bumps</h2>
 <p>对于小的凸起以及皱纹，不能使用预积分来进行计算，但是由于可以多采样，因此可以使用预滤波的方式处理法线贴图；</p>
 <p>对于specular使用正常的normalmap，对于diffuse的rgb分别使用针对不同Diffusion profile处理后的normalmap，因此需要4张normalmap；</p>
-<p>为了效率考虑，可以使用一种高精度无滤波的normalmap，一张低精度预滤波的normalmap分别针对rgb插值来近似相应的预滤波处理；需要2张normalmap；</p>
-<p>可以将低精度无滤波的normalmap省略，直接使用模型法线来代替，这样就可以指使用一张高精度无滤波的normalmap进行处理了；不过这样做并不能保证结果的合理性，纯粹为表现导向的使用策略；</p>
+<p>为了效率考虑，可以使用一种高精度无滤波的normalmap，一张低精度预滤波的normalmap，针对rgb使用不同参数调制两者之间的插值来近似diffusion profile处理的结果；</p>
+<p>可以将低精度预滤波的normalmap省略，使用高精度normalmap的低mip来作为低精度预滤波的结果，更近一步可以直接使用模型法线来代替；具体的选择需要在效果与性能之间权衡；</p>
+<p>由于针对rgb调制过后的法线有三个，因此要采样三次前面的preintegrated map；针对不同的性能要求，可以选择性的省略这一环节；</p>
 <h2 id=shadows-scattering>Shadows Scattering</h2>
 <p>皮肤出的散射特性在投影边缘会体现出来，具体模拟此现象是很困难的一件事情，但是我们可以通过一些trick来实现；</p>
 <p>首先，阴影强度为0或1，表示被遮挡，或不被遮挡；位于两者之间的值，及表示半影区域，及发生散射的区域（前提是使用软阴影）；因此我们可以针对这一点，利用Diffusion profile进行积分，来得到阴影值与散射强度的关系；</p>
@@ -83,7 +85,43 @@ $$
 <p>最终的渲染结果为：</p>
 <p><img src=result.jpg alt=预积分渲染结果></p>
 <center>预积分渲染结果</center>
-<h2 id=reference>Reference</h2>
+<h2 id=extended-preintegrated-subsurface-scattering>extended preintegrated subsurface scattering</h2>
+<p>在原文中，作者在展望中写到，未来会将预积分应用于环境光，以及考虑多个主轴区域对结果的影响；然后在游戏<strong>Ghost of Tsushima</strong>中就实装了这些展望<sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup>;</p>
+<p>扩展最重要的假设，就是不再认为预积分贴图的计算是在球面积分得到的，而是在柱面上；此时计算预积分贴图使用不再是前面的redial diffusion profile，而应该linear diffusion profile（通过对redial积分获得）；此时使用的曲率也不再是平均曲率，而是方向曲率；</p>
+<p><img src=direction_model.jpg alt=direction_model></p>
+<center>柱状模型</center>
+<blockquote>
+<p>需要注意的是，对于环境光的预积分计算仍需要使用球面假设；因为原文积分使用的zonal harmonics，只能使用redial diffusion profile；</p>
+</blockquote>
+<p>不同光照方向下的方向曲率可以通过曲率向量变换，如下所示：</p>
+<p><img src=conversion.jpg alt=conversion></p>
+<center>曲率变换</center>
+<p>其中曲率张量的定义为：</p>
+<p><img src=tensor.jpg alt=tensor></p>
+<center>曲率张量</center>
+<blockquote>
+<p>原文有说曲率张量为2x2的矩阵，由此可见上图可能有误，上图的转置向量应该位于左方，右方为非转置向量；
+关于曲率张量的计算方法，详细细节需要参考论文<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>;</p>
+</blockquote>
+<p>由于曲率张量为轴对称的，因此只需要记录三个参数，加上用来计算环境光需要的平均曲率，四个参数刚好可以存储到顶点的一个4byte属性中；</p>
+<p>方向曲率的转换代码如下：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>CurvatureFromLight</span>(    float3 tangent,    float3 bitangent,    float3 curvTensor,    float3 lightDir)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{   
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    <span style=color:#75715e>// Project light vector into tangent plane    
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span style=color:#75715e></span>    float2 lightDirProj <span style=color:#f92672>=</span> float2(dot(lightDir, tangent), dot(lightDir, bitangent));  
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    <span style=color:#75715e>// NOTE (jasminp) We should normalize lightDirProj here in order to correctly  
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#75715e></span>    <span style=color:#75715e>//    calculate curvature in the light direction projected to the tangent plane.    
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#75715e></span>    <span style=color:#75715e>//    However, it makes no perceptible difference, since the skin LUT does not vary  
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span style=color:#75715e></span>    <span style=color:#75715e>//    much with curvature when N.L is large.   
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span style=color:#75715e></span>    
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>    <span style=color:#66d9ef>float</span> curvature <span style=color:#f92672>=</span> curvTensor.x <span style=color:#f92672>*</span> GSquare(lightDirProj.x) <span style=color:#f92672>+</span>     
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    <span style=color:#ae81ff>2.0f</span> <span style=color:#f92672>*</span> curvTensor.y <span style=color:#f92672>*</span> lightDirProj.x <span style=color:#f92672>*</span> lightDirProj.y <span style=color:#f92672>+</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>    curvTensor.z <span style=color:#f92672>*</span> GSquare(lightDirProj.y);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>    <span style=color:#66d9ef>return</span> curvature;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>}
+</code></pre></div><h2 id=reference>Reference</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
 <ol>
@@ -98,6 +136,12 @@ $$
 </li>
 <li id=fn:4 role=doc-endnote>
 <p><a href=http://simonstechblog.blogspot.com/2015/02/pre-integrated-skin-shading.html>Simon&rsquo;s Tech Blog</a>&#160;<a href=#fnref:4 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:5 role=doc-endnote>
+<p><a href=https://blog.selfshadow.com/publications/s2020-shading-course/patry/slides/index.html>Ghost of Tsushima</a>&#160;<a href=#fnref:5 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:6 role=doc-endnote>
+<p><a href=https://geometry.stanford.edu/papers/ng-test1/ng-test1.pdf>Estimating Curvatures and Their Derivatives on Triangle Meshes</a>&#160;<a href=#fnref:6 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
 </li>
 </ol>
 </section>
