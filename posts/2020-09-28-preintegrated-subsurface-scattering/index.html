@@ -100,8 +100,7 @@ $$
 <p><img src=tensor.jpg alt=tensor></p>
 <center>曲率张量</center>
 <blockquote>
-<p>原文有说曲率张量为2x2的矩阵，由此可见上图可能有误，上图的转置向量应该位于左方，右方为非转置向量；
-关于曲率张量的计算方法，详细细节需要参考论文<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>;</p>
+<p>关于曲率张量的计算方法，详细细节需要参考论文<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>;</p>
 </blockquote>
 <p>由于曲率张量为轴对称的，因此只需要记录三个参数，加上用来计算环境光需要的平均曲率，四个参数刚好可以存储到顶点的一个4byte属性中；</p>
 <p>方向曲率的转换代码如下：</p>
@@ -111,9 +110,9 @@ $$
 </span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span style=color:#75715e></span>    float2 lightDirProj <span style=color:#f92672>=</span> float2(dot(lightDir, tangent), dot(lightDir, bitangent));  
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    <span style=color:#75715e>// NOTE (jasminp) We should normalize lightDirProj here in order to correctly  
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#75715e></span>    <span style=color:#75715e>//    calculate curvature in the light direction projected to the tangent plane.    
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#75715e></span>    <span style=color:#75715e>//    However, it makes no perceptible difference, since the skin LUT does not vary  
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span style=color:#75715e></span>    <span style=color:#75715e>//    much with curvature when N.L is large.   
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#75715e></span>    <span style=color:#75715e>// calculate curvature in the light direction projected to the tangent plane.    
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#75715e></span>    <span style=color:#75715e>// However, it makes no perceptible difference, since the skin LUT does not vary  
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span style=color:#75715e></span>    <span style=color:#75715e>// much with curvature when N.L is large.   
 </span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span style=color:#75715e></span>    
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>    <span style=color:#66d9ef>float</span> curvature <span style=color:#f92672>=</span> curvTensor.x <span style=color:#f92672>*</span> GSquare(lightDirProj.x) <span style=color:#f92672>+</span>     
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    <span style=color:#ae81ff>2.0f</span> <span style=color:#f92672>*</span> curvTensor.y <span style=color:#f92672>*</span> lightDirProj.x <span style=color:#f92672>*</span> lightDirProj.y <span style=color:#f92672>+</span>

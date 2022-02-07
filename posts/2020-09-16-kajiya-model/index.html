@@ -53,9 +53,19 @@
 <p>可以看出，kajiya计算模型与blin-phong模型比较类似，<strong>本质上都是采用pow(NdotH, specularity)来进行的高光计算</strong>；但是<strong>kajiya模型没有使用多边形几何的法线来作为法线计算，而是采用法线平面的概念来作为法线的代替计算</strong>；</p>
 <blockquote>
 <p>虽然几何是多边形，但是仍然将其作为发丝来看待，Tangent向量作为发丝的方向；而发丝的法线应该位于与发丝垂直的平面上，且发丝与此平面的交点作为法线的起点；</p>
+<p>图片中说法线位于T、V所决定的平面上，应该是错的；从公式中能够看出，应该是位于T、H所在的平面上才对；</p>
 </blockquote>
-<p>法线平面即红色平面所显示的，法线平面中真正的法线，有T向量、H向量所决定的平面，与法线平面的交线来决定，我们将这里决定出来的法线用N1（区别于真正的多边形几何法线）来代替；由于T、H、N1都是单位向量，由几何关系可以得到<strong>N1dotH = sin(T,H)</strong>，到此，我们就可以使用T、H来进行高光计算了；</p>
-<h2 id=模拟真正的头发高光>模拟真正的头发高光</h2>
+<p>法线平面即红色平面所显示的，法线平面中真正的法线，由T向量、H向量所决定的平面，与法线平面的交线来决定，我们将这里决定出来的法线用N1（区别于真正的多边形几何法线）来代替；由于T、H、N1都是单位向量，由几何关系可以得到<strong>N1dotH = sin(T,H)</strong>，到此，我们就可以使用T、H来进行高光计算了；</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>StrandSpecular</span>(float3 T, float3 V,
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span>float3 L,<span style=color:#66d9ef>float</span> exponent)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>{
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>    float3 H <span style=color:#f92672>=</span> normalize(L<span style=color:#f92672>+</span> V);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span>    <span style=color:#66d9ef>float</span> dotTH<span style=color:#f92672>=</span> dot(T, H);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span>    <span style=color:#66d9ef>float</span> sinTH<span style=color:#f92672>=</span> sqrt(<span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span>dotTH<span style=color:#f92672>*</span>dotTH);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7</span>    <span style=color:#66d9ef>float</span> dirAtten<span style=color:#f92672>=</span> smoothstep(<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span>, <span style=color:#ae81ff>0.0</span>, dot(T, H));
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8</span>    <span style=color:#66d9ef>return</span> dirAtten<span style=color:#f92672>*</span> pow(sinTH, exponent);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">9</span>}
+</code></pre></div><h2 id=模拟真正的头发高光>模拟真正的头发高光</h2>
 <p>为了模拟头发真正的高光，还要基于对头发高光的观察进行部分假设，相应的观察假设在这张PPT上；</p>
 <p><img src=hair_ref.jpg alt=hair_ref></p>
 <center>hair参考</center>
@@ -82,7 +92,29 @@
 <p>实质上，N对T的偏移，是模拟头发的起伏，即发丝方向突出多边形平面或凹陷多边形平面；</p>
 </blockquote>
 <p>次高光的闪烁效果模拟比较简单，只需要使用一个噪音纹理与次高光相乘即可；</p>
-<h2 id=渲染排序问题>渲染排序问题</h2>
+<p>总的代码为：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span>float4 <span style=color:#a6e22e>HairLighting</span>(float3 tangent,float3 normal,float3 lightVec, float3 viewVec, float2 uv, <span style=color:#66d9ef>float</span> ambOcc)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{ 
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    <span style=color:#75715e>// shift tangents
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> shiftTex <span style=color:#f92672>=</span> tex2D (tSpecShift, uv) <span style=color:#960050;background-color:#1e0010>–</span> <span style=color:#ae81ff>0.5</span>;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    float3 t1 <span style=color:#f92672>=</span> ShiftTangent(tangent, normal, primaryShift <span style=color:#f92672>+</span> shiftTex);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    float3 t2 <span style=color:#f92672>=</span> ShiftTangent(tangent, normal, secondaryShift <span style=color:#f92672>+</span> shiftTex);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    <span style=color:#75715e>// diffuse lighting: the lerp shifts the shadow boundary for a softer look
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#75715e></span>    float3 diffuse <span style=color:#f92672>=</span> saturate (lerp (<span style=color:#ae81ff>0.25</span>, <span style=color:#ae81ff>1.0</span>, dot(normal, lightVec));
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    diffuse <span style=color:#f92672>*=</span> diffuseColor;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    <span style=color:#75715e>// specular lighting
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span style=color:#75715e></span>    float3 specular <span style=color:#f92672>=</span> specularColor1<span style=color:#f92672>*</span>StrandSpecular(t1, viewVec, lightVec, specExp1);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    <span style=color:#75715e>// add 2nd specular term, modulated with noise texture
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> specMask<span style=color:#f92672>=</span> tex2D (tSpecMask, uv); <span style=color:#75715e>// approximate sparkles using texture
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span style=color:#75715e></span>    specular <span style=color:#f92672>+=</span> specularColor2<span style=color:#f92672>*</span> specMask<span style=color:#f92672>*</span>StrandSpecular(t2, vieVec, lightVec, specExp2);
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>    <span style=color:#75715e>// final color assembly
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span style=color:#75715e></span>    float4 o;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    o.rgb <span style=color:#f92672>=</span> (diffuse <span style=color:#f92672>+</span> specular) <span style=color:#f92672>*</span> tex2D (tBase, uv) <span style=color:#f92672>*</span> lightColor;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>    o.rgb <span style=color:#f92672>*=</span> ambOcc;             <span style=color:#75715e>// modulate color by ambient occlusion term
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span style=color:#75715e></span>    o.a <span style=color:#f92672>=</span> tex2D (tAlpha, uv);    <span style=color:#75715e>// read alpha texture
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> o;
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>}
+</code></pre></div><h2 id=渲染排序问题>渲染排序问题</h2>
 <p>由于头发具有半透效果，必须依据一定的顺序进行渲染才能得到正确的Blend效果；</p>
 <h3 id=模型内部排序>模型内部排序</h3>
 <p>由于模型是一簇一簇的，因为只要决定簇之间的排序即可；依据视线观看头发的顺序，可以依照发簇距离头皮的距离进行排序；让靠近头皮的发簇对应的Index buffer排在整个模型Index buffer的前面；这样模型内部的渲染顺序就完全正确了；</p>
