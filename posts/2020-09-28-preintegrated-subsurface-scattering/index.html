@@ -117,7 +117,7 @@ k_1 & 0 \\
 $$</p>
 <p>其中<code>$[d_1,d_2]$</code>即为主方向坐标系的方向向量，<code>$k_1、k_2$</code>为主方向下的方向曲率；</p>
 <blockquote>
-<p>关于曲率张量的计算方法，详细细节需要参考论文<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>;</p>
+<p>关于曲率张量的计算方法，详细细节需要参考论文<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>；更详细细节可以参考后面所提出来的开源代码；</p>
 </blockquote>
 <p>由于曲率张量为轴对称的，因此只需要记录三个参数，加上用来计算环境光需要的平均曲率，四个参数刚好可以存储到顶点的一个4byte属性中；</p>
 <p>方向曲率的转换代码如下：</p>
@@ -275,9 +275,7 @@ $$</p>
 </span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68</span><span style=color:#75715e></span>float3 NdotL <span style=color:#f92672>=</span> float3(dot(rN,L), dot(gN,L), dot(bN,L));
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69</span>float3 diffuse <span style=color:#f92672>=</span> SkinDiffuse(curvature, NdotL) <span style=color:#f92672>*</span> LightColor <span style=color:#f92672>*</span> SkinShadow(atten, _TunePenumbraWidth);
 </code></pre></div><h3 id=calculate-directional-curvature>Calculate Directional Curvature</h3>
-<p><a href=https://github.com/Forceflow/trimesh2>github trimesh2</a>;
-<a href=https://gfx.cs.princeton.edu/proj/trimesh2/>origin trimesh2</a>;
-<a href=https://github.com/aymanesouani/curvature_estimation_Rusinkiewicz>curvature_estimation_Rusinkiewicz</a>;</p>
+<p>代码量偏大，详细细节可参考论文作者的开源库<a href=https://gfx.cs.princeton.edu/proj/trimesh2/>origin trimesh2</a>以及<a href=https://github.com/Forceflow/trimesh2>github trimesh2</a>;</p>
 <h2 id=reference>Reference</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
