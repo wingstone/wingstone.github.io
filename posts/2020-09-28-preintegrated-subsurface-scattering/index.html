@@ -33,9 +33,9 @@
 <li><a href=#small-surface-bumps>Small Surface Bumps</a></li>
 <li><a href=#shadows-scattering>Shadows Scattering</a></li>
 <li><a href=#extended-preintegrated-subsurface-scattering>extended preintegrated subsurface scattering</a></li>
-<li><a href=#code-appendix>Code Appendix</a>
+<li><a href=#appendix>Appendix</a>
 <ul>
-<li><a href=#lookup-textures>Lookup Textures</a></li>
+<li><a href=#lookup-textures-shader>Lookup Textures Shader</a></li>
 <li><a href=#simplified-skin-shader>Simplified Skin Shader</a></li>
 <li><a href=#calculate-directional-curvature>Calculate Directional Curvature</a></li>
 </ul>
@@ -137,8 +137,11 @@ $$</p>
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>    <span style=color:#66d9ef>return</span> curvature;
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>}
-</code></pre></div><h2 id=code-appendix>Code Appendix</h2>
-<h3 id=lookup-textures>Lookup Textures</h3>
+</code></pre></div><p>最终得到的运行时方向曲率计算结果为：</p>
+<p><img src=direction_curve.jpg alt=方向曲率结果></p>
+<center>方向曲率结果</center>
+<h2 id=appendix>Appendix</h2>
+<h3 id=lookup-textures-shader>Lookup Textures Shader</h3>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>Gaussian</span> (<span style=color:#66d9ef>float</span> v, <span style=color:#66d9ef>float</span> r)
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1.0</span><span style=color:#f92672>/</span>sqrt(<span style=color:#ae81ff>2.0</span><span style=color:#f92672>*</span>UNITY_PI<span style=color:#f92672>*</span>v)<span style=color:#f92672>*</span>exp(<span style=color:#f92672>-</span>(r<span style=color:#f92672>*</span>r)<span style=color:#f92672>/</span>(<span style=color:#ae81ff>2</span><span style=color:#f92672>*</span>v));
@@ -276,6 +279,7 @@ $$</p>
 <span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69</span>float3 diffuse <span style=color:#f92672>=</span> SkinDiffuse(curvature, NdotL) <span style=color:#f92672>*</span> LightColor <span style=color:#f92672>*</span> SkinShadow(atten, _TunePenumbraWidth);
 </code></pre></div><h3 id=calculate-directional-curvature>Calculate Directional Curvature</h3>
 <p>代码量偏大，详细细节可参考论文作者的开源库<a href=https://gfx.cs.princeton.edu/proj/trimesh2/>origin trimesh2</a>以及<a href=https://github.com/Forceflow/trimesh2>github trimesh2</a>;</p>
+<p>其中github trimesh2提供了编译好的lib文件，便于开发人员直接使用；与引擎比较好的一种结合方式（特别是Unity这种C#作为开发语言的引擎），是将其封装成dll文件，直接在引擎中调用来处理已有资产；</p>
 <h2 id=reference>Reference</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
