@@ -80,154 +80,322 @@
 <p>第一人称视角相机需要存储一些额外的变量，一个是移动的速度MovementSpeed，二是Pitch，Yaw角度，Pitch表示俯仰角，Yaw表示偏航角；</p>
 <p>相机自带的变量为Front，Up，Right，cameraPos，worldUp，worldUp表示世界的正上方向；</p>
 <h3 id=相机的移动实现>相机的移动实现</h3>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>ProcessKeyBoard</span>(CEMERA_MOVEMENT direction, <span style=color:#66d9ef>float</span> deltaTime)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    <span style=color:#66d9ef>float</span> offset <span style=color:#f92672>=</span> MovementSpeed <span style=color:#f92672>*</span> deltaTime;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    <span style=color:#66d9ef>switch</span> (direction)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    <span style=color:#66d9ef>case</span> FORWARD:
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>        Position <span style=color:#f92672>+=</span> Front <span style=color:#f92672>*</span> offset;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>        <span style=color:#66d9ef>break</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    <span style=color:#66d9ef>case</span> BACKWARD:
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>        Position <span style=color:#f92672>-=</span> Front <span style=color:#f92672>*</span> offset;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        <span style=color:#66d9ef>break</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    <span style=color:#66d9ef>case</span> LEFT:
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>        Position <span style=color:#f92672>-=</span> Right <span style=color:#f92672>*</span> offset;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>        <span style=color:#66d9ef>break</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>    <span style=color:#66d9ef>case</span> RIGHT:
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>        Position <span style=color:#f92672>+=</span> Right <span style=color:#f92672>*</span> offset;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>        <span style=color:#66d9ef>break</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>    <span style=color:#66d9ef>default</span><span style=color:#f92672>:</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>        <span style=color:#66d9ef>break</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>
-</code></pre></div><h3 id=相机的旋转实现>相机的旋转实现</h3>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>ProcessMouseMovement</span>(<span style=color:#66d9ef>float</span> xOffset, <span style=color:#66d9ef>float</span> yOffset, <span style=color:#66d9ef>bool</span> focusCenter <span style=color:#f92672>=</span> true, GLboolean constrainPitch <span style=color:#f92672>=</span> true)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    xOffset <span style=color:#f92672>*=</span> MouseSensitivity;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    yOffset <span style=color:#f92672>*=</span> MouseSensitivity;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    Yaw <span style=color:#f92672>+=</span> xOffset;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    Pitch <span style=color:#f92672>+=</span> yOffset;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    <span style=color:#66d9ef>if</span> (constrainPitch)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        <span style=color:#66d9ef>if</span> (Pitch <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>89.0f</span>)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>            Pitch <span style=color:#f92672>=</span> <span style=color:#ae81ff>89.0f</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>        <span style=color:#66d9ef>if</span> (Pitch <span style=color:#f92672>&lt;</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>89.0f</span>)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>            Pitch <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>89.0f</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>        glm<span style=color:#f92672>::</span>vec3 front;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>        front.x <span style=color:#f92672>=</span> sin(glm<span style=color:#f92672>::</span>radians(Yaw))<span style=color:#f92672>*</span>cos(glm<span style=color:#f92672>::</span>radians(Pitch));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>        front.y <span style=color:#f92672>=</span> sin(glm<span style=color:#f92672>::</span>radians(Pitch));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>        front.z <span style=color:#f92672>=</span> <span style=color:#f92672>-</span>cos(glm<span style=color:#f92672>::</span>radians(Yaw))<span style=color:#f92672>*</span>cos(glm<span style=color:#f92672>::</span>radians(Pitch));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>        Front <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(front);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>        Right <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(glm<span style=color:#f92672>::</span>cross(Front, WorldUp));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>        Up <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(glm<span style=color:#f92672>::</span>cross(Right, Front));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>}
-</code></pre></div><h2 id=绕固定物体的第三人称相机的实现>绕固定物体的第三人称相机的实现</h2>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>ProcessKeyBoard</span>(CEMERA_MOVEMENT direction, <span style=color:#66d9ef>float</span> deltaTime)
+{
+    <span style=color:#66d9ef>float</span> offset <span style=color:#f92672>=</span> MovementSpeed <span style=color:#f92672>*</span> deltaTime;
+    <span style=color:#66d9ef>switch</span> (direction)
+    {
+    <span style=color:#66d9ef>case</span> FORWARD:
+        Position <span style=color:#f92672>+=</span> Front <span style=color:#f92672>*</span> offset;
+        <span style=color:#66d9ef>break</span>;
+    <span style=color:#66d9ef>case</span> BACKWARD:
+        Position <span style=color:#f92672>-=</span> Front <span style=color:#f92672>*</span> offset;
+        <span style=color:#66d9ef>break</span>;
+    <span style=color:#66d9ef>case</span> LEFT:
+        Position <span style=color:#f92672>-=</span> Right <span style=color:#f92672>*</span> offset;
+        <span style=color:#66d9ef>break</span>;
+    <span style=color:#66d9ef>case</span> RIGHT:
+        Position <span style=color:#f92672>+=</span> Right <span style=color:#f92672>*</span> offset;
+        <span style=color:#66d9ef>break</span>;
+    <span style=color:#66d9ef>default</span><span style=color:#f92672>:</span>
+        <span style=color:#66d9ef>break</span>;
+    }
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=相机的旋转实现>相机的旋转实现</h3>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>ProcessMouseMovement</span>(<span style=color:#66d9ef>float</span> xOffset, <span style=color:#66d9ef>float</span> yOffset, <span style=color:#66d9ef>bool</span> focusCenter <span style=color:#f92672>=</span> true, GLboolean constrainPitch <span style=color:#f92672>=</span> true)
+{
+    xOffset <span style=color:#f92672>*=</span> MouseSensitivity;
+    yOffset <span style=color:#f92672>*=</span> MouseSensitivity;
+
+    Yaw <span style=color:#f92672>+=</span> xOffset;
+    Pitch <span style=color:#f92672>+=</span> yOffset;
+
+    <span style=color:#66d9ef>if</span> (constrainPitch)
+    {
+        <span style=color:#66d9ef>if</span> (Pitch <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>89.0f</span>)
+        {
+            Pitch <span style=color:#f92672>=</span> <span style=color:#ae81ff>89.0f</span>;
+        }
+        <span style=color:#66d9ef>if</span> (Pitch <span style=color:#f92672>&lt;</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>89.0f</span>)
+        {
+            Pitch <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>89.0f</span>;
+        }
+    }
+
+    {
+        glm<span style=color:#f92672>::</span>vec3 front;
+        front.x <span style=color:#f92672>=</span> sin(glm<span style=color:#f92672>::</span>radians(Yaw))<span style=color:#f92672>*</span>cos(glm<span style=color:#f92672>::</span>radians(Pitch));
+        front.y <span style=color:#f92672>=</span> sin(glm<span style=color:#f92672>::</span>radians(Pitch));
+        front.z <span style=color:#f92672>=</span> <span style=color:#f92672>-</span>cos(glm<span style=color:#f92672>::</span>radians(Yaw))<span style=color:#f92672>*</span>cos(glm<span style=color:#f92672>::</span>radians(Pitch));
+        Front <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(front);
+
+        Right <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(glm<span style=color:#f92672>::</span>cross(Front, WorldUp));
+        Up <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(glm<span style=color:#f92672>::</span>cross(Right, Front));
+    }
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=绕固定物体的第三人称相机的实现>绕固定物体的第三人称相机的实现</h2>
 <p>绕固定物体旋转相机，有点类似于unity或maya中，Alt+左键移动移动镜头的那种实现，只不过镜头是绕着所看到的物体旋转的，不是自由旋转的，所以相机要跟根据旋转角度计算相机方向同时计算相机位置；</p>
 <p>实际上第三人称相机就是这样实现的，只不过此时固定物体是角色而已；</p>
 <h3 id=绕固定物体相机的旋转实现>绕固定物体相机的旋转实现</h3>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>ProcessMouseMovement</span>(<span style=color:#66d9ef>float</span> xOffset, <span style=color:#66d9ef>float</span> yOffset, glm<span style=color:#f92672>::</span>vec3 focusPosition <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>vec3(<span style=color:#ae81ff>0.0f</span>), <span style=color:#66d9ef>float</span> focusDistance <span style=color:#f92672>=</span> <span style=color:#ae81ff>5.0f</span>, GLboolean constrainPitch <span style=color:#f92672>=</span> true)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    xOffset <span style=color:#f92672>*=</span> MouseSensitivity;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    yOffset <span style=color:#f92672>*=</span> MouseSensitivity;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    Yaw <span style=color:#f92672>+=</span> xOffset;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    Pitch <span style=color:#f92672>+=</span> yOffset;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    <span style=color:#66d9ef>if</span> (constrainPitch)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        <span style=color:#66d9ef>if</span> (Pitch <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>89.0f</span>)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>            Pitch <span style=color:#f92672>=</span> <span style=color:#ae81ff>89.0f</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>        <span style=color:#66d9ef>if</span> (Pitch <span style=color:#f92672>&lt;</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>89.0f</span>)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>            Pitch <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>89.0f</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>        glm<span style=color:#f92672>::</span>vec3 front;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>        front.x <span style=color:#f92672>=</span> sin(glm<span style=color:#f92672>::</span>radians(Yaw))<span style=color:#f92672>*</span>cos(glm<span style=color:#f92672>::</span>radians(Pitch));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>        front.y <span style=color:#f92672>=</span> sin(glm<span style=color:#f92672>::</span>radians(Pitch));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>        front.z <span style=color:#f92672>=</span> <span style=color:#f92672>-</span>cos(glm<span style=color:#f92672>::</span>radians(Yaw))<span style=color:#f92672>*</span>cos(glm<span style=color:#f92672>::</span>radians(Pitch));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>        Front <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(front);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>        Right <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(glm<span style=color:#f92672>::</span>cross(Front, WorldUp));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>        Up <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(glm<span style=color:#f92672>::</span>cross(Right, Front));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>    Position <span style=color:#f92672>=</span> focusPosition <span style=color:#f92672>-</span> Front <span style=color:#f92672>*</span> focusDistance;            <span style=color:#75715e>//区别在在这里
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span><span style=color:#75715e></span>}
-</code></pre></div><h1 id=离线渲染中的相机>离线渲染中的相机</h1>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>ProcessMouseMovement</span>(<span style=color:#66d9ef>float</span> xOffset, <span style=color:#66d9ef>float</span> yOffset, glm<span style=color:#f92672>::</span>vec3 focusPosition <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>vec3(<span style=color:#ae81ff>0.0f</span>), <span style=color:#66d9ef>float</span> focusDistance <span style=color:#f92672>=</span> <span style=color:#ae81ff>5.0f</span>, GLboolean constrainPitch <span style=color:#f92672>=</span> true)
+{
+    xOffset <span style=color:#f92672>*=</span> MouseSensitivity;
+    yOffset <span style=color:#f92672>*=</span> MouseSensitivity;
+
+    Yaw <span style=color:#f92672>+=</span> xOffset;
+    Pitch <span style=color:#f92672>+=</span> yOffset;
+
+    <span style=color:#66d9ef>if</span> (constrainPitch)
+    {
+        <span style=color:#66d9ef>if</span> (Pitch <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>89.0f</span>)
+        {
+            Pitch <span style=color:#f92672>=</span> <span style=color:#ae81ff>89.0f</span>;
+        }
+        <span style=color:#66d9ef>if</span> (Pitch <span style=color:#f92672>&lt;</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>89.0f</span>)
+        {
+            Pitch <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>89.0f</span>;
+        }
+    }
+
+    {
+        glm<span style=color:#f92672>::</span>vec3 front;
+        front.x <span style=color:#f92672>=</span> sin(glm<span style=color:#f92672>::</span>radians(Yaw))<span style=color:#f92672>*</span>cos(glm<span style=color:#f92672>::</span>radians(Pitch));
+        front.y <span style=color:#f92672>=</span> sin(glm<span style=color:#f92672>::</span>radians(Pitch));
+        front.z <span style=color:#f92672>=</span> <span style=color:#f92672>-</span>cos(glm<span style=color:#f92672>::</span>radians(Yaw))<span style=color:#f92672>*</span>cos(glm<span style=color:#f92672>::</span>radians(Pitch));
+        Front <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(front);
+
+        Right <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(glm<span style=color:#f92672>::</span>cross(Front, WorldUp));
+        Up <span style=color:#f92672>=</span> glm<span style=color:#f92672>::</span>normalize(glm<span style=color:#f92672>::</span>cross(Right, Front));
+    }
+
+    Position <span style=color:#f92672>=</span> focusPosition <span style=color:#f92672>-</span> Front <span style=color:#f92672>*</span> focusDistance;            <span style=color:#75715e>//区别在在这里
+</span><span style=color:#75715e></span>}
+</code></pre></td></tr></table>
+</div>
+</div><h1 id=离线渲染中的相机>离线渲染中的相机</h1>
 <p>离线渲染中并不涉及到View矩阵与Project矩阵，主要涉及到如何使用相机参数生成相应的射线；关于射线的计算与具体的相机类型有关；</p>
 <h2 id=透视相机针孔相机pin-hole>透视相机/针孔相机（Pin Hole）</h2>
 <p>针孔相机就是传统的透视相机，由于针孔无限小，这样从针孔投射的光线是唯一的，针对投影平面来说；投射光线的唯一也就导致无法多采样产生景深效果；</p>
 <p>透视相机的射线，只需要将相机坐标作为起点，相机与屏幕像素的连线作为方向即可；考虑到抗拒齿问题，一般还需要在像素区域内进行随机采样；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#75715e>//归一化屏幕坐标，范围：0~1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span style=color:#75715e></span>Ray <span style=color:#a6e22e>getRay</span>(<span style=color:#66d9ef>float</span> screenX, <span style=color:#66d9ef>float</span> screenY, <span style=color:#66d9ef>float</span> randx, <span style=color:#66d9ef>float</span> randy)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>    vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>float</span><span style=color:#f92672>&gt;</span> dir <span style=color:#f92672>=</span> _up <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>tan(_fov <span style=color:#f92672>/</span> <span style=color:#ae81ff>2</span>) <span style=color:#f92672>*</span>(screenY<span style=color:#f92672>*</span><span style=color:#ae81ff>2.0f</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1.0f</span>) <span style=color:#f92672>+</span> _right <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>tan(_fov <span style=color:#f92672>/</span> <span style=color:#ae81ff>2</span>)<span style=color:#f92672>*</span>_aspect<span style=color:#f92672>*</span>(screenX<span style=color:#f92672>*</span><span style=color:#ae81ff>2.0f</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1.0f</span>) <span style=color:#f92672>+</span> _front;  <span style=color:#75715e>//射线从origin发射
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span><span style=color:#75715e></span>    dir <span style=color:#f92672>=</span> Normalize(dir);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span>    <span style=color:#66d9ef>return</span> Ray(_origin, dir);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7</span>}
-</code></pre></div><h2 id=正交相机>正交相机</h2>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#75715e>//归一化屏幕坐标，范围：0~1
+</span><span style=color:#75715e></span>Ray <span style=color:#a6e22e>getRay</span>(<span style=color:#66d9ef>float</span> screenX, <span style=color:#66d9ef>float</span> screenY, <span style=color:#66d9ef>float</span> randx, <span style=color:#66d9ef>float</span> randy)
+{
+    vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>float</span><span style=color:#f92672>&gt;</span> dir <span style=color:#f92672>=</span> _up <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>tan(_fov <span style=color:#f92672>/</span> <span style=color:#ae81ff>2</span>) <span style=color:#f92672>*</span>(screenY<span style=color:#f92672>*</span><span style=color:#ae81ff>2.0f</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1.0f</span>) <span style=color:#f92672>+</span> _right <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>tan(_fov <span style=color:#f92672>/</span> <span style=color:#ae81ff>2</span>)<span style=color:#f92672>*</span>_aspect<span style=color:#f92672>*</span>(screenX<span style=color:#f92672>*</span><span style=color:#ae81ff>2.0f</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1.0f</span>) <span style=color:#f92672>+</span> _front;  <span style=color:#75715e>//射线从origin发射
+</span><span style=color:#75715e></span>    dir <span style=color:#f92672>=</span> Normalize(dir);
+    <span style=color:#66d9ef>return</span> Ray(_origin, dir);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=正交相机>正交相机</h2>
 <p>正交相机的射线，只需要将相机坐标作为起点，起点的坐标沿屏幕像素进行偏移即可；考虑到抗拒齿问题，一般还需要在像素区域内进行随机采样；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#75715e>//归一化屏幕坐标，范围：0~1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span style=color:#75715e></span>Ray <span style=color:#a6e22e>getRay</span>(<span style=color:#66d9ef>float</span> screenX, <span style=color:#66d9ef>float</span> screenY, <span style=color:#66d9ef>float</span> randx, <span style=color:#66d9ef>float</span> randy)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>    point origin <span style=color:#f92672>=</span> _origin <span style=color:#f92672>+</span> _right <span style=color:#f92672>*</span> (_aspect<span style=color:#f92672>*</span>(screenX<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.f</span>)) <span style=color:#f92672>+</span> _up <span style=color:#f92672>*</span> (screenY<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.f</span>);  <span style=color:#75715e>//射线从像素发射
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> Ray(origin, _front);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span>}
-</code></pre></div><h2 id=环境相机>环境相机</h2>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#75715e>//归一化屏幕坐标，范围：0~1
+</span><span style=color:#75715e></span>Ray <span style=color:#a6e22e>getRay</span>(<span style=color:#66d9ef>float</span> screenX, <span style=color:#66d9ef>float</span> screenY, <span style=color:#66d9ef>float</span> randx, <span style=color:#66d9ef>float</span> randy)
+{
+    point origin <span style=color:#f92672>=</span> _origin <span style=color:#f92672>+</span> _right <span style=color:#f92672>*</span> (_aspect<span style=color:#f92672>*</span>(screenX<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.f</span>)) <span style=color:#f92672>+</span> _up <span style=color:#f92672>*</span> (screenY<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.f</span>);  <span style=color:#75715e>//射线从像素发射
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> Ray(origin, _front);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=环境相机>环境相机</h2>
 <p>环境相机实际就是将像素的x、y坐标映射到体积角上，然后计算出相应体积角下的射线；整个像素映射下来刚好覆盖整个4pi体积角；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span>Ray <span style=color:#a6e22e>getRay</span>(<span style=color:#66d9ef>float</span> screenX, <span style=color:#66d9ef>float</span> screenY, <span style=color:#66d9ef>float</span> randx, <span style=color:#66d9ef>float</span> randy)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>    <span style=color:#66d9ef>float</span> theta <span style=color:#f92672>=</span> PI<span style=color:#f92672>*</span>(<span style=color:#ae81ff>1.f</span> <span style=color:#f92672>-</span> screenY);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>    <span style=color:#66d9ef>float</span> phi <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span><span style=color:#f92672>*</span>PI <span style=color:#f92672>*</span> screenX;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span>    vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>float</span><span style=color:#f92672>&gt;</span> dir <span style=color:#f92672>=</span> _right <span style=color:#f92672>*</span> (std<span style=color:#f92672>::</span>sin(theta)<span style=color:#f92672>*</span>std<span style=color:#f92672>::</span>cos(phi)) <span style=color:#f92672>+</span> _front <span style=color:#f92672>*</span> (std<span style=color:#f92672>::</span>sin(theta)<span style=color:#f92672>*</span>std<span style=color:#f92672>::</span>sin(phi)) <span style=color:#f92672>+</span> _up <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>cos(theta);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span>    <span style=color:#66d9ef>return</span> Ray(_origin, dir);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7</span>}
-</code></pre></div><h2 id=薄透镜相机thin-lens>薄透镜相机（Thin Lens）</h2>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++>Ray <span style=color:#a6e22e>getRay</span>(<span style=color:#66d9ef>float</span> screenX, <span style=color:#66d9ef>float</span> screenY, <span style=color:#66d9ef>float</span> randx, <span style=color:#66d9ef>float</span> randy)
+{
+    <span style=color:#66d9ef>float</span> theta <span style=color:#f92672>=</span> PI<span style=color:#f92672>*</span>(<span style=color:#ae81ff>1.f</span> <span style=color:#f92672>-</span> screenY);
+    <span style=color:#66d9ef>float</span> phi <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span><span style=color:#f92672>*</span>PI <span style=color:#f92672>*</span> screenX;
+    vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>float</span><span style=color:#f92672>&gt;</span> dir <span style=color:#f92672>=</span> _right <span style=color:#f92672>*</span> (std<span style=color:#f92672>::</span>sin(theta)<span style=color:#f92672>*</span>std<span style=color:#f92672>::</span>cos(phi)) <span style=color:#f92672>+</span> _front <span style=color:#f92672>*</span> (std<span style=color:#f92672>::</span>sin(theta)<span style=color:#f92672>*</span>std<span style=color:#f92672>::</span>sin(phi)) <span style=color:#f92672>+</span> _up <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>cos(theta);
+    <span style=color:#66d9ef>return</span> Ray(_origin, dir);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=薄透镜相机thin-lens>薄透镜相机（Thin Lens）</h2>
 <p>薄透镜相机是对传统透镜的模拟，只不过忽略了透镜的实际厚度影响；为了模拟真实的相机，需要加入<strong>光圈</strong>、<strong>焦距</strong>、<strong>焦平面距透镜距离（像距）</strong>；整个相机的<a href=http://www.360doc.com/content/18/0104/17/50354283_719051589.shtml>示意图</a>，光圈所在位置实际就是透镜所在位置；关键的问题是如何根据相机模型，以及屏幕（像平面）上坐标获取所发射出来的射线；过程如下：</p>
 <ul>
 <li>在透镜（光圈）上均匀采样，作为光线的起点，来获取所有经过光圈的光线；</li>
 <li>为了模拟对焦，像平面上坐标点与透镜中心的连线，相交于焦平面一点；此点即为所有采样射线必须经过的焦点；</li>
 <li>前面两个步骤所获取的光圈采样点、焦平面焦点即可决定采样的光线；</li>
 </ul>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#75715e>//透镜描述
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> _apertureRedius; <span style=color:#75715e>//光圈半径
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> _focusDistance;  <span style=color:#75715e>//焦距
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> _imageDistance;  <span style=color:#75715e>//像距
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span style=color:#75715e></span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span style=color:#75715e>//画布描述
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> _height;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#66d9ef>float</span> _aspect;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span style=color:#75715e>//针孔成像后为倒立图像，此处并没有对倒立过程进行纠正
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span style=color:#75715e></span>Ray <span style=color:#a6e22e>getRay</span>(<span style=color:#66d9ef>float</span> screenX, <span style=color:#66d9ef>float</span> screenY, <span style=color:#66d9ef>float</span> randx, <span style=color:#66d9ef>float</span> randy)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>    point screenPoint <span style=color:#f92672>=</span> _origin <span style=color:#f92672>+</span> _right <span style=color:#f92672>*</span> (_aspect<span style=color:#f92672>*</span>(screenX<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.f</span>)<span style=color:#f92672>*</span>_height) <span style=color:#f92672>+</span> _up <span style=color:#f92672>*</span> ((screenY<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.f</span>)<span style=color:#f92672>*</span>_height);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    point lensPoint <span style=color:#f92672>=</span> _origin <span style=color:#f92672>+</span> _front <span style=color:#f92672>*</span> _imageDistance;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>    point focusPoint <span style=color:#f92672>=</span> lensPoint <span style=color:#f92672>+</span> (lensPoint <span style=color:#f92672>-</span> screenPoint) <span style=color:#f92672>*</span> (_focusDistance <span style=color:#f92672>/</span> _imageDistance);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    point origin <span style=color:#f92672>=</span> lensPoint <span style=color:#f92672>+</span> _right <span style=color:#f92672>*</span> (std<span style=color:#f92672>::</span>sqrt(randx) <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>cos(randy<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span><span style=color:#f92672>*</span>PI)) <span style=color:#f92672>+</span> _up <span style=color:#f92672>*</span> (std<span style=color:#f92672>::</span>sqrt(randx) <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>sin(randy<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span><span style=color:#f92672>*</span>PI)) <span style=color:#f92672>*</span>_apertureRedius; <span style=color:#75715e>//射线从透镜发射
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span><span style=color:#75715e></span>    vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>float</span><span style=color:#f92672>&gt;</span> dir <span style=color:#f92672>=</span> Normalize(focusPoint <span style=color:#f92672>-</span> origin);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>    <span style=color:#66d9ef>return</span> Ray(origin, dir);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>}
-</code></pre></div><h2 id=猫眼效应cats-eye-effect与暗角vignette>猫眼效应（Cat&rsquo;s Eye Effect）与暗角（vignette）</h2>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#75715e>//透镜描述
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> _apertureRedius; <span style=color:#75715e>//光圈半径
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> _focusDistance;  <span style=color:#75715e>//焦距
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> _imageDistance;  <span style=color:#75715e>//像距
+</span><span style=color:#75715e></span>
+<span style=color:#75715e>//画布描述
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> _height;
+<span style=color:#66d9ef>float</span> _aspect;
+
+<span style=color:#75715e>//针孔成像后为倒立图像，此处并没有对倒立过程进行纠正
+</span><span style=color:#75715e></span>Ray <span style=color:#a6e22e>getRay</span>(<span style=color:#66d9ef>float</span> screenX, <span style=color:#66d9ef>float</span> screenY, <span style=color:#66d9ef>float</span> randx, <span style=color:#66d9ef>float</span> randy)
+{
+    point screenPoint <span style=color:#f92672>=</span> _origin <span style=color:#f92672>+</span> _right <span style=color:#f92672>*</span> (_aspect<span style=color:#f92672>*</span>(screenX<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.f</span>)<span style=color:#f92672>*</span>_height) <span style=color:#f92672>+</span> _up <span style=color:#f92672>*</span> ((screenY<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.f</span>)<span style=color:#f92672>*</span>_height);
+    point lensPoint <span style=color:#f92672>=</span> _origin <span style=color:#f92672>+</span> _front <span style=color:#f92672>*</span> _imageDistance;
+    point focusPoint <span style=color:#f92672>=</span> lensPoint <span style=color:#f92672>+</span> (lensPoint <span style=color:#f92672>-</span> screenPoint) <span style=color:#f92672>*</span> (_focusDistance <span style=color:#f92672>/</span> _imageDistance);
+
+    point origin <span style=color:#f92672>=</span> lensPoint <span style=color:#f92672>+</span> _right <span style=color:#f92672>*</span> (std<span style=color:#f92672>::</span>sqrt(randx) <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>cos(randy<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span><span style=color:#f92672>*</span>PI)) <span style=color:#f92672>+</span> _up <span style=color:#f92672>*</span> (std<span style=color:#f92672>::</span>sqrt(randx) <span style=color:#f92672>*</span> std<span style=color:#f92672>::</span>sin(randy<span style=color:#f92672>*</span><span style=color:#ae81ff>2.f</span><span style=color:#f92672>*</span>PI)) <span style=color:#f92672>*</span>_apertureRedius; <span style=color:#75715e>//射线从透镜发射
+</span><span style=color:#75715e></span>    vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>float</span><span style=color:#f92672>&gt;</span> dir <span style=color:#f92672>=</span> Normalize(focusPoint <span style=color:#f92672>-</span> origin);
+    <span style=color:#66d9ef>return</span> Ray(origin, dir);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=猫眼效应cats-eye-effect与暗角vignette>猫眼效应（Cat&rsquo;s Eye Effect）与暗角（vignette）</h2>
 <p>猫眼效应与暗角形成的原因，要从实际的相机模型来思考；实际的相机镜头是圆筒状的，这就导致光圈中心的光通量比较充足，而沿着光圈边缘的光线有很大概率会被镜筒遮挡住；从而导致屏幕边缘的亮度较弱，且会产生轻微畸变；</p>
 <p>知道原理后，模拟方法就比较简单了：</p>
 <ol>

@@ -115,24 +115,51 @@ sub-pixel锯齿中的sub-pixel也不是指真正意义上的sub-pixel，而是�
 <center>fxaa algorithm</center>
 <h3 id=luminance-conversion>Luminance Conversion</h3>
 <p>Nvidia建议使用red以及green通道来计算亮度进行优化，人眼对这两种颜色最为敏感；亮度计算方法如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>FxaaLuma</span>(float3 rgb) {<span style=color:#66d9ef>return</span> rgb.y <span style=color:#f92672>*</span> (<span style=color:#ae81ff>0.587</span><span style=color:#f92672>/</span><span style=color:#ae81ff>0.299</span>) <span style=color:#f92672>+</span> rgb.x; }
-</code></pre></div><h3 id=local-contrast-check>Local Contrast Check</h3>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>FxaaLuma</span>(float3 rgb) {<span style=color:#66d9ef>return</span> rgb.y <span style=color:#f92672>*</span> (<span style=color:#ae81ff>0.587</span><span style=color:#f92672>/</span><span style=color:#ae81ff>0.299</span>) <span style=color:#f92672>+</span> rgb.x; }
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=local-contrast-check>Local Contrast Check</h3>
 <p>local contrasts的计算都会使用当前像素以及及上下左右四个像素，来计算最大值与最小值的差值；当对比度大于某个最大值的阈值比例时，认为当前点处于边缘位置，会进行后续运算；该阈值比例会clamp到一个最小值，用于避免在暗部区域进行AA的计算；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span>float3 rgbN  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>,<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>float3 rgbW  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>float3 rgbM  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>0</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>float3 rgbE  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>float3 rgbS  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span style=color:#66d9ef>float</span> lumaN  <span style=color:#f92672>=</span> FxaaLuma(rgbN);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#66d9ef>float</span> lumaW  <span style=color:#f92672>=</span> FxaaLuma(rgbW);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#66d9ef>float</span> lumaM  <span style=color:#f92672>=</span> FxaaLuma(rgbM);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span><span style=color:#66d9ef>float</span> lumaE  <span style=color:#f92672>=</span> FxaaLuma(rgbE);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span><span style=color:#66d9ef>float</span> lumaS  <span style=color:#f92672>=</span> FxaaLuma(rgbS);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span style=color:#66d9ef>float</span> rangeMin <span style=color:#f92672>=</span> min(lumaM, min(min(lumaN, lumaW), min(lumaS, lumaE)));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span style=color:#66d9ef>float</span> rangeMax <span style=color:#f92672>=</span> max(lumaM, max(max(lumaN, lumaW), max(lumaS, lumaE)));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span style=color:#66d9ef>float</span> range <span style=color:#f92672>=</span> rangeMax <span style=color:#f92672>-</span>rangeMin;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span style=color:#66d9ef>if</span>(range <span style=color:#f92672>&lt;</span> max(FXAA_EDGE_THRESHOLD_MIN, rangeMax <span style=color:#f92672>*</span> FXAA_EDGE_THRESHOLD))           {<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>FxaaFilterReturn</span>(rgbM); }
-</code></pre></div><h4 id=tuning-defines>Tuning Defines</h4>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 rgbN  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>,<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)).xyz;
+float3 rgbW  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0</span>)).xyz;
+float3 rgbM  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>0</span>)).xyz;
+float3 rgbE  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0</span>)).xyz;
+float3 rgbS  <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span>)).xyz;
+<span style=color:#66d9ef>float</span> lumaN  <span style=color:#f92672>=</span> FxaaLuma(rgbN);
+<span style=color:#66d9ef>float</span> lumaW  <span style=color:#f92672>=</span> FxaaLuma(rgbW);
+<span style=color:#66d9ef>float</span> lumaM  <span style=color:#f92672>=</span> FxaaLuma(rgbM);
+<span style=color:#66d9ef>float</span> lumaE  <span style=color:#f92672>=</span> FxaaLuma(rgbE);
+<span style=color:#66d9ef>float</span> lumaS  <span style=color:#f92672>=</span> FxaaLuma(rgbS);
+<span style=color:#66d9ef>float</span> rangeMin <span style=color:#f92672>=</span> min(lumaM, min(min(lumaN, lumaW), min(lumaS, lumaE)));
+<span style=color:#66d9ef>float</span> rangeMax <span style=color:#f92672>=</span> max(lumaM, max(max(lumaN, lumaW), max(lumaS, lumaE)));
+<span style=color:#66d9ef>float</span> range <span style=color:#f92672>=</span> rangeMax <span style=color:#f92672>-</span>rangeMin;
+<span style=color:#66d9ef>if</span>(range <span style=color:#f92672>&lt;</span> max(FXAA_EDGE_THRESHOLD_MIN, rangeMax <span style=color:#f92672>*</span> FXAA_EDGE_THRESHOLD))           {<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>FxaaFilterReturn</span>(rgbM); }
+</code></pre></td></tr></table>
+</div>
+</div><h4 id=tuning-defines>Tuning Defines</h4>
 <p>FXAA_EDGE_THRESHOLD：处理local contrast的阈值比例</p>
 <ul>
 <li>1/3 – too little；</li>
@@ -148,19 +175,42 @@ sub-pixel锯齿中的sub-pixel也不是指真正意义上的sub-pixel，而是�
 </ul>
 <h3 id=sub-pixel-aliasing-test>Sub-pixel Aliasing Test</h3>
 <p>之前检测的最大值与最小值的差，称之为local contrast。pixel contrast使用当前pixel的luma与luma的均值（上下左右的平均值）的差来定义；pixel contrast与local contrast的比值可以用来计算sub-pixel aliasing；该值越接近于1，越表示single pixel dots的存在，越接近于0，表示对边缘的贡献越大；这个比值可以转换为最后低通滤波blend的程度；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> lumaL <span style=color:#f92672>=</span> (lumaN <span style=color:#f92672>+</span> lumaW <span style=color:#f92672>+</span> lumaE <span style=color:#f92672>+</span> lumaS) <span style=color:#f92672>*</span> <span style=color:#ae81ff>0.25</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span style=color:#66d9ef>float</span> rangeL <span style=color:#f92672>=</span> abs(lumaL <span style=color:#f92672>-</span> lumaM);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span><span style=color:#66d9ef>float</span> blendL <span style=color:#f92672>=</span> max(<span style=color:#ae81ff>0.0</span>, (rangeL <span style=color:#f92672>/</span> range) <span style=color:#f92672>-</span> FXAA_SUBPIX_TRIM) <span style=color:#f92672>*</span> FXAA_SUBPIX_TRIM_SCALE;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>blendL <span style=color:#f92672>=</span> min(FXAA_SUBPIX_CAP, blendL); 
-</code></pre></div><p>低通滤波的值使用3x3的box filter来进行计算；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span>float3 rgbL <span style=color:#f92672>=</span> rgbN <span style=color:#f92672>+</span> rgbW <span style=color:#f92672>+</span> rgbM <span style=color:#f92672>+</span> rgbE <span style=color:#f92672>+</span> rgbS; <span style=color:#75715e>// ... 
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span><span style=color:#75715e></span>float3 rgbNW <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>,<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>float3 rgbNE <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>1</span>,<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>float3 rgbSW <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span>float3 rgbSE <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>)).xyz;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span>rgbL <span style=color:#f92672>+=</span> (rgbNW <span style=color:#f92672>+</span> rgbNE <span style=color:#f92672>+</span> rgbSW <span style=color:#f92672>+</span> rgbSE);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7</span>rgbL <span style=color:#f92672>*=</span> FxaaToFloat3(<span style=color:#ae81ff>1.0</span><span style=color:#f92672>/</span><span style=color:#ae81ff>9.0</span>);
-</code></pre></div><h4 id=tuning-defines-1>Tuning Defines</h4>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> lumaL <span style=color:#f92672>=</span> (lumaN <span style=color:#f92672>+</span> lumaW <span style=color:#f92672>+</span> lumaE <span style=color:#f92672>+</span> lumaS) <span style=color:#f92672>*</span> <span style=color:#ae81ff>0.25</span>;
+<span style=color:#66d9ef>float</span> rangeL <span style=color:#f92672>=</span> abs(lumaL <span style=color:#f92672>-</span> lumaM);
+<span style=color:#66d9ef>float</span> blendL <span style=color:#f92672>=</span> max(<span style=color:#ae81ff>0.0</span>, (rangeL <span style=color:#f92672>/</span> range) <span style=color:#f92672>-</span> FXAA_SUBPIX_TRIM) <span style=color:#f92672>*</span> FXAA_SUBPIX_TRIM_SCALE;
+blendL <span style=color:#f92672>=</span> min(FXAA_SUBPIX_CAP, blendL); 
+</code></pre></td></tr></table>
+</div>
+</div><p>低通滤波的值使用3x3的box filter来进行计算；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 rgbL <span style=color:#f92672>=</span> rgbN <span style=color:#f92672>+</span> rgbW <span style=color:#f92672>+</span> rgbM <span style=color:#f92672>+</span> rgbE <span style=color:#f92672>+</span> rgbS; <span style=color:#75715e>// ... 
+</span><span style=color:#75715e></span>float3 rgbNW <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>,<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)).xyz;
+float3 rgbNE <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>1</span>,<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)).xyz;
+float3 rgbSW <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>)).xyz;
+float3 rgbSE <span style=color:#f92672>=</span> FxaaTextureOffset(tex, pos.xy, FxaaInt2( <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>)).xyz;
+rgbL <span style=color:#f92672>+=</span> (rgbNW <span style=color:#f92672>+</span> rgbNE <span style=color:#f92672>+</span> rgbSW <span style=color:#f92672>+</span> rgbSE);
+rgbL <span style=color:#f92672>*=</span> FxaaToFloat3(<span style=color:#ae81ff>1.0</span><span style=color:#f92672>/</span><span style=color:#ae81ff>9.0</span>);
+</code></pre></td></tr></table>
+</div>
+</div><h4 id=tuning-defines-1>Tuning Defines</h4>
 <p>FXAA_SUBPIX：控制subpix filtering的开启；</p>
 <ul>
 <li>0 – turn off；</li>
@@ -183,35 +233,71 @@ sub-pixel锯齿中的sub-pixel也不是指真正意义上的sub-pixel，而是�
 </ul>
 <h3 id=verticalhorizontal-edge-test>Vertical/Horizontal Edge Test</h3>
 <p>边缘检测的滤波器比如sobel不能用来检测single pixel lines，此类滤波器在pixel center会检测失效；因此FXAA将局部 3x3 邻域的行和列的高通值的加权平均幅度来评判local edge，从而得到edge的方向。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> edgeVert <span style=color:#f92672>=</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span>    abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaN) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNE)) <span style=color:#f92672>+</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>    abs((<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaW ) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span> <span style=color:#f92672>*</span> lumaM) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaE )) <span style=color:#f92672>+</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>    abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaS) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSE));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span><span style=color:#66d9ef>float</span> edgeHorz <span style=color:#f92672>=</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span>    abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaW) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSW)) <span style=color:#f92672>+</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7</span>    abs((<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaN ) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span> <span style=color:#f92672>*</span> lumaM) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaS )) <span style=color:#f92672>+</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8</span>    abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNE) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaE) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSE));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">9</span><span style=color:#66d9ef>bool</span> horzSpan <span style=color:#f92672>=</span> edgeHorz <span style=color:#f92672>&gt;=</span> edgeVert; 
-</code></pre></div><h3 id=end-of-edge-search>End-of-edge Search</h3>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> edgeVert <span style=color:#f92672>=</span> 
+    abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaN) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNE)) <span style=color:#f92672>+</span> 
+    abs((<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaW ) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span> <span style=color:#f92672>*</span> lumaM) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaE )) <span style=color:#f92672>+</span> 
+    abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaS) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSE));
+<span style=color:#66d9ef>float</span> edgeHorz <span style=color:#f92672>=</span> 
+    abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNW) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaW) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSW)) <span style=color:#f92672>+</span> 
+    abs((<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaN ) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span> <span style=color:#f92672>*</span> lumaM) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.50</span> <span style=color:#f92672>*</span> lumaS )) <span style=color:#f92672>+</span> 
+    abs((<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaNE) <span style=color:#f92672>+</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> lumaE) <span style=color:#f92672>+</span> (<span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> lumaSE));
+<span style=color:#66d9ef>bool</span> horzSpan <span style=color:#f92672>=</span> edgeHorz <span style=color:#f92672>&gt;=</span> edgeVert; 
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=end-of-edge-search>End-of-edge Search</h3>
 <p>给定了edge的方向后，FXAA首先计算出与edge90度垂直的具有最高对比的的像素对；然后沿着edge的正负方向查找，直到达到查找限制或像素对的平均值的变化量到达某个程度；</p>
 <p>一个简单的循环查找可以在正方向与负方向以并行的方式进行，这样可以降低shader中brunch语句的使用；</p>
 <p>当查找加速被开启时（即preset0，1，2），查找可以使用硬件aniostropic filtering作为box filter来检测多个像素对，得到加速的效果；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>for</span>(uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> FXAA_SEARCH_STEPS; i<span style=color:#f92672>++</span>)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{   
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    <span style=color:#960050;background-color:#1e0010>#</span><span style=color:#66d9ef>if</span> FXAA_SEARCH_ACCELERATION <span style=color:#f92672>==</span> <span style=color:#ae81ff>1</span>     
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneN) lumaEndN <span style=color:#f92672>=</span> FxaaLuma(FxaaTexture(tex, posN.xy).xyz);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneP) lumaEndP <span style=color:#f92672>=</span> FxaaLuma(FxaaTexture(tex, posP.xy).xyz);   
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    <span style=color:#960050;background-color:#1e0010>#</span><span style=color:#66d9ef>else</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneN) lumaEndN <span style=color:#f92672>=</span> FxaaLuma(             FxaaTextureGrad(tex, posN.xy, offNP).xyz);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneP) lumaEndP <span style=color:#f92672>=</span> FxaaLuma(             FxaaTextureGrad(tex, posP.xy, offNP).xyz);     
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    <span style=color:#960050;background-color:#1e0010>#</span>endif
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    doneN <span style=color:#f92672>=</span> doneN <span style=color:#f92672>||</span> (abs(lumaEndN <span style=color:#f92672>-</span> lumaN) <span style=color:#f92672>&gt;=</span> gradientN);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>    doneP <span style=color:#f92672>=</span> doneP <span style=color:#f92672>||</span> (abs(lumaEndP <span style=color:#f92672>-</span> lumaN) <span style=color:#f92672>&gt;=</span> gradientN);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    <span style=color:#66d9ef>if</span>(doneN <span style=color:#f92672>&amp;&amp;</span> doneP) <span style=color:#66d9ef>break</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>    <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneN) posN <span style=color:#f92672>-=</span> offNP;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneP) posP <span style=color:#f92672>+=</span> offNP;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>}
-</code></pre></div><h4 id=tuning-defines-2>Tuning Defines</h4>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>for</span>(uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> FXAA_SEARCH_STEPS; i<span style=color:#f92672>++</span>)
+{   
+    <span style=color:#960050;background-color:#1e0010>#</span><span style=color:#66d9ef>if</span> FXAA_SEARCH_ACCELERATION <span style=color:#f92672>==</span> <span style=color:#ae81ff>1</span>     
+        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneN) lumaEndN <span style=color:#f92672>=</span> FxaaLuma(FxaaTexture(tex, posN.xy).xyz);
+        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneP) lumaEndP <span style=color:#f92672>=</span> FxaaLuma(FxaaTexture(tex, posP.xy).xyz);   
+    <span style=color:#960050;background-color:#1e0010>#</span><span style=color:#66d9ef>else</span> 
+        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneN) lumaEndN <span style=color:#f92672>=</span> FxaaLuma(             FxaaTextureGrad(tex, posN.xy, offNP).xyz);
+        <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneP) lumaEndP <span style=color:#f92672>=</span> FxaaLuma(             FxaaTextureGrad(tex, posP.xy, offNP).xyz);     
+    <span style=color:#960050;background-color:#1e0010>#</span>endif
+    doneN <span style=color:#f92672>=</span> doneN <span style=color:#f92672>||</span> (abs(lumaEndN <span style=color:#f92672>-</span> lumaN) <span style=color:#f92672>&gt;=</span> gradientN);
+    doneP <span style=color:#f92672>=</span> doneP <span style=color:#f92672>||</span> (abs(lumaEndP <span style=color:#f92672>-</span> lumaN) <span style=color:#f92672>&gt;=</span> gradientN);
+    <span style=color:#66d9ef>if</span>(doneN <span style=color:#f92672>&amp;&amp;</span> doneP) <span style=color:#66d9ef>break</span>;
+    <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneN) posN <span style=color:#f92672>-=</span> offNP;
+    <span style=color:#66d9ef>if</span>(<span style=color:#f92672>!</span>doneP) posP <span style=color:#f92672>+=</span> offNP;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h4 id=tuning-defines-2>Tuning Defines</h4>
 <p>FXAA_SEARCH_STEPS：控制最大查找步数；</p>
 <p>FXAA_SEARCH_ACCELERATION：控制使用anisotropic filtering加速的程度；</p>
 <ul>

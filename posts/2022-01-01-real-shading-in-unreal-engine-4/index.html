@@ -118,52 +118,103 @@ $$</p>
 \int_H {L_i(L)f(l,v)cos\theta_l} {\rm d}l= \frac{1}{N}\sum_{k=1}^N \frac{L_i(l_k)f(l,v)cos\theta_l}{p(l_k, v)} \quad
 $$</p>
 <p>代码为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span>float3 <span style=color:#a6e22e>ImportanceSampleGGX</span>( float2 Xi, <span style=color:#66d9ef>float</span> Roughness, float3 N )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    <span style=color:#66d9ef>float</span> a <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> Roughness;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    <span style=color:#66d9ef>float</span> Phi <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> PI <span style=color:#f92672>*</span> Xi.x;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    <span style=color:#66d9ef>float</span> CosTheta <span style=color:#f92672>=</span> sqrt( (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Xi.y) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> (a<span style=color:#f92672>*</span>a <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> Xi.y ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    <span style=color:#66d9ef>float</span> SinTheta <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> CosTheta <span style=color:#f92672>*</span> CosTheta );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    float3 H;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    H.x <span style=color:#f92672>=</span> SinTheta <span style=color:#f92672>*</span> cos( Phi );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    H.y <span style=color:#f92672>=</span> SinTheta <span style=color:#f92672>*</span> sin( Phi );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    H.z <span style=color:#f92672>=</span> CosTheta;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>    float3 UpVector <span style=color:#f92672>=</span> abs(N.z) <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0.999</span> <span style=color:#f92672>?</span> float3(<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>1</span>) <span style=color:#f92672>:</span> float3(<span style=color:#ae81ff>1</span>,<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span>);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    float3 TangentX <span style=color:#f92672>=</span> normalize( cross( UpVector, N ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>    float3 TangentY <span style=color:#f92672>=</span> cross( N, TangentX );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    <span style=color:#75715e>// Tangent to world space
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> TangentX <span style=color:#f92672>*</span> H.x <span style=color:#f92672>+</span> TangentY <span style=color:#f92672>*</span> H.y <span style=color:#f92672>+</span> N <span style=color:#f92672>*</span> H.z;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>float3 <span style=color:#a6e22e>SpecularIBL</span>( float3 SpecularColor , <span style=color:#66d9ef>float</span> Roughness, float3 N, float3 V )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>    float3 SpecularLighting <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>        <span style=color:#66d9ef>float</span> NoV <span style=color:#f92672>=</span> saturate( dot( N, V ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( dot( N, L ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>        <span style=color:#66d9ef>float</span> NoH <span style=color:#f92672>=</span> saturate( dot( N, H ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>        <span style=color:#66d9ef>float</span> VoH <span style=color:#f92672>=</span> saturate( dot( V, H ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>            float3 SampleColor <span style=color:#f92672>=</span> EnvMap.SampleLevel( EnvMapSampler , L, <span style=color:#ae81ff>0</span> ).rgb;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span>            <span style=color:#66d9ef>float</span> G <span style=color:#f92672>=</span> G_Smith( Roughness, NoV, NoL );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>            <span style=color:#66d9ef>float</span> Fc <span style=color:#f92672>=</span> pow( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> VoH, <span style=color:#ae81ff>5</span> );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>            float3 F <span style=color:#f92672>=</span> (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Fc) <span style=color:#f92672>*</span> SpecularColor <span style=color:#f92672>+</span> Fc;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span>            <span style=color:#75715e>// Incident light = SampleColor * NoL
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span><span style=color:#75715e></span>            <span style=color:#75715e>// Microfacet specular = D*G*F / (4*NoL*NoV)
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span><span style=color:#75715e></span>            <span style=color:#75715e>// pdf = D * NoH / (4 * VoH)
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span><span style=color:#75715e></span>            SpecularLighting <span style=color:#f92672>+=</span> SampleColor <span style=color:#f92672>*</span> F <span style=color:#f92672>*</span> G <span style=color:#f92672>*</span> VoH <span style=color:#f92672>/</span> (NoH <span style=color:#f92672>*</span> NoV);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43</span>    <span style=color:#66d9ef>return</span> SpecularLighting <span style=color:#f92672>/</span> NumSamples;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45</span>
-</code></pre></div><p>就算使用重要性采样，使用mipmap来加速收敛，仍至少需要16次采样才能满足效果，再考虑到反射采样之间的blend（各种反射探针），实际上采样一次才能满足性能要求；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>ImportanceSampleGGX</span>( float2 Xi, <span style=color:#66d9ef>float</span> Roughness, float3 N )
+{
+    <span style=color:#66d9ef>float</span> a <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> Roughness;
+    <span style=color:#66d9ef>float</span> Phi <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> PI <span style=color:#f92672>*</span> Xi.x;
+    <span style=color:#66d9ef>float</span> CosTheta <span style=color:#f92672>=</span> sqrt( (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Xi.y) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> (a<span style=color:#f92672>*</span>a <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> Xi.y ) );
+    <span style=color:#66d9ef>float</span> SinTheta <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> CosTheta <span style=color:#f92672>*</span> CosTheta );
+    float3 H;
+    H.x <span style=color:#f92672>=</span> SinTheta <span style=color:#f92672>*</span> cos( Phi );
+    H.y <span style=color:#f92672>=</span> SinTheta <span style=color:#f92672>*</span> sin( Phi );
+    H.z <span style=color:#f92672>=</span> CosTheta;
+    float3 UpVector <span style=color:#f92672>=</span> abs(N.z) <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0.999</span> <span style=color:#f92672>?</span> float3(<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>1</span>) <span style=color:#f92672>:</span> float3(<span style=color:#ae81ff>1</span>,<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span>);
+    float3 TangentX <span style=color:#f92672>=</span> normalize( cross( UpVector, N ) );
+    float3 TangentY <span style=color:#f92672>=</span> cross( N, TangentX );
+    <span style=color:#75715e>// Tangent to world space
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> TangentX <span style=color:#f92672>*</span> H.x <span style=color:#f92672>+</span> TangentY <span style=color:#f92672>*</span> H.y <span style=color:#f92672>+</span> N <span style=color:#f92672>*</span> H.z;
+}
+
+float3 <span style=color:#a6e22e>SpecularIBL</span>( float3 SpecularColor , <span style=color:#66d9ef>float</span> Roughness, float3 N, float3 V )
+{
+    float3 SpecularLighting <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
+    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
+    {
+        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
+        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
+        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
+        <span style=color:#66d9ef>float</span> NoV <span style=color:#f92672>=</span> saturate( dot( N, V ) );
+        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( dot( N, L ) );
+        <span style=color:#66d9ef>float</span> NoH <span style=color:#f92672>=</span> saturate( dot( N, H ) );
+        <span style=color:#66d9ef>float</span> VoH <span style=color:#f92672>=</span> saturate( dot( V, H ) );
+        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+        {
+            float3 SampleColor <span style=color:#f92672>=</span> EnvMap.SampleLevel( EnvMapSampler , L, <span style=color:#ae81ff>0</span> ).rgb;
+            <span style=color:#66d9ef>float</span> G <span style=color:#f92672>=</span> G_Smith( Roughness, NoV, NoL );
+            <span style=color:#66d9ef>float</span> Fc <span style=color:#f92672>=</span> pow( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> VoH, <span style=color:#ae81ff>5</span> );
+            float3 F <span style=color:#f92672>=</span> (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Fc) <span style=color:#f92672>*</span> SpecularColor <span style=color:#f92672>+</span> Fc;
+            <span style=color:#75715e>// Incident light = SampleColor * NoL
+</span><span style=color:#75715e></span>            <span style=color:#75715e>// Microfacet specular = D*G*F / (4*NoL*NoV)
+</span><span style=color:#75715e></span>            <span style=color:#75715e>// pdf = D * NoH / (4 * VoH)
+</span><span style=color:#75715e></span>            SpecularLighting <span style=color:#f92672>+=</span> SampleColor <span style=color:#f92672>*</span> F <span style=color:#f92672>*</span> G <span style=color:#f92672>*</span> VoH <span style=color:#f92672>/</span> (NoH <span style=color:#f92672>*</span> NoV);
+        }
+    }
+    <span style=color:#66d9ef>return</span> SpecularLighting <span style=color:#f92672>/</span> NumSamples;
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><p>就算使用重要性采样，使用mipmap来加速收敛，仍至少需要16次采样才能满足效果，再考虑到反射采样之间的blend（各种反射探针），实际上采样一次才能满足性能要求；</p>
 <h4 id=split-sum-approximation>Split Sum Approximation</h4>
 <p>将积分进行分离即可达到预结算的效果，同时满足性能要求；</p>
 <p>$$
@@ -171,73 +222,144 @@ $$</p>
 $$</p>
 <h4 id=pre-filtered-environment-map>Pre-Filtered Environment Map</h4>
 <p>对于light部分，我们采用GGX来进行filter，将不同粗糙度下的filter结果存放到mipmap level中；同时假设<code>$n=v=l$</code>，引入的误差，在filter过程中使用<code>$cos\theta_{l_k}$</code>来加权得到更好的效果；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span>float3 <span style=color:#a6e22e>PrefilterEnvMap</span>( <span style=color:#66d9ef>float</span> Roughness, float3 R )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    float3 N <span style=color:#f92672>=</span> R;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    float3 V <span style=color:#f92672>=</span> R;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    float3 PrefilteredColor <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( dot( N, L ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>            PrefilteredColor <span style=color:#f92672>+=</span> EnvMap.SampleLevel( EnvMapSampler , L, <span style=color:#ae81ff>0</span> ).rgb <span style=color:#f92672>*</span> NoL;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>            TotalWeight <span style=color:#f92672>+=</span> NoL;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>    <span style=color:#66d9ef>return</span> PrefilteredColor <span style=color:#f92672>/</span> TotalWeight;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>}
-</code></pre></div><h4 id=environment-brdf>Environment BRDF</h4>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>PrefilterEnvMap</span>( <span style=color:#66d9ef>float</span> Roughness, float3 R )
+{
+    float3 N <span style=color:#f92672>=</span> R;
+    float3 V <span style=color:#f92672>=</span> R;
+    float3 PrefilteredColor <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
+    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
+    {
+        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
+        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
+        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
+        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( dot( N, L ) );
+        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+        {
+            PrefilteredColor <span style=color:#f92672>+=</span> EnvMap.SampleLevel( EnvMapSampler , L, <span style=color:#ae81ff>0</span> ).rgb <span style=color:#f92672>*</span> NoL;
+            TotalWeight <span style=color:#f92672>+=</span> NoL;
+        }
+    }
+    <span style=color:#66d9ef>return</span> PrefilteredColor <span style=color:#f92672>/</span> TotalWeight;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h4 id=environment-brdf>Environment BRDF</h4>
 <p>第二项积分，可以认为是均匀白光下，对Specular brdf的积分，即<code>$L_i(l_k)=1$</code>；对于菲涅尔项，使用Schlick的形式：<code>$F(v,h)=F_0+(1-F_0)(1-v\cdot h)^5$</code>，我们可以发现，积分中<code>$F_0$</code>可以提取出来，即</p>
 <p>$$
 \int_H {f(l,v)cos\theta_l} {\rm d}l= F_0\int_H {\frac{f(l,v)}{F(v,h)}(1-(1-v\cdot h)^5)cos\theta_l} {\rm d}l + \int_H {\frac{f(l,v)}{F(v,h)}(1-v\cdot h)^5cos\theta_l} {\rm d}l
 $$</p>
 <p>最后的积分公式只需要Roughness与<code>$cos\theta_v$</code>作为输入，<code>$F_0$</code>的scale与bias作为输出。由于输入为0到1的范围，可以很容易的使用2dlut来存储积分结果。</p>
 <p>Unreal使用R16G16float的存储格式来存储，因为测试发现精度起着非常重要的作用。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#75715e>// 积分代码
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#75715e></span>float2 <span style=color:#a6e22e>IntegrateBRDF</span>( <span style=color:#66d9ef>float</span> Roughness, <span style=color:#66d9ef>float</span> NoV )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    float3 V;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    V.x <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1.0f</span> <span style=color:#f92672>-</span> NoV <span style=color:#f92672>*</span> NoV ); <span style=color:#75715e>// sin
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span style=color:#75715e></span>    V.y <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    V.z <span style=color:#f92672>=</span> NoV; <span style=color:#75715e>// cos
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> A <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    <span style=color:#66d9ef>float</span> B <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( L.z );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>        <span style=color:#66d9ef>float</span> NoH <span style=color:#f92672>=</span> saturate( H.z );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        <span style=color:#66d9ef>float</span> VoH <span style=color:#f92672>=</span> saturate( dot( V, H ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>            <span style=color:#66d9ef>float</span> G <span style=color:#f92672>=</span> G_Smith( Roughness, NoV, NoL );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>            <span style=color:#66d9ef>float</span> G_Vis <span style=color:#f92672>=</span> G <span style=color:#f92672>*</span> VoH <span style=color:#f92672>/</span> (NoH <span style=color:#f92672>*</span> NoV);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>            <span style=color:#66d9ef>float</span> Fc <span style=color:#f92672>=</span> pow( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> VoH, <span style=color:#ae81ff>5</span> );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>            A <span style=color:#f92672>+=</span> (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Fc) <span style=color:#f92672>*</span> G_Vis;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>            B <span style=color:#f92672>+=</span> Fc <span style=color:#f92672>*</span> G_Vis;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>    <span style=color:#66d9ef>return</span> float2( A, B ) <span style=color:#f92672>/</span> NumSamples;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span><span style=color:#75715e>// 实时计算代码
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span><span style=color:#75715e></span>float3 <span style=color:#a6e22e>ApproximateSpecularIBL</span>( float3 SpecularColor, <span style=color:#66d9ef>float</span> Roughness, float3 N, float3 V )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span>    <span style=color:#66d9ef>float</span> NoV <span style=color:#f92672>=</span> saturate( dot( N, V ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>    float3 R <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, N ) <span style=color:#f92672>*</span> N <span style=color:#f92672>-</span> V;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>    float3 PrefilteredColor <span style=color:#f92672>=</span> PrefilterEnvMap( Roughness, R );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span>    float2 EnvBRDF <span style=color:#f92672>=</span> IntegrateBRDF( Roughness, NoV );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span>    <span style=color:#66d9ef>return</span> PrefilteredColor <span style=color:#f92672>*</span> ( SpecularColor <span style=color:#f92672>*</span> EnvBRDF.x <span style=color:#f92672>+</span> EnvBRDF.y );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span>}
-</code></pre></div><p>很多其他的研究使用了跟unreal一样或接近的的方式来计算lut，其中<a href=http://blog.selfshadow.com/publications/s2013-shading-course/>Getting More Physical in Call of Duty: Black Ops II</a>更近一步，使用解析拟合的方式来逼近积分。</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 积分代码
+</span><span style=color:#75715e></span>float2 <span style=color:#a6e22e>IntegrateBRDF</span>( <span style=color:#66d9ef>float</span> Roughness, <span style=color:#66d9ef>float</span> NoV )
+{
+    float3 V;
+    V.x <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1.0f</span> <span style=color:#f92672>-</span> NoV <span style=color:#f92672>*</span> NoV ); <span style=color:#75715e>// sin
+</span><span style=color:#75715e></span>    V.y <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    V.z <span style=color:#f92672>=</span> NoV; <span style=color:#75715e>// cos
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> A <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>float</span> B <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>const</span> uint NumSamples <span style=color:#f92672>=</span> <span style=color:#ae81ff>1024</span>;
+    <span style=color:#66d9ef>for</span>( uint i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> NumSamples; i<span style=color:#f92672>++</span> )
+    {
+        float2 Xi <span style=color:#f92672>=</span> Hammersley( i, NumSamples );
+        float3 H <span style=color:#f92672>=</span> ImportanceSampleGGX( Xi, Roughness, N );
+        float3 L <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, H ) <span style=color:#f92672>*</span> H <span style=color:#f92672>-</span> V;
+        <span style=color:#66d9ef>float</span> NoL <span style=color:#f92672>=</span> saturate( L.z );
+        <span style=color:#66d9ef>float</span> NoH <span style=color:#f92672>=</span> saturate( H.z );
+        <span style=color:#66d9ef>float</span> VoH <span style=color:#f92672>=</span> saturate( dot( V, H ) );
+        <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+        {
+            <span style=color:#66d9ef>float</span> G <span style=color:#f92672>=</span> G_Smith( Roughness, NoV, NoL );
+            <span style=color:#66d9ef>float</span> G_Vis <span style=color:#f92672>=</span> G <span style=color:#f92672>*</span> VoH <span style=color:#f92672>/</span> (NoH <span style=color:#f92672>*</span> NoV);
+            <span style=color:#66d9ef>float</span> Fc <span style=color:#f92672>=</span> pow( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> VoH, <span style=color:#ae81ff>5</span> );
+            A <span style=color:#f92672>+=</span> (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Fc) <span style=color:#f92672>*</span> G_Vis;
+            B <span style=color:#f92672>+=</span> Fc <span style=color:#f92672>*</span> G_Vis;
+        }
+    }
+    <span style=color:#66d9ef>return</span> float2( A, B ) <span style=color:#f92672>/</span> NumSamples;
+}
+
+<span style=color:#75715e>// 实时计算代码
+</span><span style=color:#75715e></span>float3 <span style=color:#a6e22e>ApproximateSpecularIBL</span>( float3 SpecularColor, <span style=color:#66d9ef>float</span> Roughness, float3 N, float3 V )
+{
+    <span style=color:#66d9ef>float</span> NoV <span style=color:#f92672>=</span> saturate( dot( N, V ) );
+    float3 R <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> dot( V, N ) <span style=color:#f92672>*</span> N <span style=color:#f92672>-</span> V;
+    float3 PrefilteredColor <span style=color:#f92672>=</span> PrefilterEnvMap( Roughness, R );
+    float2 EnvBRDF <span style=color:#f92672>=</span> IntegrateBRDF( Roughness, NoV );
+    <span style=color:#66d9ef>return</span> PrefilteredColor <span style=color:#f92672>*</span> ( SpecularColor <span style=color:#f92672>*</span> EnvBRDF.x <span style=color:#f92672>+</span> EnvBRDF.y );
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>很多其他的研究使用了跟unreal一样或接近的的方式来计算lut，其中<a href=http://blog.selfshadow.com/publications/s2013-shading-course/>Getting More Physical in Call of Duty: Black Ops II</a>更近一步，使用解析拟合的方式来逼近积分。</p>
 <h2 id=material-model>Material Model</h2>
 <p>对于unreal的延迟管线来说，限制参数范围非常重要，这样可以优化gbuffer空间以及texture的存储及获取。
 Unreal使用的参数为：</p>
@@ -357,242 +479,502 @@ $$</p>
 <li>Representative point方法主要用来计算面光源情况下的Specular BRDF，不会影响Irradiance的计算，因此NoL的计算直接使用光源中心即可，不需要使用Representative point计算得来的光照方向来计算NoL；</li>
 <li>NoL的计算需要考虑光源与水平面相交的特殊情况，对此情况的处理，Unreal使用近似的方式来计算NoL的wrap，并给出了解析算法的代码；</li>
 </ul>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#75715e>// Engine/Shaders/Private/CapsuleLight.ush
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#75715e>// Alpha is half of angle of spherical cap
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>SphereHorizonCosWrap</span>( <span style=color:#66d9ef>float</span> NoL, <span style=color:#66d9ef>float</span> SinAlphaSqr )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span style=color:#75715e>#if 1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> SinAlpha <span style=color:#f92672>=</span> sqrt( SinAlphaSqr );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&lt;</span> SinAlpha )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>        NoL <span style=color:#f92672>=</span> max( NoL, <span style=color:#f92672>-</span>SinAlpha );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span><span style=color:#75715e>        // Accurate sphere irradiance
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span style=color:#75715e>        float CosBeta = NoL;
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span style=color:#75715e>        float SinBeta = sqrt( 1 - CosBeta * CosBeta );
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span style=color:#75715e>        float TanBeta = SinBeta / CosBeta;
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span style=color:#75715e>
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span><span style=color:#75715e>        float x = sqrt( 1 / SinAlphaSqr - 1 );
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span><span style=color:#75715e>        float y = -x / TanBeta;
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span style=color:#75715e>        float z = SinBeta * sqrt(1 - y*y);
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span><span style=color:#75715e>
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span><span style=color:#75715e>        NoL = NoL * acos(y) - x * z + atan( z / x ) / SinAlphaSqr;
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span><span style=color:#75715e>        NoL /= PI;
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span><span style=color:#75715e></span><span style=color:#75715e>#else
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span><span style=color:#75715e></span>        <span style=color:#75715e>// Hermite spline approximation
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span><span style=color:#75715e></span>        <span style=color:#75715e>// Fairly accurate with SinAlpha &lt; 0.8
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span><span style=color:#75715e></span>        <span style=color:#75715e>// y=0 and dy/dx=0 at -SinAlpha
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span><span style=color:#75715e></span>        <span style=color:#75715e>// y=SinAlpha and dy/dx=1 at SinAlpha
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span><span style=color:#75715e></span>        NoL <span style=color:#f92672>=</span> Pow2( SinAlpha <span style=color:#f92672>+</span> NoL ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>4</span> <span style=color:#f92672>*</span> SinAlpha );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span><span style=color:#75715e>#endif
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span><span style=color:#75715e></span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span><span style=color:#75715e>#else
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span><span style=color:#75715e></span>    NoL <span style=color:#f92672>=</span> saturate( ( NoL <span style=color:#f92672>+</span> SinAlphaSqr ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> SinAlphaSqr ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span><span style=color:#75715e>#endif
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span><span style=color:#75715e></span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>    <span style=color:#66d9ef>return</span> NoL;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>}
-</code></pre></div><ul>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// Engine/Shaders/Private/CapsuleLight.ush
+</span><span style=color:#75715e>// Alpha is half of angle of spherical cap
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>SphereHorizonCosWrap</span>( <span style=color:#66d9ef>float</span> NoL, <span style=color:#66d9ef>float</span> SinAlphaSqr )
+{
+<span style=color:#75715e>#if 1
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> SinAlpha <span style=color:#f92672>=</span> sqrt( SinAlphaSqr );
+
+    <span style=color:#66d9ef>if</span>( NoL <span style=color:#f92672>&lt;</span> SinAlpha )
+    {
+        NoL <span style=color:#f92672>=</span> max( NoL, <span style=color:#f92672>-</span>SinAlpha );
+<span style=color:#75715e>#if 0</span><span style=color:#75715e>
+</span><span style=color:#75715e>        // Accurate sphere irradiance
+</span><span style=color:#75715e>        float CosBeta = NoL;
+</span><span style=color:#75715e>        float SinBeta = sqrt( 1 - CosBeta * CosBeta );
+</span><span style=color:#75715e>        float TanBeta = SinBeta / CosBeta;
+</span><span style=color:#75715e>
+</span><span style=color:#75715e>        float x = sqrt( 1 / SinAlphaSqr - 1 );
+</span><span style=color:#75715e>        float y = -x / TanBeta;
+</span><span style=color:#75715e>        float z = SinBeta * sqrt(1 - y*y);
+</span><span style=color:#75715e>
+</span><span style=color:#75715e>        NoL = NoL * acos(y) - x * z + atan( z / x ) / SinAlphaSqr;
+</span><span style=color:#75715e>        NoL /= PI;
+</span><span style=color:#75715e></span><span style=color:#75715e>#else
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// Hermite spline approximation
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// Fairly accurate with SinAlpha &lt; 0.8
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// y=0 and dy/dx=0 at -SinAlpha
+</span><span style=color:#75715e></span>        <span style=color:#75715e>// y=SinAlpha and dy/dx=1 at SinAlpha
+</span><span style=color:#75715e></span>        NoL <span style=color:#f92672>=</span> Pow2( SinAlpha <span style=color:#f92672>+</span> NoL ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>4</span> <span style=color:#f92672>*</span> SinAlpha );
+<span style=color:#75715e>#endif
+</span><span style=color:#75715e></span>    }
+<span style=color:#75715e>#else
+</span><span style=color:#75715e></span>    NoL <span style=color:#f92672>=</span> saturate( ( NoL <span style=color:#f92672>+</span> SinAlphaSqr ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> SinAlphaSqr ) );
+<span style=color:#75715e>#endif
+</span><span style=color:#75715e></span>
+    <span style=color:#66d9ef>return</span> NoL;
+}
+</code></pre></td></tr></table>
+</div>
+</div><ul>
 <li>能量守恒同样只针对于Speculer部分，对于normalize需要的 <code>$\alpha \prime$</code> 的计算，源码中给出了不一样的计算方法，与modified D distribution方法中的计算方式不同；</li>
 </ul>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#75715e>// Engine/Shaders/Private/ShadingModels.ush
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>New_a2</span>( <span style=color:#66d9ef>float</span> a2, <span style=color:#66d9ef>float</span> SinAlpha, <span style=color:#66d9ef>float</span> VoH )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    <span style=color:#66d9ef>return</span> a2 <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> SinAlpha <span style=color:#f92672>*</span> (<span style=color:#ae81ff>3.0</span> <span style=color:#f92672>*</span> sqrtFast(a2) <span style=color:#f92672>+</span> SinAlpha) <span style=color:#f92672>/</span> ( VoH <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.001</span> );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    <span style=color:#75715e>//return a2 + 0.25 * SinAlpha * ( saturate(12 * a2 + 0.125) + SinAlpha ) / ( VoH + 0.001 );
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span style=color:#75715e></span>    <span style=color:#75715e>//return a2 + 0.25 * SinAlpha * ( a2 * 2 + 1 + SinAlpha ) / ( VoH + 0.001 );
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#75715e></span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>EnergyNormalization</span>( inout <span style=color:#66d9ef>float</span> a2, <span style=color:#66d9ef>float</span> VoH, FAreaLight AreaLight )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    <span style=color:#66d9ef>if</span>( AreaLight.SphereSinAlphaSoft <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>        <span style=color:#75715e>// Modify Roughness
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span style=color:#75715e></span>        a2 <span style=color:#f92672>=</span> saturate( a2 <span style=color:#f92672>+</span> Pow2( AreaLight.SphereSinAlphaSoft ) <span style=color:#f92672>/</span> ( VoH <span style=color:#f92672>*</span> <span style=color:#ae81ff>3.6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.4</span> ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>    <span style=color:#66d9ef>float</span> Sphere_a2 <span style=color:#f92672>=</span> a2;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    <span style=color:#66d9ef>float</span> Energy <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>    <span style=color:#66d9ef>if</span>( AreaLight.SphereSinAlpha <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>        Sphere_a2 <span style=color:#f92672>=</span> New_a2( a2, AreaLight.SphereSinAlpha, VoH );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>        Energy <span style=color:#f92672>=</span> a2 <span style=color:#f92672>/</span> Sphere_a2;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>    <span style=color:#66d9ef>if</span>( AreaLight.LineCosSubtended <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>1</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span><span style=color:#75715e>#if 1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span><span style=color:#75715e></span>        <span style=color:#66d9ef>float</span> LineCosTwoAlpha <span style=color:#f92672>=</span> AreaLight.LineCosSubtended;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>        <span style=color:#66d9ef>float</span> LineTanAlpha <span style=color:#f92672>=</span> sqrt( ( <span style=color:#ae81ff>1.0001</span> <span style=color:#f92672>-</span> LineCosTwoAlpha ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> LineCosTwoAlpha ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>        <span style=color:#66d9ef>float</span> Line_a2 <span style=color:#f92672>=</span> New_a2( Sphere_a2, LineTanAlpha, VoH );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>        Energy <span style=color:#f92672>*=</span> sqrt( Sphere_a2 <span style=color:#f92672>/</span> Line_a2 );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span><span style=color:#75715e>#else
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span><span style=color:#75715e></span>        <span style=color:#66d9ef>float</span> LineCosTwoAlpha <span style=color:#f92672>=</span> AreaLight.LineCosSubtended;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>        <span style=color:#66d9ef>float</span> LineSinAlpha <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> LineCosTwoAlpha );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span>        <span style=color:#66d9ef>float</span> Line_a2 <span style=color:#f92672>=</span> New_a2( Sphere_a2, LineSinAlpha, VoH );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>        Energy <span style=color:#f92672>*=</span> Sphere_a2 <span style=color:#f92672>/</span> Line_a2;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span><span style=color:#75715e>#endif
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span><span style=color:#75715e></span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span>    <span style=color:#66d9ef>return</span> Energy;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41</span>
-</code></pre></div><ul>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// Engine/Shaders/Private/ShadingModels.ush
+</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>New_a2</span>( <span style=color:#66d9ef>float</span> a2, <span style=color:#66d9ef>float</span> SinAlpha, <span style=color:#66d9ef>float</span> VoH )
+{
+    <span style=color:#66d9ef>return</span> a2 <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> SinAlpha <span style=color:#f92672>*</span> (<span style=color:#ae81ff>3.0</span> <span style=color:#f92672>*</span> sqrtFast(a2) <span style=color:#f92672>+</span> SinAlpha) <span style=color:#f92672>/</span> ( VoH <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.001</span> );
+    <span style=color:#75715e>//return a2 + 0.25 * SinAlpha * ( saturate(12 * a2 + 0.125) + SinAlpha ) / ( VoH + 0.001 );
+</span><span style=color:#75715e></span>    <span style=color:#75715e>//return a2 + 0.25 * SinAlpha * ( a2 * 2 + 1 + SinAlpha ) / ( VoH + 0.001 );
+</span><span style=color:#75715e></span>}
+<span style=color:#66d9ef>float</span> <span style=color:#a6e22e>EnergyNormalization</span>( inout <span style=color:#66d9ef>float</span> a2, <span style=color:#66d9ef>float</span> VoH, FAreaLight AreaLight )
+{
+    <span style=color:#66d9ef>if</span>( AreaLight.SphereSinAlphaSoft <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+    {
+        <span style=color:#75715e>// Modify Roughness
+</span><span style=color:#75715e></span>        a2 <span style=color:#f92672>=</span> saturate( a2 <span style=color:#f92672>+</span> Pow2( AreaLight.SphereSinAlphaSoft ) <span style=color:#f92672>/</span> ( VoH <span style=color:#f92672>*</span> <span style=color:#ae81ff>3.6</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.4</span> ) );
+    }
+
+    <span style=color:#66d9ef>float</span> Sphere_a2 <span style=color:#f92672>=</span> a2;
+    <span style=color:#66d9ef>float</span> Energy <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+    <span style=color:#66d9ef>if</span>( AreaLight.SphereSinAlpha <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+    {
+        Sphere_a2 <span style=color:#f92672>=</span> New_a2( a2, AreaLight.SphereSinAlpha, VoH );
+        Energy <span style=color:#f92672>=</span> a2 <span style=color:#f92672>/</span> Sphere_a2;
+    }
+
+    <span style=color:#66d9ef>if</span>( AreaLight.LineCosSubtended <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>1</span> )
+    {
+<span style=color:#75715e>#if 1
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>float</span> LineCosTwoAlpha <span style=color:#f92672>=</span> AreaLight.LineCosSubtended;
+        <span style=color:#66d9ef>float</span> LineTanAlpha <span style=color:#f92672>=</span> sqrt( ( <span style=color:#ae81ff>1.0001</span> <span style=color:#f92672>-</span> LineCosTwoAlpha ) <span style=color:#f92672>/</span> ( <span style=color:#ae81ff>1</span> <span style=color:#f92672>+</span> LineCosTwoAlpha ) );
+        <span style=color:#66d9ef>float</span> Line_a2 <span style=color:#f92672>=</span> New_a2( Sphere_a2, LineTanAlpha, VoH );
+        Energy <span style=color:#f92672>*=</span> sqrt( Sphere_a2 <span style=color:#f92672>/</span> Line_a2 );
+<span style=color:#75715e>#else
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>float</span> LineCosTwoAlpha <span style=color:#f92672>=</span> AreaLight.LineCosSubtended;
+        <span style=color:#66d9ef>float</span> LineSinAlpha <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> LineCosTwoAlpha );
+        <span style=color:#66d9ef>float</span> Line_a2 <span style=color:#f92672>=</span> New_a2( Sphere_a2, LineSinAlpha, VoH );
+        Energy <span style=color:#f92672>*=</span> Sphere_a2 <span style=color:#f92672>/</span> Line_a2;
+<span style=color:#75715e>#endif
+</span><span style=color:#75715e></span>    }
+
+    <span style=color:#66d9ef>return</span> Energy;
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><ul>
 <li>在计算Specular BRDF是时候，unreal参考了Decima Engine演讲<a href=http://advances.realtimerendering.com/s2017/DecimaSiggraph2017.pdf>Decima Engine: Advances in Lighting and AA</a>中的做法，来计算NoH的最大值，代码为：</li>
 </ul>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#75715e>// Engine/Shaders/Private/BRDF.ush
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#75715e>// [ de Carpentier 2017, &#34;Decima Engine: Advances in Lighting and AA&#34; ]
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#75715e></span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SphereMaxNoH</span>( inout BxDFContext Context, <span style=color:#66d9ef>float</span> SinAlpha, <span style=color:#66d9ef>bool</span> bNewtonIteration )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    <span style=color:#66d9ef>if</span>( SinAlpha <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>        <span style=color:#66d9ef>float</span> CosAlpha <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Pow2( SinAlpha ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>        <span style=color:#66d9ef>float</span> RoL <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoL <span style=color:#f92672>*</span> Context.NoV <span style=color:#f92672>-</span> Context.VoL;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>        <span style=color:#66d9ef>if</span>( RoL <span style=color:#f92672>&gt;=</span> CosAlpha )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>            Context.NoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>            Context.XoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>            Context.YoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>            Context.VoH <span style=color:#f92672>=</span> abs( Context.NoV );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>        <span style=color:#66d9ef>else</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>            <span style=color:#66d9ef>float</span> rInvLengthT <span style=color:#f92672>=</span> SinAlpha <span style=color:#f92672>*</span> rsqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> RoL<span style=color:#f92672>*</span>RoL );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>            <span style=color:#66d9ef>float</span> NoTr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> ( Context.NoV <span style=color:#f92672>-</span> RoL <span style=color:#f92672>*</span> Context.NoL );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span><span style=color:#75715e>// Enable once anisotropic materials support area lights
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span><span style=color:#75715e>            float XoTr = rInvLengthT * ( Context.XoV - RoL * Context.XoL );
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span><span style=color:#75715e>            float YoTr = rInvLengthT * ( Context.YoV - RoL * Context.YoL );
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span><span style=color:#75715e></span><span style=color:#75715e>#endif
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span><span style=color:#75715e></span>            <span style=color:#66d9ef>float</span> VoTr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> ( <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoV<span style=color:#f92672>*</span>Context.NoV <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> RoL <span style=color:#f92672>*</span> Context.VoL );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>            <span style=color:#66d9ef>if</span> (bNewtonIteration)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>                <span style=color:#75715e>// dot( cross(N,L), V )
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span><span style=color:#75715e></span>                <span style=color:#66d9ef>float</span> NxLoV <span style=color:#f92672>=</span> sqrt( saturate( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Pow2(Context.NoL) <span style=color:#f92672>-</span> Pow2(Context.NoV) <span style=color:#f92672>-</span> Pow2(Context.VoL) <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoL <span style=color:#f92672>*</span> Context.NoV <span style=color:#f92672>*</span> Context.VoL ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>                <span style=color:#66d9ef>float</span> NoBr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> NxLoV;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span>                <span style=color:#66d9ef>float</span> VoBr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> NxLoV <span style=color:#f92672>*</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoV;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>                <span style=color:#66d9ef>float</span> NoLVTr <span style=color:#f92672>=</span> Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> Context.NoV <span style=color:#f92672>+</span> NoTr;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span>                <span style=color:#66d9ef>float</span> VoLVTr <span style=color:#f92672>=</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>   <span style=color:#f92672>+</span> VoTr;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span>                <span style=color:#66d9ef>float</span> p <span style=color:#f92672>=</span> NoBr   <span style=color:#f92672>*</span> VoLVTr;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span>                <span style=color:#66d9ef>float</span> q <span style=color:#f92672>=</span> NoLVTr <span style=color:#f92672>*</span> VoLVTr;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41</span>                <span style=color:#66d9ef>float</span> s <span style=color:#f92672>=</span> VoBr   <span style=color:#f92672>*</span> NoLVTr;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43</span>                <span style=color:#66d9ef>float</span> xNum <span style=color:#f92672>=</span> q <span style=color:#f92672>*</span> ( <span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> p <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> VoBr <span style=color:#f92672>*</span> NoLVTr );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44</span>                <span style=color:#66d9ef>float</span> xDenom <span style=color:#f92672>=</span> p<span style=color:#f92672>*</span>p <span style=color:#f92672>+</span> s <span style=color:#f92672>*</span> (s <span style=color:#f92672>-</span> <span style=color:#ae81ff>2</span><span style=color:#f92672>*</span>p) <span style=color:#f92672>+</span> NoLVTr <span style=color:#f92672>*</span> ( (Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> Context.NoV) <span style=color:#f92672>*</span> Pow2(VoLVTr) <span style=color:#f92672>+</span> q <span style=color:#f92672>*</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> (VoLVTr <span style=color:#f92672>+</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha) <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.5</span>) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45</span>                <span style=color:#66d9ef>float</span> TwoX1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> xNum <span style=color:#f92672>/</span> ( Pow2(xDenom) <span style=color:#f92672>+</span> Pow2(xNum) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46</span>                <span style=color:#66d9ef>float</span> SinTheta <span style=color:#f92672>=</span> TwoX1 <span style=color:#f92672>*</span> xDenom;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47</span>                <span style=color:#66d9ef>float</span> CosTheta <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span> TwoX1 <span style=color:#f92672>*</span> xNum;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48</span>                NoTr <span style=color:#f92672>=</span> CosTheta <span style=color:#f92672>*</span> NoTr <span style=color:#f92672>+</span> SinTheta <span style=color:#f92672>*</span> NoBr;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49</span>                VoTr <span style=color:#f92672>=</span> CosTheta <span style=color:#f92672>*</span> VoTr <span style=color:#f92672>+</span> SinTheta <span style=color:#f92672>*</span> VoBr;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52</span>            Context.NoL <span style=color:#f92672>=</span> Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> NoTr; <span style=color:#75715e>// dot( N, L * CosAlpha + T * SinAlpha )
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53</span><span style=color:#75715e>// Enable once anisotropic materials support area lights
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54</span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55</span><span style=color:#75715e>            Context.XoL = Context.XoL * CosAlpha + XoTr;
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56</span><span style=color:#75715e>            Context.YoL = Context.YoL * CosAlpha + YoTr;
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57</span><span style=color:#75715e></span><span style=color:#75715e>#endif
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58</span><span style=color:#75715e></span>            Context.VoL <span style=color:#f92672>=</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> VoTr;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60</span>            <span style=color:#66d9ef>float</span> InvLenH <span style=color:#f92672>=</span> rsqrt( <span style=color:#ae81ff>2</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.VoL );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61</span>            Context.NoH <span style=color:#f92672>=</span> saturate( ( Context.NoL <span style=color:#f92672>+</span> Context.NoV ) <span style=color:#f92672>*</span> InvLenH );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62</span><span style=color:#75715e>// Enable once anisotropic materials support area lights
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63</span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64</span><span style=color:#75715e>            Context.XoH = ((Context.XoL + Context.XoV) * InvLenH);    // dot(X, (L+V)/|L+V|)
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65</span><span style=color:#75715e>            Context.YoH = ((Context.YoL + Context.YoV) * InvLenH);
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66</span><span style=color:#75715e></span><span style=color:#75715e>#endif
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67</span><span style=color:#75715e></span>            Context.VoH <span style=color:#f92672>=</span> saturate( InvLenH <span style=color:#f92672>+</span> InvLenH <span style=color:#f92672>*</span> Context.VoL );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70</span>}
-</code></pre></div><h3 id=shading-model-1>shading model</h3>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// Engine/Shaders/Private/BRDF.ush
+</span><span style=color:#75715e>// [ de Carpentier 2017, &#34;Decima Engine: Advances in Lighting and AA&#34; ]
+</span><span style=color:#75715e></span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SphereMaxNoH</span>( inout BxDFContext Context, <span style=color:#66d9ef>float</span> SinAlpha, <span style=color:#66d9ef>bool</span> bNewtonIteration )
+{
+    <span style=color:#66d9ef>if</span>( SinAlpha <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span> )
+    {
+        <span style=color:#66d9ef>float</span> CosAlpha <span style=color:#f92672>=</span> sqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Pow2( SinAlpha ) );
+    
+        <span style=color:#66d9ef>float</span> RoL <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoL <span style=color:#f92672>*</span> Context.NoV <span style=color:#f92672>-</span> Context.VoL;
+        <span style=color:#66d9ef>if</span>( RoL <span style=color:#f92672>&gt;=</span> CosAlpha )
+        {
+            Context.NoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+            Context.XoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+            Context.YoH <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+            Context.VoH <span style=color:#f92672>=</span> abs( Context.NoV );
+        }
+        <span style=color:#66d9ef>else</span>
+        {
+            <span style=color:#66d9ef>float</span> rInvLengthT <span style=color:#f92672>=</span> SinAlpha <span style=color:#f92672>*</span> rsqrt( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> RoL<span style=color:#f92672>*</span>RoL );
+            <span style=color:#66d9ef>float</span> NoTr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> ( Context.NoV <span style=color:#f92672>-</span> RoL <span style=color:#f92672>*</span> Context.NoL );
+<span style=color:#75715e>// Enable once anisotropic materials support area lights
+</span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
+</span><span style=color:#75715e>            float XoTr = rInvLengthT * ( Context.XoV - RoL * Context.XoL );
+</span><span style=color:#75715e>            float YoTr = rInvLengthT * ( Context.YoV - RoL * Context.YoL );
+</span><span style=color:#75715e></span><span style=color:#75715e>#endif
+</span><span style=color:#75715e></span>            <span style=color:#66d9ef>float</span> VoTr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> ( <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoV<span style=color:#f92672>*</span>Context.NoV <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> RoL <span style=color:#f92672>*</span> Context.VoL );
+
+            <span style=color:#66d9ef>if</span> (bNewtonIteration)
+            {
+                <span style=color:#75715e>// dot( cross(N,L), V )
+</span><span style=color:#75715e></span>                <span style=color:#66d9ef>float</span> NxLoV <span style=color:#f92672>=</span> sqrt( saturate( <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> Pow2(Context.NoL) <span style=color:#f92672>-</span> Pow2(Context.NoV) <span style=color:#f92672>-</span> Pow2(Context.VoL) <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoL <span style=color:#f92672>*</span> Context.NoV <span style=color:#f92672>*</span> Context.VoL ) );
+
+                <span style=color:#66d9ef>float</span> NoBr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> NxLoV;
+                <span style=color:#66d9ef>float</span> VoBr <span style=color:#f92672>=</span> rInvLengthT <span style=color:#f92672>*</span> NxLoV <span style=color:#f92672>*</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.NoV;
+
+                <span style=color:#66d9ef>float</span> NoLVTr <span style=color:#f92672>=</span> Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> Context.NoV <span style=color:#f92672>+</span> NoTr;
+                <span style=color:#66d9ef>float</span> VoLVTr <span style=color:#f92672>=</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>   <span style=color:#f92672>+</span> VoTr;
+
+                <span style=color:#66d9ef>float</span> p <span style=color:#f92672>=</span> NoBr   <span style=color:#f92672>*</span> VoLVTr;
+                <span style=color:#66d9ef>float</span> q <span style=color:#f92672>=</span> NoLVTr <span style=color:#f92672>*</span> VoLVTr;
+                <span style=color:#66d9ef>float</span> s <span style=color:#f92672>=</span> VoBr   <span style=color:#f92672>*</span> NoLVTr;
+
+                <span style=color:#66d9ef>float</span> xNum <span style=color:#f92672>=</span> q <span style=color:#f92672>*</span> ( <span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> p <span style=color:#f92672>+</span> <span style=color:#ae81ff>0.25</span> <span style=color:#f92672>*</span> VoBr <span style=color:#f92672>*</span> NoLVTr );
+                <span style=color:#66d9ef>float</span> xDenom <span style=color:#f92672>=</span> p<span style=color:#f92672>*</span>p <span style=color:#f92672>+</span> s <span style=color:#f92672>*</span> (s <span style=color:#f92672>-</span> <span style=color:#ae81ff>2</span><span style=color:#f92672>*</span>p) <span style=color:#f92672>+</span> NoLVTr <span style=color:#f92672>*</span> ( (Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> Context.NoV) <span style=color:#f92672>*</span> Pow2(VoLVTr) <span style=color:#f92672>+</span> q <span style=color:#f92672>*</span> (<span style=color:#f92672>-</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>*</span> (VoLVTr <span style=color:#f92672>+</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha) <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.5</span>) );
+                <span style=color:#66d9ef>float</span> TwoX1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> xNum <span style=color:#f92672>/</span> ( Pow2(xDenom) <span style=color:#f92672>+</span> Pow2(xNum) );
+                <span style=color:#66d9ef>float</span> SinTheta <span style=color:#f92672>=</span> TwoX1 <span style=color:#f92672>*</span> xDenom;
+                <span style=color:#66d9ef>float</span> CosTheta <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span> TwoX1 <span style=color:#f92672>*</span> xNum;
+                NoTr <span style=color:#f92672>=</span> CosTheta <span style=color:#f92672>*</span> NoTr <span style=color:#f92672>+</span> SinTheta <span style=color:#f92672>*</span> NoBr;
+                VoTr <span style=color:#f92672>=</span> CosTheta <span style=color:#f92672>*</span> VoTr <span style=color:#f92672>+</span> SinTheta <span style=color:#f92672>*</span> VoBr;
+            }
+
+            Context.NoL <span style=color:#f92672>=</span> Context.NoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> NoTr; <span style=color:#75715e>// dot( N, L * CosAlpha + T * SinAlpha )
+</span><span style=color:#75715e>// Enable once anisotropic materials support area lights
+</span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
+</span><span style=color:#75715e>            Context.XoL = Context.XoL * CosAlpha + XoTr;
+</span><span style=color:#75715e>            Context.YoL = Context.YoL * CosAlpha + YoTr;
+</span><span style=color:#75715e></span><span style=color:#75715e>#endif
+</span><span style=color:#75715e></span>            Context.VoL <span style=color:#f92672>=</span> Context.VoL <span style=color:#f92672>*</span> CosAlpha <span style=color:#f92672>+</span> VoTr;
+
+            <span style=color:#66d9ef>float</span> InvLenH <span style=color:#f92672>=</span> rsqrt( <span style=color:#ae81ff>2</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> Context.VoL );
+            Context.NoH <span style=color:#f92672>=</span> saturate( ( Context.NoL <span style=color:#f92672>+</span> Context.NoV ) <span style=color:#f92672>*</span> InvLenH );
+<span style=color:#75715e>// Enable once anisotropic materials support area lights
+</span><span style=color:#75715e></span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
+</span><span style=color:#75715e>            Context.XoH = ((Context.XoL + Context.XoV) * InvLenH);    // dot(X, (L+V)/|L+V|)
+</span><span style=color:#75715e>            Context.YoH = ((Context.YoL + Context.YoV) * InvLenH);
+</span><span style=color:#75715e></span><span style=color:#75715e>#endif
+</span><span style=color:#75715e></span>            Context.VoH <span style=color:#f92672>=</span> saturate( InvLenH <span style=color:#f92672>+</span> InvLenH <span style=color:#f92672>*</span> Context.VoL );
+        }
+    }
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=shading-model-1>shading model</h3>
 <p>在IBL这一块unreal使用了lut来做精确计算。不过随着硬件的发展，alu比带宽性能将会更友好，在2012的SIGGRAPH上<a href=https://blog.selfshadow.com/publications/s2013-shading-course/>Getting More Physical in Call of Duty: Black Ops II</a>给出了blin-phong模型的的EnvBRDF拟合做法；<a href=https://knarkowicz.wordpress.com/2014/12/27/analytical-dfg-term-for-ibl/>Krzysztof Narkowicz</a>以此为参考，给出了ggx的enviromwnt brdf拟合公式，代码为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span>float3 <span style=color:#a6e22e>EnvDFGLazarov</span>( float3 specularColor, <span style=color:#66d9ef>float</span> gloss, <span style=color:#66d9ef>float</span> ndotv )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    float4 p0 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>0.5745</span>, <span style=color:#ae81ff>1.548</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.02397</span>, <span style=color:#ae81ff>1.301</span> );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    float4 p1 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>0.5753</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.2511</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.02066</span>, <span style=color:#ae81ff>0.4755</span> );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    float4 t <span style=color:#f92672>=</span> gloss <span style=color:#f92672>*</span> p0 <span style=color:#f92672>+</span> p1;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    <span style=color:#66d9ef>float</span> bias <span style=color:#f92672>=</span> saturate( t.x <span style=color:#f92672>*</span> min( t.y, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>7.672</span> <span style=color:#f92672>*</span> ndotv ) ) <span style=color:#f92672>+</span> t.z );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    <span style=color:#66d9ef>float</span> delta <span style=color:#f92672>=</span> saturate( t.w );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    <span style=color:#66d9ef>float</span> scale <span style=color:#f92672>=</span> delta <span style=color:#f92672>-</span> bias;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    bias <span style=color:#f92672>*=</span> saturate( <span style=color:#ae81ff>50.0</span> <span style=color:#f92672>*</span> specularColor.y );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>    <span style=color:#66d9ef>return</span> specularColor <span style=color:#f92672>*</span> scale <span style=color:#f92672>+</span> bias;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>float3 <span style=color:#a6e22e>EnvDFGPolynomial</span>( float3 specularColor, <span style=color:#66d9ef>float</span> gloss, <span style=color:#66d9ef>float</span> ndotv )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    <span style=color:#66d9ef>float</span> x <span style=color:#f92672>=</span> gloss;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>    <span style=color:#66d9ef>float</span> y <span style=color:#f92672>=</span> ndotv;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>    <span style=color:#66d9ef>float</span> b1 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>0.1688</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>    <span style=color:#66d9ef>float</span> b2 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.895</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>    <span style=color:#66d9ef>float</span> b3 <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.9903</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>    <span style=color:#66d9ef>float</span> b4 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>4.853</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>    <span style=color:#66d9ef>float</span> b5 <span style=color:#f92672>=</span> <span style=color:#ae81ff>8.404</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>    <span style=color:#66d9ef>float</span> b6 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>5.069</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>    <span style=color:#66d9ef>float</span> bias <span style=color:#f92672>=</span> saturate( min( b1 <span style=color:#f92672>*</span> x <span style=color:#f92672>+</span> b2 <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> x, b3 <span style=color:#f92672>+</span> b4 <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> b5 <span style=color:#f92672>*</span> y <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> b6 <span style=color:#f92672>*</span> y <span style=color:#f92672>*</span> y <span style=color:#f92672>*</span> y ) );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>    <span style=color:#66d9ef>float</span> d0 <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.6045</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>    <span style=color:#66d9ef>float</span> d1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.699</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>    <span style=color:#66d9ef>float</span> d2 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>0.5228</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>    <span style=color:#66d9ef>float</span> d3 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>3.603</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>    <span style=color:#66d9ef>float</span> d4 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.404</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>    <span style=color:#66d9ef>float</span> d5 <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.1939</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span>    <span style=color:#66d9ef>float</span> d6 <span style=color:#f92672>=</span> <span style=color:#ae81ff>2.661</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>    <span style=color:#66d9ef>float</span> delta <span style=color:#f92672>=</span> saturate( d0 <span style=color:#f92672>+</span> d1 <span style=color:#f92672>*</span> x <span style=color:#f92672>+</span> d2 <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> d3 <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> x <span style=color:#f92672>+</span> d4 <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> d5 <span style=color:#f92672>*</span> y <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> d6 <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> x );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>    <span style=color:#66d9ef>float</span> scale <span style=color:#f92672>=</span> delta <span style=color:#f92672>-</span> bias;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span>    bias <span style=color:#f92672>*=</span> saturate( <span style=color:#ae81ff>50.0</span> <span style=color:#f92672>*</span> specularColor.y );
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span>    <span style=color:#66d9ef>return</span> specularColor <span style=color:#f92672>*</span> scale <span style=color:#f92672>+</span> bias;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span>}
-</code></pre></div><p>对于mobile平台，出于对考虑性能问题。unreal也参考COD给出了ggx的EnvBRDF拟合公式，相关发表为<a href=https://www.unrealengine.com/en-US/blog/physically-based-shading-on-mobile>Physically Based Shading on Mobile</a>，如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span>half3 <span style=color:#a6e22e>EnvBRDFApprox</span>( half3 SpecularColor, half Roughness, half NoV )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    <span style=color:#66d9ef>const</span> half4 c0 <span style=color:#f92672>=</span> { <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0275</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.572</span>, <span style=color:#ae81ff>0.022</span> };
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>    <span style=color:#66d9ef>const</span> half4 c1 <span style=color:#f92672>=</span> { <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0.0425</span>, <span style=color:#ae81ff>1.04</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.04</span> };
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    half4 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    half a004 <span style=color:#f92672>=</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    half2 AB <span style=color:#f92672>=</span> half2( <span style=color:#f92672>-</span><span style=color:#ae81ff>1.04</span>, <span style=color:#ae81ff>1.04</span> ) <span style=color:#f92672>*</span> a004 <span style=color:#f92672>+</span> r.zw;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    <span style=color:#66d9ef>return</span> SpecularColor <span style=color:#f92672>*</span> AB.x <span style=color:#f92672>+</span> AB.y;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>half <span style=color:#a6e22e>EnvBRDFApproxNonmetal</span>( half Roughness, half NoV )
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    <span style=color:#75715e>// Same as EnvBRDFApprox( 0.04, Roughness, NoV )
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span style=color:#75715e></span>    <span style=color:#66d9ef>const</span> half2 c0 <span style=color:#f92672>=</span> { <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0275</span> };
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    <span style=color:#66d9ef>const</span> half2 c1 <span style=color:#f92672>=</span> { <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0.0425</span> };
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>    half2 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>    <span style=color:#66d9ef>return</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>}
-</code></pre></div><p>Unity针对移动平台的性能要求，提供了更为简化的EnvBRDF公式，此外Unity还提供了ggx brdf在移动平台的简化版，参考文章为<a href=https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/moving-mobile-graphics>Moving Mobile Graphics</a>中的Optimizing PBR演讲；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>EnvDFGLazarov</span>( float3 specularColor, <span style=color:#66d9ef>float</span> gloss, <span style=color:#66d9ef>float</span> ndotv )
+{
+    float4 p0 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>0.5745</span>, <span style=color:#ae81ff>1.548</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.02397</span>, <span style=color:#ae81ff>1.301</span> );
+    float4 p1 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>0.5753</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.2511</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.02066</span>, <span style=color:#ae81ff>0.4755</span> );
+ 
+    float4 t <span style=color:#f92672>=</span> gloss <span style=color:#f92672>*</span> p0 <span style=color:#f92672>+</span> p1;
+ 
+    <span style=color:#66d9ef>float</span> bias <span style=color:#f92672>=</span> saturate( t.x <span style=color:#f92672>*</span> min( t.y, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>7.672</span> <span style=color:#f92672>*</span> ndotv ) ) <span style=color:#f92672>+</span> t.z );
+    <span style=color:#66d9ef>float</span> delta <span style=color:#f92672>=</span> saturate( t.w );
+    <span style=color:#66d9ef>float</span> scale <span style=color:#f92672>=</span> delta <span style=color:#f92672>-</span> bias;
+ 
+    bias <span style=color:#f92672>*=</span> saturate( <span style=color:#ae81ff>50.0</span> <span style=color:#f92672>*</span> specularColor.y );
+    <span style=color:#66d9ef>return</span> specularColor <span style=color:#f92672>*</span> scale <span style=color:#f92672>+</span> bias;
+}
+float3 <span style=color:#a6e22e>EnvDFGPolynomial</span>( float3 specularColor, <span style=color:#66d9ef>float</span> gloss, <span style=color:#66d9ef>float</span> ndotv )
+{
+    <span style=color:#66d9ef>float</span> x <span style=color:#f92672>=</span> gloss;
+    <span style=color:#66d9ef>float</span> y <span style=color:#f92672>=</span> ndotv;
+ 
+    <span style=color:#66d9ef>float</span> b1 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>0.1688</span>;
+    <span style=color:#66d9ef>float</span> b2 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.895</span>;
+    <span style=color:#66d9ef>float</span> b3 <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.9903</span>;
+    <span style=color:#66d9ef>float</span> b4 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>4.853</span>;
+    <span style=color:#66d9ef>float</span> b5 <span style=color:#f92672>=</span> <span style=color:#ae81ff>8.404</span>;
+    <span style=color:#66d9ef>float</span> b6 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>5.069</span>;
+    <span style=color:#66d9ef>float</span> bias <span style=color:#f92672>=</span> saturate( min( b1 <span style=color:#f92672>*</span> x <span style=color:#f92672>+</span> b2 <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> x, b3 <span style=color:#f92672>+</span> b4 <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> b5 <span style=color:#f92672>*</span> y <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> b6 <span style=color:#f92672>*</span> y <span style=color:#f92672>*</span> y <span style=color:#f92672>*</span> y ) );
+ 
+    <span style=color:#66d9ef>float</span> d0 <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.6045</span>;
+    <span style=color:#66d9ef>float</span> d1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.699</span>;
+    <span style=color:#66d9ef>float</span> d2 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>0.5228</span>;
+    <span style=color:#66d9ef>float</span> d3 <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>3.603</span>;
+    <span style=color:#66d9ef>float</span> d4 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.404</span>;
+    <span style=color:#66d9ef>float</span> d5 <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.1939</span>;
+    <span style=color:#66d9ef>float</span> d6 <span style=color:#f92672>=</span> <span style=color:#ae81ff>2.661</span>;
+    <span style=color:#66d9ef>float</span> delta <span style=color:#f92672>=</span> saturate( d0 <span style=color:#f92672>+</span> d1 <span style=color:#f92672>*</span> x <span style=color:#f92672>+</span> d2 <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> d3 <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> x <span style=color:#f92672>+</span> d4 <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> d5 <span style=color:#f92672>*</span> y <span style=color:#f92672>*</span> y <span style=color:#f92672>+</span> d6 <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> x <span style=color:#f92672>*</span> x );
+    <span style=color:#66d9ef>float</span> scale <span style=color:#f92672>=</span> delta <span style=color:#f92672>-</span> bias;
+ 
+    bias <span style=color:#f92672>*=</span> saturate( <span style=color:#ae81ff>50.0</span> <span style=color:#f92672>*</span> specularColor.y );
+    <span style=color:#66d9ef>return</span> specularColor <span style=color:#f92672>*</span> scale <span style=color:#f92672>+</span> bias;
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>对于mobile平台，出于对考虑性能问题。unreal也参考COD给出了ggx的EnvBRDF拟合公式，相关发表为<a href=https://www.unrealengine.com/en-US/blog/physically-based-shading-on-mobile>Physically Based Shading on Mobile</a>，如下：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>half3 <span style=color:#a6e22e>EnvBRDFApprox</span>( half3 SpecularColor, half Roughness, half NoV )
+{
+    <span style=color:#66d9ef>const</span> half4 c0 <span style=color:#f92672>=</span> { <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0275</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.572</span>, <span style=color:#ae81ff>0.022</span> };
+    <span style=color:#66d9ef>const</span> half4 c1 <span style=color:#f92672>=</span> { <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0.0425</span>, <span style=color:#ae81ff>1.04</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.04</span> };
+    half4 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
+    half a004 <span style=color:#f92672>=</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
+    half2 AB <span style=color:#f92672>=</span> half2( <span style=color:#f92672>-</span><span style=color:#ae81ff>1.04</span>, <span style=color:#ae81ff>1.04</span> ) <span style=color:#f92672>*</span> a004 <span style=color:#f92672>+</span> r.zw;
+    <span style=color:#66d9ef>return</span> SpecularColor <span style=color:#f92672>*</span> AB.x <span style=color:#f92672>+</span> AB.y;
+}
+half <span style=color:#a6e22e>EnvBRDFApproxNonmetal</span>( half Roughness, half NoV )
+{
+    <span style=color:#75715e>// Same as EnvBRDFApprox( 0.04, Roughness, NoV )
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>const</span> half2 c0 <span style=color:#f92672>=</span> { <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0275</span> };
+    <span style=color:#66d9ef>const</span> half2 c1 <span style=color:#f92672>=</span> { <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>0.0425</span> };
+    half2 r <span style=color:#f92672>=</span> Roughness <span style=color:#f92672>*</span> c0 <span style=color:#f92672>+</span> c1;
+    <span style=color:#66d9ef>return</span> min( r.x <span style=color:#f92672>*</span> r.x, exp2( <span style=color:#f92672>-</span><span style=color:#ae81ff>9.28</span> <span style=color:#f92672>*</span> NoV ) ) <span style=color:#f92672>*</span> r.x <span style=color:#f92672>+</span> r.y;
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>Unity针对移动平台的性能要求，提供了更为简化的EnvBRDF公式，此外Unity还提供了ggx brdf在移动平台的简化版，参考文章为<a href=https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/moving-mobile-graphics>Moving Mobile Graphics</a>中的Optimizing PBR演讲；</p>
 <p>而unity在buildin管线及urp管线中，实际使用的EnvBRDF代码与以上代码并不一致，网上也找不到相应的文章参考，实际的代码实现为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>inline</span> half3 <span style=color:#a6e22e>FresnelLerp</span> (half3 F0, half3 F90, half cosA)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    half t <span style=color:#f92672>=</span> Pow5 (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> cosA);   <span style=color:#75715e>// ala Schlick interpoliation
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> lerp (F0, F90, t);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span style=color:#75715e>// approximage Schlick with ^4 instead of ^5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#75715e></span><span style=color:#66d9ef>inline</span> half3 <span style=color:#a6e22e>FresnelLerpFast</span> (half3 F0, half3 F90, half cosA)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    half t <span style=color:#f92672>=</span> Pow4 (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> cosA);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    <span style=color:#66d9ef>return</span> lerp (F0, F90, t);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>}
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>half grazingTerm <span style=color:#f92672>=</span> saturate(smoothness <span style=color:#f92672>+</span> (<span style=color:#ae81ff>1</span><span style=color:#f92672>-</span>oneMinusReflectivity));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span> 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span><span style=color:#75715e>// Computes the specular term for EnvironmentBRDF
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span style=color:#75715e></span>half3 <span style=color:#a6e22e>EnvironmentBRDFSpecular</span>(half3 specColor, half roughness, half grazingTerm, half fresnelTerm)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>    <span style=color:#66d9ef>float</span> surfaceReduction <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>/</span> (roughness<span style=color:#f92672>*</span>roughness <span style=color:#f92672>+</span> <span style=color:#ae81ff>1.0</span>); <span style=color:#75715e>// not perceptualRoughness
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> surfaceReduction <span style=color:#f92672>*</span> FresnelLerp(specColor, grazingTerm, fresnelTerm);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>}
-</code></pre></div>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>inline</span> half3 <span style=color:#a6e22e>FresnelLerp</span> (half3 F0, half3 F90, half cosA)
+{
+    half t <span style=color:#f92672>=</span> Pow5 (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> cosA);   <span style=color:#75715e>// ala Schlick interpoliation
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> lerp (F0, F90, t);
+}
+<span style=color:#75715e>// approximage Schlick with ^4 instead of ^5
+</span><span style=color:#75715e></span><span style=color:#66d9ef>inline</span> half3 <span style=color:#a6e22e>FresnelLerpFast</span> (half3 F0, half3 F90, half cosA)
+{
+    half t <span style=color:#f92672>=</span> Pow4 (<span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span> cosA);
+    <span style=color:#66d9ef>return</span> lerp (F0, F90, t);
+}
+
+half grazingTerm <span style=color:#f92672>=</span> saturate(smoothness <span style=color:#f92672>+</span> (<span style=color:#ae81ff>1</span><span style=color:#f92672>-</span>oneMinusReflectivity));
+ 
+<span style=color:#75715e>// Computes the specular term for EnvironmentBRDF
+</span><span style=color:#75715e></span>half3 <span style=color:#a6e22e>EnvironmentBRDFSpecular</span>(half3 specColor, half roughness, half grazingTerm, half fresnelTerm)
+{
+    <span style=color:#66d9ef>float</span> surfaceReduction <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>/</span> (roughness<span style=color:#f92672>*</span>roughness <span style=color:#f92672>+</span> <span style=color:#ae81ff>1.0</span>); <span style=color:#75715e>// not perceptualRoughness
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> surfaceReduction <span style=color:#f92672>*</span> FresnelLerp(specColor, grazingTerm, fresnelTerm);
+}
+</code></pre></td></tr></table>
+</div>
+</div>
 </main>
 <div id=gitalk-container></div>
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>

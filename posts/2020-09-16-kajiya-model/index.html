@@ -60,16 +60,31 @@
 <p>图片中说法线位于T、V所决定的平面上，应该是错的；从公式中能够看出，应该是位于T、H所在的平面上才对；</p>
 </blockquote>
 <p>法线平面即红色平面所显示的，法线平面中真正的法线，由T向量、H向量所决定的平面，与法线平面的交线来决定，我们将这里决定出来的法线用N1（区别于真正的多边形几何法线）来代替；由于T、H、N1都是单位向量，由几何关系可以得到<strong>N1dotH = sin(T,H)</strong>，到此，我们就可以使用T、H来进行高光计算了；</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>StrandSpecular</span>(float3 T, float3 V,
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span>float3 L,<span style=color:#66d9ef>float</span> exponent)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>    float3 H <span style=color:#f92672>=</span> normalize(L<span style=color:#f92672>+</span> V);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span>    <span style=color:#66d9ef>float</span> dotTH<span style=color:#f92672>=</span> dot(T, H);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6</span>    <span style=color:#66d9ef>float</span> sinTH<span style=color:#f92672>=</span> sqrt(<span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span>dotTH<span style=color:#f92672>*</span>dotTH);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7</span>    <span style=color:#66d9ef>float</span> dirAtten<span style=color:#f92672>=</span> smoothstep(<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span>, <span style=color:#ae81ff>0.0</span>, dot(T, H));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8</span>    <span style=color:#66d9ef>return</span> dirAtten<span style=color:#f92672>*</span> pow(sinTH, exponent);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">9</span>}
-</code></pre></div><h2 id=模拟真正的头发高光>模拟真正的头发高光</h2>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">9
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>StrandSpecular</span>(float3 T, float3 V,
+float3 L,<span style=color:#66d9ef>float</span> exponent)
+{
+    float3 H <span style=color:#f92672>=</span> normalize(L<span style=color:#f92672>+</span> V);
+    <span style=color:#66d9ef>float</span> dotTH<span style=color:#f92672>=</span> dot(T, H);
+    <span style=color:#66d9ef>float</span> sinTH<span style=color:#f92672>=</span> sqrt(<span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span>dotTH<span style=color:#f92672>*</span>dotTH);
+    <span style=color:#66d9ef>float</span> dirAtten<span style=color:#f92672>=</span> smoothstep(<span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span>, <span style=color:#ae81ff>0.0</span>, dot(T, H));
+    <span style=color:#66d9ef>return</span> dirAtten<span style=color:#f92672>*</span> pow(sinTH, exponent);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=模拟真正的头发高光>模拟真正的头发高光</h2>
 <p>为了模拟头发真正的高光，还要基于对头发高光的观察进行部分假设，相应的观察假设在这张PPT上；</p>
 <p><img src=hair_ref.jpg alt=hair_ref></p>
 <center>hair参考</center>
@@ -81,44 +96,90 @@
 </ol>
 <p>模拟两层高光比较简单，只需要计算两次高光即可；</p>
 <p>如何模拟高光的切变流向，即一个位置偏向发梢，一个偏向发根；因为我们使用模型的T来计算的高光，要想改变高光位置，只能从T下手；AMD提供的方法为，使用N（这里是多边形几何的法线，不是法线平面中的法线N1）对T进行偏移；偏移量可以从贴图中进行采样，计算公式如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>ShiftTangent</span>(float3 T, float3 N, <span style=color:#66d9ef>float</span> shift)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3</span>    float3 shiftedT <span style=color:#f92672>=</span> T <span style=color:#f92672>+</span> shift <span style=color:#f92672>*</span> N;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4</span>    <span style=color:#66d9ef>return</span> normalize(shiftedT);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5</span>}
-</code></pre></div><p>如下图：T&rsquo;与T'&lsquo;是切变后的切向量；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>ShiftTangent</span>(float3 T, float3 N, <span style=color:#66d9ef>float</span> shift)
+{
+    float3 shiftedT <span style=color:#f92672>=</span> T <span style=color:#f92672>+</span> shift <span style=color:#f92672>*</span> N;
+    <span style=color:#66d9ef>return</span> normalize(shiftedT);
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>如下图：T&rsquo;与T'&lsquo;是切变后的切向量；</p>
 <p><img src=tangent.jpg alt=tangent></p>
 <center>tangent计算</center>
 <p>T表示发丝的方向，那么当发丝方向发生变化时，N（多边形对应法线）自然而然也同样产生变化，偏移后的N为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1</span>float3 B <span style=color:#f92672>=</span> cross(N, T);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2</span>N <span style=color:#f92672>=</span> cross(T, B);
-</code></pre></div><blockquote>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C++ data-lang=C++>float3 B <span style=color:#f92672>=</span> cross(N, T);
+N <span style=color:#f92672>=</span> cross(T, B);
+</code></pre></td></tr></table>
+</div>
+</div><blockquote>
 <p>实质上，N对T的偏移，是模拟头发的起伏，即发丝方向突出多边形平面或凹陷多边形平面；</p>
 </blockquote>
 <p>次高光的闪烁效果模拟比较简单，只需要使用一个噪音纹理与次高光相乘即可；</p>
 <p>总的代码为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span>float4 <span style=color:#a6e22e>HairLighting</span>(float3 tangent,float3 normal,float3 lightVec, float3 viewVec, float2 uv, <span style=color:#66d9ef>float</span> ambOcc)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span>{ 
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span>    <span style=color:#75715e>// shift tangents
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> shiftTex <span style=color:#f92672>=</span> tex2D (tSpecShift, uv) <span style=color:#960050;background-color:#1e0010>–</span> <span style=color:#ae81ff>0.5</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>    float3 t1 <span style=color:#f92672>=</span> ShiftTangent(tangent, normal, primaryShift <span style=color:#f92672>+</span> shiftTex);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>    float3 t2 <span style=color:#f92672>=</span> ShiftTangent(tangent, normal, secondaryShift <span style=color:#f92672>+</span> shiftTex);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    <span style=color:#75715e>// diffuse lighting: the lerp shifts the shadow boundary for a softer look
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#75715e></span>    float3 diffuse <span style=color:#f92672>=</span> saturate (lerp (<span style=color:#ae81ff>0.25</span>, <span style=color:#ae81ff>1.0</span>, dot(normal, lightVec));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    diffuse <span style=color:#f92672>*=</span> diffuseColor;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    <span style=color:#75715e>// specular lighting
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span><span style=color:#75715e></span>    float3 specular <span style=color:#f92672>=</span> specularColor1<span style=color:#f92672>*</span>StrandSpecular(t1, viewVec, lightVec, specExp1);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    <span style=color:#75715e>// add 2nd specular term, modulated with noise texture
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> specMask<span style=color:#f92672>=</span> tex2D (tSpecMask, uv); <span style=color:#75715e>// approximate sparkles using texture
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span style=color:#75715e></span>    specular <span style=color:#f92672>+=</span> specularColor2<span style=color:#f92672>*</span> specMask<span style=color:#f92672>*</span>StrandSpecular(t2, vieVec, lightVec, specExp2);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>    <span style=color:#75715e>// final color assembly
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span><span style=color:#75715e></span>    float4 o;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    o.rgb <span style=color:#f92672>=</span> (diffuse <span style=color:#f92672>+</span> specular) <span style=color:#f92672>*</span> tex2D (tBase, uv) <span style=color:#f92672>*</span> lightColor;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>    o.rgb <span style=color:#f92672>*=</span> ambOcc;             <span style=color:#75715e>// modulate color by ambient occlusion term
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span><span style=color:#75715e></span>    o.a <span style=color:#f92672>=</span> tex2D (tAlpha, uv);    <span style=color:#75715e>// read alpha texture
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> o;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>}
-</code></pre></div><h2 id=渲染排序问题>渲染排序问题</h2>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float4 <span style=color:#a6e22e>HairLighting</span>(float3 tangent,float3 normal,float3 lightVec, float3 viewVec, float2 uv, <span style=color:#66d9ef>float</span> ambOcc)
+{ 
+    <span style=color:#75715e>// shift tangents
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> shiftTex <span style=color:#f92672>=</span> tex2D (tSpecShift, uv) <span style=color:#960050;background-color:#1e0010>–</span> <span style=color:#ae81ff>0.5</span>;
+    float3 t1 <span style=color:#f92672>=</span> ShiftTangent(tangent, normal, primaryShift <span style=color:#f92672>+</span> shiftTex);
+    float3 t2 <span style=color:#f92672>=</span> ShiftTangent(tangent, normal, secondaryShift <span style=color:#f92672>+</span> shiftTex);
+    <span style=color:#75715e>// diffuse lighting: the lerp shifts the shadow boundary for a softer look
+</span><span style=color:#75715e></span>    float3 diffuse <span style=color:#f92672>=</span> saturate (lerp (<span style=color:#ae81ff>0.25</span>, <span style=color:#ae81ff>1.0</span>, dot(normal, lightVec));
+    diffuse <span style=color:#f92672>*=</span> diffuseColor;
+    <span style=color:#75715e>// specular lighting
+</span><span style=color:#75715e></span>    float3 specular <span style=color:#f92672>=</span> specularColor1<span style=color:#f92672>*</span>StrandSpecular(t1, viewVec, lightVec, specExp1);
+    <span style=color:#75715e>// add 2nd specular term, modulated with noise texture
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> specMask<span style=color:#f92672>=</span> tex2D (tSpecMask, uv); <span style=color:#75715e>// approximate sparkles using texture
+</span><span style=color:#75715e></span>    specular <span style=color:#f92672>+=</span> specularColor2<span style=color:#f92672>*</span> specMask<span style=color:#f92672>*</span>StrandSpecular(t2, vieVec, lightVec, specExp2);
+    <span style=color:#75715e>// final color assembly
+</span><span style=color:#75715e></span>    float4 o;
+    o.rgb <span style=color:#f92672>=</span> (diffuse <span style=color:#f92672>+</span> specular) <span style=color:#f92672>*</span> tex2D (tBase, uv) <span style=color:#f92672>*</span> lightColor;
+    o.rgb <span style=color:#f92672>*=</span> ambOcc;             <span style=color:#75715e>// modulate color by ambient occlusion term
+</span><span style=color:#75715e></span>    o.a <span style=color:#f92672>=</span> tex2D (tAlpha, uv);    <span style=color:#75715e>// read alpha texture
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> o;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=渲染排序问题>渲染排序问题</h2>
 <p>由于头发具有半透效果，必须依据一定的顺序进行渲染才能得到正确的Blend效果；</p>
 <h3 id=模型内部排序>模型内部排序</h3>
 <p>由于模型是一簇一簇的，因为只要决定簇之间的排序即可；依据视线观看头发的顺序，可以依照发簇距离头皮的距离进行排序；让靠近头皮的发簇对应的Index buffer排在整个模型Index buffer的前面；这样模型内部的渲染顺序就完全正确了；</p>

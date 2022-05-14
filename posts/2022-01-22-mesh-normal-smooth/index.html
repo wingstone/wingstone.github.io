@@ -32,185 +32,575 @@
 <ul>
 <li><a href=#version1>Version1</a></li>
 <li><a href=#version2>Version2</a></li>
+<li><a href=#normal-smooth-method>Normal Smooth Method</a></li>
+<li><a href=#reference>Reference</a></li>
 </ul>
 </nav>
 <main>
 <p>Unity计算平滑法线的简单功能实现；</p>
-<p>如果Unity中Vector3的Equals方法的实现与“==”的实现一致，那么代码将会简洁高效很多，参考<a href=https://docs.unity3d.com/ScriptReference/Vector3.Equals.html>Vector3.Equals</a>;</p>
 <h2 id=version1>Version1</h2>
 <p>只对顶点索引重叠的顶点进行法线平滑，即ReCalculateNormal：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>using</span> UnityEngine;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#66d9ef>using</span> UnityEditor;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#66d9ef>using</span> System.Collections.Generic;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> : EditorWindow
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#a6e22e>    [MenuItem(&#34;Window/MeshNormalSmoothWindow&#34;)]</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>        MeshNormalSmoothWindow window = (MeshNormalSmoothWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(MeshNormalSmoothWindow));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        window.Show();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    Mesh mesh;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>    <span style=color:#66d9ef>void</span> OnGUI()
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        EditorGUILayout.BeginVertical();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>        mesh = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, <span style=color:#66d9ef>typeof</span>(Mesh), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Mesh;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>            Vector3[] vertices = mesh.vertices;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>            <span style=color:#66d9ef>int</span>[] triangles = mesh.triangles;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>            <span style=color:#66d9ef>int</span> polygonNum = mesh.triangles.Length / <span style=color:#ae81ff>3</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>            Vector3[] polyNormals = <span style=color:#66d9ef>new</span> Vector3[polygonNum];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>                <span style=color:#75715e>// 乘以1000避免数值过小时计算结果为0
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span><span style=color:#75715e></span>                polyNormals[i] = Vector3.Cross((vertices[vid1] - vertices[vid0]) * <span style=color:#ae81ff>1000</span>, (vertices[vid2] - vertices[vid0]) * <span style=color:#ae81ff>1000</span>).normalized;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span>            <span style=color:#66d9ef>int</span> vertexNum = mesh.vertices.Length;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span>            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexNum];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span>            <span style=color:#66d9ef>int</span>[] normalsNum = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexNum];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42</span>                normals[i] = Vector3.zero;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47</span>                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48</span>                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49</span>                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51</span>                normals[vid0] += polyNormals[i];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52</span>                normals[vid1] += polyNormals[i];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53</span>                normals[vid2] += polyNormals[i];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54</span>                normalsNum[vid0]++;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55</span>                normalsNum[vid1]++;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56</span>                normalsNum[vid2]++;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60</span>                normals[i] /= normalsNum[i];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61</span>                normals[i].Normalize();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64</span>            Mesh newmesh = <span style=color:#66d9ef>new</span> Mesh();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65</span>            newmesh.vertices = mesh.vertices;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66</span>            newmesh.triangles = mesh.triangles;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67</span>            newmesh.normals = normals;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68</span>            newmesh.uv = mesh.uv;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69</span>            newmesh.uv2 = mesh.uv2;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70</span>            newmesh.boneWeights = mesh.boneWeights;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">71</span>            newmesh.bindposes = mesh.bindposes;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">72</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">73</span>            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">74</span>            AssetDatabase.Refresh();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">75</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">76</span>        EditorGUILayout.EndVertical();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">77</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">78</span>}
-</code></pre></div><h2 id=version2>Version2</h2>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">71
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">72
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">73
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">74
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">75
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">76
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">77
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">78
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>using</span> UnityEngine;
+<span style=color:#66d9ef>using</span> UnityEditor;
+<span style=color:#66d9ef>using</span> System.Collections.Generic;
+
+<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> : EditorWindow
+{
+<span style=color:#a6e22e>    [MenuItem(&#34;Window/MeshNormalSmoothWindow&#34;)]</span>
+    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
+    {
+        MeshNormalSmoothWindow window = (MeshNormalSmoothWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(MeshNormalSmoothWindow));
+        window.Show();
+    }
+
+    Mesh mesh;
+
+    <span style=color:#66d9ef>void</span> OnGUI()
+    {
+        EditorGUILayout.BeginVertical();
+        mesh = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, <span style=color:#66d9ef>typeof</span>(Mesh), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Mesh;
+        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
+        {
+            Vector3[] vertices = mesh.vertices;
+            <span style=color:#66d9ef>int</span>[] triangles = mesh.triangles;
+
+            <span style=color:#66d9ef>int</span> polygonNum = mesh.triangles.Length / <span style=color:#ae81ff>3</span>;
+            Vector3[] polyNormals = <span style=color:#66d9ef>new</span> Vector3[polygonNum];
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+            {
+                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+
+                <span style=color:#75715e>// 乘以1000避免数值过小时计算结果为0
+</span><span style=color:#75715e></span>                polyNormals[i] = Vector3.Cross((vertices[vid1] - vertices[vid0]) * <span style=color:#ae81ff>1000</span>, (vertices[vid2] - vertices[vid0]) * <span style=color:#ae81ff>1000</span>).normalized;
+            }
+
+            <span style=color:#66d9ef>int</span> vertexNum = mesh.vertices.Length;
+            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexNum];
+            <span style=color:#66d9ef>int</span>[] normalsNum = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexNum];
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+            {
+                normals[i] = Vector3.zero;
+            }
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+            {
+
+                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+
+                normals[vid0] += polyNormals[i];
+                normals[vid1] += polyNormals[i];
+                normals[vid2] += polyNormals[i];
+                normalsNum[vid0]++;
+                normalsNum[vid1]++;
+                normalsNum[vid2]++;
+            }
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+            {
+                normals[i] /= normalsNum[i];
+                normals[i].Normalize();
+            }
+
+            Mesh newmesh = <span style=color:#66d9ef>new</span> Mesh();
+            newmesh.vertices = mesh.vertices;
+            newmesh.triangles = mesh.triangles;
+            newmesh.normals = normals;
+            newmesh.uv = mesh.uv;
+            newmesh.uv2 = mesh.uv2;
+            newmesh.boneWeights = mesh.boneWeights;
+            newmesh.bindposes = mesh.bindposes;
+
+            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
+            AssetDatabase.Refresh();
+        }
+        EditorGUILayout.EndVertical();
+    }
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=version2>Version2</h2>
 <p>只对顶点重叠的顶点进行法线平滑，即对Lowpoly添加光滑组：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#66d9ef>using</span> UnityEngine;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#66d9ef>using</span> UnityEditor;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#66d9ef>using</span> System.Collections.Generic;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> : EditorWindow
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>{
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span><span style=color:#a6e22e>    [MenuItem(&#34;Window/MeshNormalSmoothWindow&#34;)]</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>        MeshNormalSmoothWindow window = (MeshNormalSmoothWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(MeshNormalSmoothWindow));
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>        window.Show();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    Mesh mesh;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>    <span style=color:#66d9ef>void</span> OnGUI()
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        EditorGUILayout.BeginVertical();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>        mesh = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, <span style=color:#66d9ef>typeof</span>(Mesh), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Mesh;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>        {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>            Vector3[] vertices = mesh.vertices;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>            <span style=color:#66d9ef>int</span>[] triangles = mesh.triangles;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>            <span style=color:#66d9ef>int</span> polygonNum = mesh.triangles.Length / <span style=color:#ae81ff>3</span>;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>            Vector3[] polyNormals = <span style=color:#66d9ef>new</span> Vector3[polygonNum];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33</span>                <span style=color:#75715e>// 乘以1000避免数值过小时计算结果为0
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34</span><span style=color:#75715e></span>                polyNormals[i] = Vector3.Cross((vertices[vid1] - vertices[vid0])*<span style=color:#ae81ff>1000</span>, (vertices[vid2] - vertices[vid0])*<span style=color:#ae81ff>1000</span>).normalized;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37</span>            <span style=color:#66d9ef>int</span> vertexNum = mesh.vertices.Length;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38</span>            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexNum];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39</span>            <span style=color:#66d9ef>int</span>[] normalsNum = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>int</span>[vertexNum];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42</span>                normals[i] = Vector3.zero;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47</span>                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48</span>                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49</span>                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51</span>                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; vertexNum; j++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52</span>                {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53</span>                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid0])
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54</span>                    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55</span>                        normals[j] += polyNormals[i];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56</span>                        normalsNum[j]++;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57</span>                    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58</span>                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid1])
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59</span>                    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60</span>                        normals[j] += polyNormals[i];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61</span>                        normalsNum[j]++;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62</span>                    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63</span>                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid2])
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64</span>                    {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65</span>                        normals[j] += polyNormals[i];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66</span>                        normalsNum[j]++;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67</span>                    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68</span>                }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">71</span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">72</span>            {
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">73</span>                normals[i] /= normalsNum[i];
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">74</span>                normals[i].Normalize();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">75</span>            }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">76</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">77</span>            Mesh newmesh = <span style=color:#66d9ef>new</span> Mesh();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">78</span>            newmesh.vertices = mesh.vertices;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">79</span>            newmesh.triangles = mesh.triangles;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">80</span>            newmesh.normals = normals;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">81</span>            newmesh.uv = mesh.uv;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">82</span>            newmesh.uv2 = mesh.uv2;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">83</span>            newmesh.boneWeights = mesh.boneWeights;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">84</span>            newmesh.bindposes = mesh.bindposes;
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">85</span>
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">86</span>            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">87</span>            AssetDatabase.Refresh();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">88</span>        }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">89</span>        EditorGUILayout.EndVertical();
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">90</span>    }
-<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">91</span>}
-</code></pre></div>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">70
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">71
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">72
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">73
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">74
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">75
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">76
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">77
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">78
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">79
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">80
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">81
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">82
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">83
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">84
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">85
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">86
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">87
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">88
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">89
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">90
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">91
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">92
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">93
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>using</span> UnityEngine;
+<span style=color:#66d9ef>using</span> UnityEditor;
+<span style=color:#66d9ef>using</span> System.Collections.Generic;
+
+<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MeshNormalSmoothWindow</span> : EditorWindow
+{
+<span style=color:#a6e22e>    [MenuItem(&#34;Window/MeshNormalSmoothWindow&#34;)]</span>
+    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Init()
+    {
+        MeshNormalSmoothWindow window = (MeshNormalSmoothWindow)EditorWindow.GetWindow(<span style=color:#66d9ef>typeof</span>(MeshNormalSmoothWindow));
+        window.Show();
+    }
+
+    Mesh mesh;
+
+    <span style=color:#66d9ef>void</span> OnGUI()
+    {
+        EditorGUILayout.BeginVertical();
+        mesh = EditorGUILayout.ObjectField(<span style=color:#e6db74>&#34;mesh&#34;</span>, mesh, <span style=color:#66d9ef>typeof</span>(Mesh), <span style=color:#66d9ef>true</span>) <span style=color:#66d9ef>as</span> Mesh;
+        <span style=color:#66d9ef>if</span> (GUILayout.Button(<span style=color:#e6db74>&#34;convert&#34;</span>))
+        {
+            Vector3[] vertices = mesh.vertices;
+            <span style=color:#66d9ef>int</span>[] triangles = mesh.triangles;
+
+            <span style=color:#66d9ef>int</span> polygonNum = mesh.triangles.Length / <span style=color:#ae81ff>3</span>;
+            Vector3[] polyNormals = <span style=color:#66d9ef>new</span> Vector3[polygonNum];
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+            {
+                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+
+                <span style=color:#75715e>// 乘以1000避免数值过小时计算结果为0
+</span><span style=color:#75715e></span>                polyNormals[i] = Vector3.Cross((vertices[vid1] - vertices[vid0])*<span style=color:#ae81ff>1000</span>, (vertices[vid2] - vertices[vid0])*<span style=color:#ae81ff>1000</span>).normalized;
+            }
+
+            <span style=color:#66d9ef>int</span> vertexNum = mesh.vertices.Length;
+            Vector3[] normals = <span style=color:#66d9ef>new</span> Vector3[vertexNum];
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+            {
+                normals[i] = Vector3.zero;
+            }
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+            {
+
+                <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+                <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+                <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+
+                <span style=color:#75715e>// 这里可以使用Dictionary来进行优化，那么不用进行整个顶点的遍历；
+</span><span style=color:#75715e></span>                <span style=color:#75715e>// 因此需要将Vector3作为Dictionary的Key来使用；
+</span><span style=color:#75715e></span>                <span style=color:#75715e>// Dictionary中添加自定义Key的方法为：
+</span><span style=color:#75715e></span>                <span style=color:#75715e>// https://stackoverflow.com/questions/6999191/use-custom-object-as-dictionary-key
+</span><span style=color:#75715e></span>                <span style=color:#75715e>// https://www.codeproject.com/Articles/23610/Dictionary-with-a-Custom-Key
+</span><span style=color:#75715e></span>                <span style=color:#75715e>// 因为Vector3的Equals方法是精确匹配，只有“==”的实现是非精确匹配；因此不适合使用Vector3来作为Key使用；
+</span><span style=color:#75715e></span>                <span style=color:#75715e>// 参考https://docs.unity3d.com/ScriptReference/Vector3.Equals.html
+</span><span style=color:#75715e></span>                <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; vertexNum; j++)
+                {
+                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid0])
+                    {
+                        normals[j] += polyNormals[i];
+                    }
+                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid1])
+                    {
+                        normals[j] += polyNormals[i];
+                    }
+                    <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid2])
+                    {
+                        normals[j] += polyNormals[i];
+                    }
+                }
+
+            }
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+            {
+                normals[i].Normalize();
+            }
+
+            Mesh newmesh = <span style=color:#66d9ef>new</span> Mesh();
+            newmesh.vertices = mesh.vertices;
+            newmesh.triangles = mesh.triangles;
+            newmesh.normals = normals;
+            newmesh.uv = mesh.uv;
+            newmesh.uv2 = mesh.uv2;
+            newmesh.boneWeights = mesh.boneWeights;
+            newmesh.bindposes = mesh.bindposes;
+
+            AssetDatabase.CreateAsset(newmesh, <span style=color:#e6db74>&#34;Assets/test.asset&#34;</span>);
+            AssetDatabase.Refresh();
+        }
+        EditorGUILayout.EndVertical();
+    }
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=normal-smooth-method>Normal Smooth Method</h2>
+<p>在前面的version1与version2中，使用的都是直接针对当前点进行面法线平均的算法；代码如下：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+{
+    <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+    <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+    <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+
+    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; vertexNum; j++)
+    {
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid0])
+        {
+            normals[j] += polyNormals[i];
+            normalsNum[j]++;
+        }
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid1])
+        {
+            normals[j] += polyNormals[i];
+            normalsNum[j]++;
+        }
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid2])
+        {
+            normals[j] += polyNormals[i];
+            normalsNum[j]++;
+        }
+    }
+}
+<span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+{
+    normals[i].Normalize();
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>这样会导致平滑法线偏向面数比较多的方向，如果三角面数量在同一点上分布不均匀，就会产生比较大的瑕疵；因此可以考虑使用<strong>三角形的面积来进行加权平均</strong>；代码如下：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+{
+    <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+    <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+    <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+
+    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; vertexNum; j++)
+    {
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid0])
+        {
+            normals[j] += polyNormals[i]*polyArea[i];
+            normalsNum[j]++;
+        }
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid1])
+        {
+            normals[j] += polyNormals[i]*polyArea[i];
+            normalsNum[j]++;
+        }
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid2])
+        {
+            normals[j] += polyNormals[i]*polyArea[i];
+            normalsNum[j]++;
+        }
+    }
+}
+<span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+{
+    normals[i].Normalize();
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>三角形的面积来进行加权平均仍然会有同样的问题，就是如果三角面面积在同一点上分布不均匀，同样会产生比较大的瑕疵，有时甚至会比非面积加权的更加严重；
+最终的解决方案，应该是针对同一点，使用对应三面在该点的夹角来进行平均，这样就将法线的影响锁定到了局部，不会受其他非有效因素的影响；代码如下：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; polygonNum; i++)
+{
+    <span style=color:#66d9ef>int</span> vid0 = triangles[i * <span style=color:#ae81ff>3</span>];
+    <span style=color:#66d9ef>int</span> vid1 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>1</span>];
+    <span style=color:#66d9ef>int</span> vid2 = triangles[i * <span style=color:#ae81ff>3</span> + <span style=color:#ae81ff>2</span>];
+
+    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> j = <span style=color:#ae81ff>0</span>; j &lt; vertexNum; j++)
+    {
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid0])
+        {
+            normals[j] += polyNormals[i]*polyAngle[i];
+            normalsNum[j]++;
+        }
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid1])
+        {
+            normals[j] += polyNormals[i]*polyAngle[i];
+            normalsNum[j]++;
+        }
+        <span style=color:#66d9ef>if</span>(vertices[j] == vertices[vid2])
+        {
+            normals[j] += polyNormals[i]*polyAngle[i];
+            normalsNum[j]++;
+        }
+    }
+}
+<span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; vertexNum; i++)
+{
+    normals[i].Normalize();
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=reference>Reference</h2>
+<ol>
+<li><a href=http://www.bytehazard.com/articles/vertnorm.html>Weighted Vertex Normals</a></li>
+<li><a href=https://stackoverflow.com/questions/6999191/use-custom-object-as-dictionary-key>use custom object as dictionary key</a></li>
+<li><a href=https://www.codeproject.com/Articles/23610/Dictionary-with-a-Custom-Key>Dictionary with a Custom Key</a></li>
+<li><a href=https://docs.unity3d.com/ScriptReference/Vector3.Equals.html>Vector3.Equals</a></li>
+<li><a href=https://stackoverflow.com/questions/45477806/general-method-for-calculating-smooth-vertex-normals-with-100-smoothness>General method for calculating Smooth vertex normals with 100% smoothness</a></li>
+</ol>
 </main>
 <div id=gitalk-container></div>
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
