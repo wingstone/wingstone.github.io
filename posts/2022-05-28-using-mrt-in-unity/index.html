@@ -1,0 +1,228 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Using mrt in unity | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>Using mrt in unity</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/05/28</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#使用graphicssetrendertarget>使用Graphics.SetRenderTarget</a></li>
+<li><a href=#使用camerasettargetbuffers>使用Camera.SetTargetBuffers</a></li>
+<li><a href=#使用commandbuffersetrendertarget>使用CommandBuffer.SetRenderTarget</a></li>
+</ul>
+</nav>
+<main>
+<p>记录一下在unity中使用mrt的一些方法及问题；</p>
+<h2 id=使用graphicssetrendertarget>使用Graphics.SetRenderTarget</h2>
+<p>此方法可以用于后期中的mrt使用，需要先设置mrt，然后再blit到null；也可以搭配Graphics.RenderMesh或Graphics.DrawMesh通过绘制quad来实现后期中的mrt使用；如果把quad修改成逐物体的mesh，则可以实现逐物体的mrt渲染；比较适用于buildin管线。</p>
+<p>使用方法为：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>void</span> OnRenderImage(RenderTexture source, RenderTexture destination)
+{
+    <span style=color:#66d9ef>var</span> <span style=color:#ae81ff>_</span>mrt = <span style=color:#66d9ef>new</span> RenderBuffer[<span style=color:#ae81ff>2</span>];
+    <span style=color:#66d9ef>var</span> rt1 = RenderTexture.GetTemporary(source.width, source.height, <span style=color:#ae81ff>0</span>, RenderTextureFormat.Default);
+    <span style=color:#66d9ef>var</span> rt2 = RenderTexture.GetTemporary(source.width, source.height, <span style=color:#ae81ff>0</span>, RenderTextureFormat.DefaultHDR);
+
+    <span style=color:#ae81ff>_</span>mrt[<span style=color:#ae81ff>0</span>] = rt1.colorBuffer;
+    <span style=color:#ae81ff>_</span>mrt[<span style=color:#ae81ff>1</span>] = rt2.colorBuffer;
+
+    <span style=color:#75715e>// Blit with a MRT.
+</span><span style=color:#75715e></span>    Graphics.SetRenderTarget(<span style=color:#ae81ff>_</span>mrt, rt1.depthBuffer);
+    Graphics.Blit(<span style=color:#66d9ef>null</span>, <span style=color:#ae81ff>_</span>material, <span style=color:#ae81ff>0</span>);
+
+    <span style=color:#75715e>// Combine them and output to the destination.
+</span><span style=color:#75715e></span>    <span style=color:#ae81ff>_</span>material.SetTexture(<span style=color:#e6db74>&#34;_SecondTex&#34;</span>, rt1);
+    <span style=color:#ae81ff>_</span>material.SetTexture(<span style=color:#e6db74>&#34;_ThirdTex&#34;</span>, rt2);
+    Graphics.Blit(source, destination, <span style=color:#ae81ff>_</span>material, <span style=color:#ae81ff>1</span>);
+
+    RenderTexture.ReleaseTemporary(rt1);
+    RenderTexture.ReleaseTemporary(rt2);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=使用camerasettargetbuffers>使用Camera.SetTargetBuffers</h2>
+<p>此方法可以直接在相机的绘制中直接使用mrt，用法类似于Camera.targetTexture，设置一次即可；比较适用于buildin管线。</p>
+<p>需要注意的是，使用了MRT后，很多其他的后期插件（比如官方的postprocess stack）都不兼容，主要问题是使用mrt导致官方后其中的BuiltinRenderTextureType.CameraTarget丢失，就算自己去写后期也有一定的兼容问题；</p>
+<p>比较好的做法是手动创建一个备用相机来渲染mrt，然后将备用相机合成结果blit到当前相机所用的CameraTarget上；</p>
+<p>或者手动创建一个RT作为finalRT，在相机渲染结束后，将mrt的结果合成到finalRT上，再将finalRT blit到屏幕上（通过绘制api或通过rawimage）；</p>
+<p>使用方法为：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#><span style=color:#66d9ef>void</span> Start()
+{
+    cam = GetComponent&lt;Camera&gt; ();
+    cam.hdr = <span style=color:#66d9ef>true</span>;
+
+    rts = <span style=color:#66d9ef>new</span> RenderTexture[bufferNames.Length];
+    buffers = <span style=color:#66d9ef>new</span> RenderBuffer[bufferNames.Length];
+    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i = <span style=color:#ae81ff>0</span>; i &lt; rts.Length; i++) {
+        rts [i] = <span style=color:#66d9ef>new</span> RenderTexture ((<span style=color:#66d9ef>int</span>)cam.pixelWidth, (<span style=color:#66d9ef>int</span>)cam.pixelHeight, <span style=color:#ae81ff>0</span>, RenderTextureFormat.ARGBFloat);
+        rts [i].filterMode = FilterMode.Point;
+        rts [i].name = bufferNames [i];
+        rts [i].Create ();
+        buffers [i] = rts [i].colorBuffer;
+    }
+    dRt = <span style=color:#66d9ef>new</span> RenderTexture ((<span style=color:#66d9ef>int</span>)cam.pixelWidth, (<span style=color:#66d9ef>int</span>)cam.pixelHeight, <span style=color:#ae81ff>24</span>, RenderTextureFormat.Depth);
+    dRt.name = depthBufferName;
+
+    cam.SetTargetBuffers (buffers, dRt.depthBuffer);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=使用commandbuffersetrendertarget>使用CommandBuffer.SetRenderTarget</h2>
+<p>使用此方法拥有最大的自由度，可用于在相机的绘制中使用mrt，也可以在后期中使用mrt；此方法也是unity所推荐的方法，即可用于srp，也可用于buildin管线；</p>
+<p>事实上，unity的整个srp都是由commandbuffer所构建的，那么mrt的支持自然不会落下；</p>
+<p>使用方法为：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c# data-lang=c#>
+<span style=color:#75715e>// Define command buffer
+</span><span style=color:#75715e></span><span style=color:#66d9ef>var</span> cmd = <span style=color:#66d9ef>new</span> CommandBuffer();
+cmd.name = <span style=color:#960050;background-color:#1e0010>“</span>TestGBufferCMD<span style=color:#960050;background-color:#1e0010>”</span>;
+
+<span style=color:#75715e>// Define render identifier and set textures
+</span><span style=color:#75715e></span><span style=color:#66d9ef>var</span> rtGBuffersID = <span style=color:#66d9ef>new</span> RenderTargetIdentifier[rtGBuffers.Length];
+<span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>var</span> i = <span style=color:#ae81ff>0</span>; i &lt; rtGBuffers.Length; ++i) {
+    rtGBuffersID[i] = cmd.GetTemporary(Screen.width, Screen.height, <span style=color:#ae81ff>0</span>);
+}
+depthBuffer = cmd.GetTemporary(Screen.width, Screen.height, <span style=color:#ae81ff>0</span>);
+
+<span style=color:#75715e>// Set up command buffer
+</span><span style=color:#75715e></span>cmd.SetRenderTarget(rtGBuffersID, depthBuffer);
+cmd.ClearRenderTarget(<span style=color:#66d9ef>true</span>, <span style=color:#66d9ef>true</span>, Color.clear, <span style=color:#ae81ff>1</span>);
+
+<span style=color:#75715e>// draw render in srp
+</span><span style=color:#75715e></span>cmd.DrawRenderer(targetRender, gBufferMaterial);
+
+<span style=color:#75715e>// draw big triangle for postprocess
+</span><span style=color:#75715e></span>cmd.DrawMesh(fullscreenTriangle, Matrix4x4.identity, propertySheet.material, <span style=color:#ae81ff>0</span>, pass, propertySheet.properties);
+
+<span style=color:#75715e>// Add command buffer to camera 
+</span><span style=color:#75715e></span>Camera.main.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, cmd);
+
+<span style=color:#75715e>// Or execute command buffer manually
+</span><span style=color:#75715e></span>Graphics.ExecuteCommandBuffer(cmd);
+</code></pre></td></tr></table>
+</div>
+</div>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
