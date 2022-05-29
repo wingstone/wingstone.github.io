@@ -38,20 +38,27 @@
 </li>
 <li><a href=#acl使用一些注意事项>acl使用一些注意事项</a></li>
 <li><a href=#关于acl的一些感想>关于acl的一些感想</a></li>
+<li><a href=#acl的bit位数选择策略>acl的bit位数选择策略</a>
+<ul>
+<li><a href=#initial-state>Initial State</a></li>
+<li><a href=#first-phase>First Phase</a></li>
+<li><a href=#second-phase>Second Phase</a></li>
+</ul>
+</li>
 <li><a href=#reference>Reference</a></li>
 </ul>
 </nav>
 <main>
 <p>记录一下阅读acl unreal plugin，以及将acl集成到游戏引擎中的一些使用心得；</p>
 <h2 id=acl的使用方法>acl的使用方法</h2>
-<p>acl的插件使用方法，在仓库中有非常完整的文档说明，并且有配套的博客来讲解背后的实现原理；</p>
+<p>acl插件<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>的使用方法，在仓库中有非常完整的文档说明，并且有配套的博客<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>来讲解背后的实现原理；</p>
 <h3 id=acl的验证>acl的验证</h3>
 <p>在acl的tools文件夹包含一些简单的压缩与解压example，比较适合单独验证acl的压缩与解压缩；</p>
 <p>对于没用过acl的人，可以将自己的单个动画片段的数据整理后，整合acl做一个小程序进行压缩与解压缩的验证；写法可参考tools文件夹下的example；</p>
 <p>从我验证的结果来看，acl压缩的质量非常之高，并且使用非常低的内存与磁盘存储，并且动画效果肉眼几乎看不出压缩的痕迹；</p>
 <h3 id=acl的引擎集成>acl的引擎集成</h3>
 <p>如果完成了acl的验证过程，基本上对acl的集成有了充分的认识，那么集成acl就相对简单点；</p>
-<p>比较好的集成方式，是参考<a href=https://github.com/nfrechette/acl-ue4-plugin>acl-ue4-plugin</a>的实现，整个结构非常清晰与完整，对引擎不会有太大改动；</p>
+<p>比较好的集成方式，是参考acl-ue4-plugin<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>的实现，整个结构非常清晰与完整，对引擎不会有太大改动；</p>
 <p>整个集成过程可分为三步：</p>
 <p>压缩过程：</p>
 <ol>
@@ -73,12 +80,36 @@
 <p>acl厉害的一点是采用了更加合理地误差计算（考虑了误差沿骨骼链传递的因素），并且针对uniform sampling，采取了更合理的误差优化算法；</p>
 <p>如果想要集成Keyframe Reduction算法，acl所使用的误差计算方式是非常值得借鉴的，而误差优化算法就需要去精心设计（也就是抽取哪一帧更加合理）；更进一步，Keyframe Reduction过后的数据，仍可以使用量化的算法来进行存储（仅仅是数据的量化）；这是一个很大的工程量；</p>
 <p>acl关于骨骼动画压缩着一块，基本上只能适用于骨骼动画；但是acl还提供了标量数据的压缩，标量数据的压缩显得更加的通用，只要提供合适的误差算法，使用acl进行标量数据的压缩也是一步很大的优化；事实上，acl-ue4-plugin里所提供的关于blendshape动画的压缩，就是采用acl标量数据的压缩方法；</p>
+<h2 id=acl的bit位数选择策略>acl的bit位数选择策略</h2>
+<p>acl对clip切分后，针对每个track conponent来计算其应需要的压缩bit数；由于track conponent数量过多，采用穷举的方法来选取bit数显得耗时过高而不可取；acl采取启发式的算法来选取，不期望全局最优，但是在可接受的误差范围，并且压缩耗时会大大降低<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>；</p>
+<p>acl设置了16中可选的bit位数，0, 3, 4, …, 16, and 23；从而减少了搜索范围；</p>
+<h3 id=initial-state>Initial State</h3>
+<p>为了保证最高精度，acl会将每个track的bit位数初始化为最高的位数23bit；</p>
+<h3 id=first-phase>First Phase</h3>
+<p>第一阶段为了能够加快搜索速度，acl会对每一个track都进行固定bit位数的下降，知道恰好不超过设定的误差范围；不过根部节点除外，因为根部节点，比如相机节点，一般都会有非常高的精度要求，如果对其进行处理，反而会引入更大其他误差；</p>
+<p>比如相机的旋转，如果我们对其进行不合适量化，离相机越远就会引入更大误差；</p>
+<h3 id=second-phase>Second Phase</h3>
+<p>第二阶段为了能够精确计算结果，会针对所有的track进行迭代，来尽可能降低每个track的bit位数，直到误差恰好满足设定的要求；</p>
+<p>这个过程中，遍历track的顺序非常重要，从根节点向叶节点遍历，与从叶节点向根节点遍历，产生的bit位数分布会有相当多不同；从叶节点向根节点遍历，叶节点会使用更低的bit位数，由于叶节点相比根节点会多很多，这样对减少内存会起更大作用；同样由于叶节点使用较低bit位数，父节点因而会保持较高的bit位数，来保证误差满足设定的要求；</p>
+<p>acl的作者进行了测试，相比从根节点向叶节点遍历，从叶节点向根节点遍历会减少2%内存，并且不会产生任何精度、加压缩时间的问题；</p>
 <h2 id=reference>Reference</h2>
+<section class=footnotes role=doc-endnotes>
+<hr>
 <ol>
-<li><a href=https://github.com/nfrechette/acl>acl</a></li>
-<li><a href=https://github.com/nfrechette/acl-ue4-plugin>acl-ue4-plugin</a></li>
-<li><a href=https://nfrechette.github.io/2016/10/21/anim_compression_toc/>Animation Compression: Table of Contents</a></li>
+<li id=fn:1 role=doc-endnote>
+<p><a href=https://github.com/nfrechette/acl>acl</a>&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:2 role=doc-endnote>
+<p><a href=https://github.com/nfrechette/acl-ue4-plugin>acl-ue4-plugin</a>&#160;<a href=#fnref:2 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:3 role=doc-endnote>
+<p><a href=https://nfrechette.github.io/2016/10/21/anim_compression_toc/>Animation Compression: Table of Contents</a>&#160;<a href=#fnref:3 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:4 role=doc-endnote>
+<p><a href=https://nfrechette.github.io/2017/03/12/anim_compression_advanced_quantization/>Animation Compression: Advanced Quantization</a>&#160;<a href=#fnref:4 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
 </ol>
+</section>
 </main>
 <div id=gitalk-container></div>
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
