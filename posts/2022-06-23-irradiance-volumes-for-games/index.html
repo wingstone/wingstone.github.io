@@ -1,0 +1,99 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>irradiance volumes for games | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>irradiance volumes for games</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/06/23</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#前置理论>前置理论</a></li>
+<li><a href=#为什么需要irradiance-volumes技术>为什么需要irradiance volumes技术</a></li>
+<li><a href=#irradiance-volumes的捕捉>irradiance volumes的捕捉</a></li>
+<li><a href=#irradiance-volumes的rendering>irradiance volumes的rendering</a>
+<ul>
+<li><a href=#sampling-the-volume>Sampling the Volume</a></li>
+<li><a href=#self-occlusion>Self Occlusion</a></li>
+</ul>
+</li>
+<li><a href=#example>example</a>
+<ul>
+<li><a href=#direct3d9-sdk>Direct3D9 SDK</a></li>
+<li><a href=#unity>Unity</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+<main>
+<p>Irradiance Volumes为一种全局光照技术，参考<a href=https://developer.amd.com/wordpress/media/2012/10/Tatarchuk_Irradiance_Volumes.pdf>Irradiance Volumes for Games</a>，这里记录一下心得体会；</p>
+<h2 id=前置理论>前置理论</h2>
+<p>首先需要理解光照渲染中常见的radiance、irradiance等物理概念，随后需要了解IBL背后的技术（只理解diffuse部分即可，主要需要知道SH在渲染中的应用）；</p>
+<h2 id=为什么需要irradiance-volumes技术>为什么需要irradiance volumes技术</h2>
+<p>传统的全局光照一般使用lightmap来表示，带来的问题为存储空间大，只适用于静态场景，只能作用于物体表面；
+为了解决这个问题，可以使用irradiance volumes来捕捉静态场景所提供的的整个空间上的光照环境，这样使用irradiance volumes，我们就既可以照射静态物体，也可以照射动态物体，同时不太局限于物体表面，甚至对一些体积产生效果（如雾、云等）；</p>
+<p>irradiance volumes的理论其实并不难，只是将IBL的思想扩充到局部场景而已；更多需要解决的问题来自技术应用上；</p>
+<h2 id=irradiance-volumes的捕捉>irradiance volumes的捕捉</h2>
+<p>简单的捕捉方法为：在场景中放置对应的irradiance volume，并设置相应的分辨率，随后计算volume中每个探针的光照环境（使用SH表示）；
+根据场景的不同，irradiance volume可以使用均匀划分，也可以使用自适应划分;
+划分后SH的计算有两种方式，一种是先capture探针的cubemap，随后使用cubemap来计算对应的SH；一种是直接使用tracing的方法来直接计算SH；</p>
+<h2 id=irradiance-volumes的rendering>irradiance volumes的rendering</h2>
+<h3 id=sampling-the-volume>Sampling the Volume</h3>
+<p>最简单的方法为，直接采样trilinear后的SH来计算GI，但是对于使用自适应划分的irradiance volume，则需要使用细分面的节点数据来进行trilinear插值；</p>
+<p>如果使用均匀划分，则可以使直接使用Tex3D来进行数据的存储，从而使得插值在GPU端进行，并且可以在同一mesh的不同位置来得到不同的gi效果；</p>
+<p>使用trlinear有时会带来反向问题，如下图：</p>
+<p><img src=gradients-for-interpolation.png alt="gradients for interpolation"></p>
+<p>文章中使用point+gradient来构建cubic patches的方法来进行插值，从而解决这个问题，具体代码可以看D3D9SDK中的示例；</p>
+<h3 id=self-occlusion>Self Occlusion</h3>
+<p>解决self occlusion的方法很简单，直接使用PRT将物体自身的遮挡的SH系数预先计算好，存储至mesh或贴图中即可；随后计算式使用prt来计算自遮挡，irradiance volume来计算光照；</p>
+<h2 id=example>example</h2>
+<h3 id=direct3d9-sdk>Direct3D9 SDK</h3>
+<p>在Direct3D9的SDK中提供了相应的示例，对应的代码在<a href=https://github.com/walbourn/directx-sdk-legacy-samples/tree/main/Direct3D/IrradianceVolume>IrradianceVolume</a>，使用VS2019即可直接打开时编译运行；</p>
+<p>D3D的示例直接在CPU端进行trilinear插值，由于使用了OcTree，SH的存储并不是在Tex3D中，而volume的采样也需要在CPU端进行，并且对于同一个物体只能使用同一个GI来计算；</p>
+<h3 id=unity>Unity</h3>
+<p>在Unity中，<a href=https://docs.unity3d.com/Manual/class-LightProbeProxyVolume.html>Light Probe Proxy Volume component</a>组件就提供了uniform volume的使用；从而使得同一个mesh的不同位置能接收到不同的GI；</p>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
