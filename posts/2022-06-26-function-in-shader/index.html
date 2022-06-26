@@ -1,0 +1,382 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>buildin function in shader | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>buildin function in shader</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/06/26</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#super-function>super function</a>
+<ul>
+<li><a href=#sin>sin</a></li>
+<li><a href=#asin>asin</a></li>
+<li><a href=#tan>tan</a></li>
+<li><a href=#atan>atan</a></li>
+<li><a href=#pow>pow</a></li>
+<li><a href=#smoothstep>smoothstep</a></li>
+<li><a href=#reflect>reflect</a></li>
+<li><a href=#refract>refract</a></li>
+<li><a href=#refract-1>refract</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+<main>
+<p>关于内置函数的实现方法，发现<a href=https://developer.download.nvidia.cn/cg/index_stdlib.html>Cg Standard Library</a>写的最好，给出了各种函数的Reference Implementation；实际上，unity查看shader编译后的代码也可以看到对应实现；这里记录几种常见函数的实现方式，从而可以对shader的复杂度有更好的认知；</p>
+<h2 id=super-function>super function</h2>
+<h3 id=sin>sin</h3>
+<p>采用泰勒级数展开的拟合形式；但原文有说最好实现为native instruction，因此在实际上大概率会直接调用硬件指令来运行；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>sin</span>(<span style=color:#66d9ef>float</span> a)
+{
+  <span style=color:#75715e>/* C simulation gives a max absolute error of less than 1.8e-7 */</span>
+  float4 c0 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>0.0</span>,            <span style=color:#ae81ff>0.5</span>,
+                      <span style=color:#ae81ff>1.0</span>,            <span style=color:#ae81ff>0.0</span>            );
+  float4 c1 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>0.25</span>,          <span style=color:#f92672>-</span><span style=color:#ae81ff>9.0</span>,
+                      <span style=color:#ae81ff>0.75</span>,           <span style=color:#ae81ff>0.159154943091</span> );
+  float4 c2 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>24.9808039603</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>24.9808039603</span>,
+                     <span style=color:#f92672>-</span><span style=color:#ae81ff>60.1458091736</span>,  <span style=color:#ae81ff>60.1458091736</span>  );
+  float4 c3 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>85.4537887573</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>85.4537887573</span>,
+                     <span style=color:#f92672>-</span><span style=color:#ae81ff>64.9393539429</span>,  <span style=color:#ae81ff>64.9393539429</span>  );
+  float4 c4 <span style=color:#f92672>=</span> float4( <span style=color:#ae81ff>19.7392082214</span>, <span style=color:#f92672>-</span><span style=color:#ae81ff>19.7392082214</span>,
+                     <span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span>,            <span style=color:#ae81ff>1.0</span>            );
+
+  <span style=color:#75715e>/* r0.x = sin(a) */</span>
+  float3 r0, r1, r2;
+
+  r1.x  <span style=color:#f92672>=</span> c1.w <span style=color:#f92672>*</span> a <span style=color:#f92672>-</span> c1.x;                <span style=color:#75715e>// only difference from cos!
+</span><span style=color:#75715e></span>  r1.y  <span style=color:#f92672>=</span> frac( r1.x );                   <span style=color:#75715e>// and extract fraction
+</span><span style=color:#75715e></span>  r2.x  <span style=color:#f92672>=</span> (<span style=color:#66d9ef>float</span>) ( r1.y <span style=color:#f92672>&lt;</span> c1.x );        <span style=color:#75715e>// range check: 0.0 to 0.25
+</span><span style=color:#75715e></span>  r2.yz <span style=color:#f92672>=</span> (float2) ( r1.yy <span style=color:#f92672>&gt;=</span> c1.yz );    <span style=color:#75715e>// range check: 0.75 to 1.0
+</span><span style=color:#75715e></span>  r2.y  <span style=color:#f92672>=</span> dot( r2, c4.zwz );              <span style=color:#75715e>// range check: 0.25 to 0.75
+</span><span style=color:#75715e></span>  r0    <span style=color:#f92672>=</span> c0.xyz <span style=color:#f92672>-</span> r1.yyy;                <span style=color:#75715e>// range centering
+</span><span style=color:#75715e></span>  r0    <span style=color:#f92672>=</span> r0 <span style=color:#f92672>*</span> r0;
+  r1    <span style=color:#f92672>=</span> c2.xyx <span style=color:#f92672>*</span> r0 <span style=color:#f92672>+</span> c2.zwz;           <span style=color:#75715e>// start power series
+</span><span style=color:#75715e></span>  r1    <span style=color:#f92672>=</span>     r1 <span style=color:#f92672>*</span> r0 <span style=color:#f92672>+</span> c3.xyx;
+  r1    <span style=color:#f92672>=</span>     r1 <span style=color:#f92672>*</span> r0 <span style=color:#f92672>+</span> c3.zwz;
+  r1    <span style=color:#f92672>=</span>     r1 <span style=color:#f92672>*</span> r0 <span style=color:#f92672>+</span> c4.xyx;
+  r1    <span style=color:#f92672>=</span>     r1 <span style=color:#f92672>*</span> r0 <span style=color:#f92672>+</span> c4.zwz;
+  r0.x  <span style=color:#f92672>=</span> dot( r1, <span style=color:#f92672>-</span>r2 );                 <span style=color:#75715e>// range extract
+</span><span style=color:#75715e></span>
+  <span style=color:#66d9ef>return</span> r0.x;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=asin>asin</h3>
+<p>atan会转化为泰勒级数展开的拟合形式，在unity查看编译后的源码能发现实现确实如此；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// Handbook of Mathematical Functions
+</span><span style=color:#75715e>// M. Abramowitz and I.A. Stegun, Ed.
+</span><span style=color:#75715e></span>
+<span style=color:#66d9ef>float</span> <span style=color:#a6e22e>asin</span>(<span style=color:#66d9ef>float</span> x) {
+  <span style=color:#66d9ef>float</span> negate <span style=color:#f92672>=</span> <span style=color:#66d9ef>float</span>(x <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span>);
+  x <span style=color:#f92672>=</span> abs(x);
+  <span style=color:#66d9ef>float</span> ret <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>0.0187293</span>;
+  ret <span style=color:#f92672>*=</span> x;
+  ret <span style=color:#f92672>+=</span> <span style=color:#ae81ff>0.0742610</span>;
+  ret <span style=color:#f92672>*=</span> x;
+  ret <span style=color:#f92672>-=</span> <span style=color:#ae81ff>0.2121144</span>;
+  ret <span style=color:#f92672>*=</span> x;
+  ret <span style=color:#f92672>+=</span> <span style=color:#ae81ff>1.5707288</span>;
+  ret <span style=color:#f92672>=</span> <span style=color:#ae81ff>3.14159265358979</span><span style=color:#f92672>*</span><span style=color:#ae81ff>0.5</span> <span style=color:#f92672>-</span> sqrt(<span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span> x)<span style=color:#f92672>*</span>ret;
+  <span style=color:#66d9ef>return</span> ret <span style=color:#f92672>-</span> <span style=color:#ae81ff>2</span> <span style=color:#f92672>*</span> negate <span style=color:#f92672>*</span> ret;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=tan>tan</h3>
+<p>tan会转化为sin与cos来实现；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>tan</span>(<span style=color:#66d9ef>float</span> a) {
+  <span style=color:#66d9ef>float</span> s, c;
+  sincos(a, s, c);
+  <span style=color:#66d9ef>return</span> s <span style=color:#f92672>/</span> c;
+}
+</code></pre></td></tr></table>
+</div>
+</div><div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>sincos</span>(float3 a, out float3 s, float3 out c)
+{
+  s <span style=color:#f92672>=</span> sin(a);
+  c <span style=color:#f92672>=</span> cos(a);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=atan>atan</h3>
+<p>atan会转化为泰勒级数展开的拟合形式；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>atan</span>(<span style=color:#66d9ef>float</span> x) {
+    <span style=color:#66d9ef>return</span> atan2(x, <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>1</span>));
+}
+</code></pre></td></tr></table>
+</div>
+</div><div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float2 <span style=color:#a6e22e>atan2</span>(float2 y, float2 x)
+{
+  float2 t0, t1, t2, t3, t4;
+
+  t3 <span style=color:#f92672>=</span> abs(x);
+  t1 <span style=color:#f92672>=</span> abs(y);
+  t0 <span style=color:#f92672>=</span> max(t3, t1);
+  t1 <span style=color:#f92672>=</span> min(t3, t1);
+  t3 <span style=color:#f92672>=</span> <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>1</span>) <span style=color:#f92672>/</span> t0;
+  t3 <span style=color:#f92672>=</span> t1 <span style=color:#f92672>*</span> t3;
+
+  t4 <span style=color:#f92672>=</span> t3 <span style=color:#f92672>*</span> t3;
+  t0 <span style=color:#f92672>=</span>         <span style=color:#f92672>-</span> <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>0.013480470</span>);
+  t0 <span style=color:#f92672>=</span> t0 <span style=color:#f92672>*</span> t4 <span style=color:#f92672>+</span> <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>0.057477314</span>);
+  t0 <span style=color:#f92672>=</span> t0 <span style=color:#f92672>*</span> t4 <span style=color:#f92672>-</span> <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>0.121239071</span>);
+  t0 <span style=color:#f92672>=</span> t0 <span style=color:#f92672>*</span> t4 <span style=color:#f92672>+</span> <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>0.195635925</span>);
+  t0 <span style=color:#f92672>=</span> t0 <span style=color:#f92672>*</span> t4 <span style=color:#f92672>-</span> <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>0.332994597</span>);
+  t0 <span style=color:#f92672>=</span> t0 <span style=color:#f92672>*</span> t4 <span style=color:#f92672>+</span> <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>0.999995630</span>);
+  t3 <span style=color:#f92672>=</span> t0 <span style=color:#f92672>*</span> t3;
+
+  t3 <span style=color:#f92672>=</span> (abs(y) <span style=color:#f92672>&gt;</span> abs(x)) <span style=color:#f92672>?</span> <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>1.570796327</span>) <span style=color:#f92672>-</span> t3 : t3;
+  t3 <span style=color:#f92672>=</span> (x <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span>) <span style=color:#f92672>?</span>  <span style=color:#66d9ef>float</span>(<span style=color:#ae81ff>3.141592654</span>) <span style=color:#f92672>-</span> t3 : t3;
+  t3 <span style=color:#f92672>=</span> (y <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span>) <span style=color:#f92672>?</span> <span style=color:#f92672>-</span>t3 : t3;
+
+  <span style=color:#66d9ef>return</span> t3;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=pow>pow</h3>
+<p>底层会采用exp2与log2来实现；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>pow</span>(float3 x, float3 y)
+{
+  <span style=color:#66d9ef>return</span> exp2(log2(x)<span style=color:#f92672>*</span>y);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=smoothstep>smoothstep</h3>
+<p>smoothstep依旧以插值的形式来实现；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>smoothstep</span>(<span style=color:#66d9ef>float</span> a, <span style=color:#66d9ef>float</span> b, <span style=color:#66d9ef>float</span> x)
+{
+    <span style=color:#66d9ef>float</span> t <span style=color:#f92672>=</span> saturate((x <span style=color:#f92672>-</span> a)<span style=color:#f92672>/</span>(b <span style=color:#f92672>-</span> a));
+    <span style=color:#66d9ef>return</span> t<span style=color:#f92672>*</span>t<span style=color:#f92672>*</span>(<span style=color:#ae81ff>3.0</span> <span style=color:#f92672>-</span> (<span style=color:#ae81ff>2.0</span><span style=color:#f92672>*</span>t));
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=reflect>reflect</h3>
+<p>reflect根据反射原理来实现；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>reflect</span>( float3 i, float3 n )
+{
+  <span style=color:#66d9ef>return</span> i <span style=color:#f92672>-</span> <span style=color:#ae81ff>2.0</span> <span style=color:#f92672>*</span> n <span style=color:#f92672>*</span> dot(n,i);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=refract>refract</h3>
+<p>refract根据折射原理来实现；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>refract</span>( float3 i, float3 n, <span style=color:#66d9ef>float</span> eta )
+{
+  <span style=color:#66d9ef>float</span> cosi <span style=color:#f92672>=</span> dot(<span style=color:#f92672>-</span>i, n);
+  <span style=color:#66d9ef>float</span> cost2 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0f</span> <span style=color:#f92672>-</span> eta <span style=color:#f92672>*</span> eta <span style=color:#f92672>*</span> (<span style=color:#ae81ff>1.0f</span> <span style=color:#f92672>-</span> cosi<span style=color:#f92672>*</span>cosi);
+  float3 t <span style=color:#f92672>=</span> eta<span style=color:#f92672>*</span>i <span style=color:#f92672>+</span> ((eta<span style=color:#f92672>*</span>cosi <span style=color:#f92672>-</span> sqrt(abs(cost2))) <span style=color:#f92672>*</span> n);
+  <span style=color:#66d9ef>return</span> t <span style=color:#f92672>*</span> (float3)(cost2 <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span>);
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=refract-1>refract</h3>
+<p>refract根据折射原理来实现；</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>float3 <span style=color:#a6e22e>normalize</span>(float3 v)
+{
+  <span style=color:#66d9ef>return</span> rsqrt(dot(v,v))<span style=color:#f92672>*</span>v;
+}
+</code></pre></td></tr></table>
+</div>
+</div>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
