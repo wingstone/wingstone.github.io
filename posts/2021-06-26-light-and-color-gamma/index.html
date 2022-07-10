@@ -45,6 +45,7 @@
 <li><a href=#gamma使用不当会引起的问题>gamma使用不当会引起的问题</a></li>
 </ul>
 </li>
+<li><a href=#gamma所带来的的优势>gamma所带来的的优势</a></li>
 <li><a href=#总结>总结</a></li>
 <li><a href=#references>references</a></li>
 </ul>
@@ -106,6 +107,11 @@
 <p><img src=gamma-ropping.png alt=ropping></p>
 <center>ropping</center>
 <p>ropping现象则是因为没有经过gamma correction引起的直线弯曲效应；不过需要在使用msaa或者ssaa的情况下才能看到，上图就是开8xaa情况下出现的问题；</p>
+<h2 id=gamma所带来的的优势>gamma所带来的的优势</h2>
+<ol>
+<li>CRT所使用的的非线性变换，刚好为人眼感知的逆向；这使得CRT的响应在人眼的视觉感知上为线性的；这种特性是高度需要的；</li>
+<li>Gamma correction的使用不仅是为了补偿CRT自身所带来的非线性变换，更重要的是，人眼对暗部区域的感知比亮部更加敏感，使用gamma空间来进行文件存储，可以大量减少存储所实际需要的精度；</li>
+</ol>
 <h2 id=总结>总结</h2>
 <p>本文主要介绍了图形学中gamma的由来，以及图形开发中与gamma相关的场景；开发者们需要注意gamma的存在，并通过正确的线性工作流来避免gamma引起显示不正确问题；</p>
 <h2 id=references>references</h2>
@@ -113,7 +119,7 @@
 <hr>
 <ol>
 <li id=fn:1 role=doc-endnote>
-<p><a href=http://poynton.ca/notes/colour_and_gamma/gammafaq.html>gamma faq</a>&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+<p><a href=http://poynton.ca/notes/colour_and_gamma/GammaFAQ.html>gamma faq</a>&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
 </li>
 <li id=fn:2 role=doc-endnote>
 <p><a href=https://www.wigglepixel.nl/en/blog/what-are-color-spaces-color-profiles-and-gamma-correction>what are color spaces, color profiles and gamma correction?</a>&#160;<a href=#fnref:2 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>

@@ -65,7 +65,7 @@
 <p>如果使用均匀划分，则可以使直接使用Tex3D来进行数据的存储，从而使得插值在GPU端进行，并且可以在同一mesh的不同位置来得到不同的gi效果；</p>
 <p>使用trlinear有时会带来反向问题，如下图：</p>
 <p><img src=gradients-for-interpolation.png alt="gradients for interpolation"></p>
-<p>文章中使用point+gradient来构建cubic patches的方法来进行插值，从而解决这个问题，具体代码可以看D3D9SDK中的示例；</p>
+<p>文章中使用point+gradient来构建cubic patches的方法来进行插值，从而解决这个问题，具体论文可参考<a href=https://jankautz.com/publications/gradientSH_RS04.pdf>Spherical Harmonic Gradients for Mid-Range Illumination</a>；</p>
 <h3 id=self-occlusion>Self Occlusion</h3>
 <p>解决self occlusion的方法很简单，直接使用PRT将物体自身的遮挡的SH系数预先计算好，存储至mesh或贴图中即可；随后计算式使用prt来计算自遮挡，irradiance volume来计算光照；</p>
 <h2 id=example>example</h2>

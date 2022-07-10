@@ -86,6 +86,7 @@ Tile-Based Deferred Rendering (TBDR)</a>；</p>
 </ol>
 <h2 id=mali的特性>mali的特性</h2>
 <p>在arm的开发者文档上能了解到更多的内容<a href="https://developer.arm.com/Architectures#aq=%40navigationhierarchiescategories%3D%3D%22Architecture%20products%22%20AND%20%40navigationhierarchiescontenttype%3D%3D%22Product%20Information%22&numberOfResults=48&f%5Bnavigationhierarchiesprocessortype%5D=GPU%20Architectures">mali GPU Architectures</a>；整个mali gpu家族对应的型号、特性、架构可以在<a href="https://developer.arm.com/documentation/100587/1-1/The-Mali-GPU-Hardware-Families/About-the-Mali-GPU-hardware-families?lang=en">About the Mali GPU hardware families</a>了解到；</p>
+<p>mali最初的架构为<a href="https://developer.arm.com/documentation/102538/0100/?lang=en">Utgard架构</a>，其用于opengl es2.0，并且采用vertex core、fragment core分离的方式来运作；后面的<a href="https://developer.arm.com/documentation/102560/0100?lang=en">Midgard架构</a>、<a href="https://developer.arm.com/documentation/102546/0100/?lang=en">Bifrost架构</a>、<a href="https://developer.arm.com/documentation/102203/0100/?lang=en">Valhall架构</a>不区分vertex、fragment、geometry等工作，都采用unified shader core来统一运作，用来提升运行效率，切都支持了opengl es3.0+；</p>
 <p>在文档上并未找到更多的关于mali特有的架构特性，但在文档中介绍TBR时，详细介绍了TBR所带来的的优势与劣势<a href="https://developer.arm.com/documentation/102662/0100?lang=en">Tile-based GPUs</a>；</p>
 <ol>
 <li>带宽优势，除了上面提到的带宽优势，mali在拷贝tile color至system mem时，会启用‘Cyclic Redundancy Check' (CRC)检测，如果tile color与system color并无变化，则不需要进行mem的拷贝，从而节省带宽；在很多ui渲染，以及休闲游戏，此特性能带来很大的带宽收益；在进行mem拷贝时，mali会启用 ‘Arm Frame Buffer Compression' (AFBC)的特性，用来进行color data的无损压缩，从而节省带宽；可以看出，在节省带宽上，mali做了很多额外的工作；</li>
