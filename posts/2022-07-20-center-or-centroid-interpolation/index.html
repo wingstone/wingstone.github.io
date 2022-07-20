@@ -1,0 +1,75 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>center or centroid interpolation | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>center or centroid interpolation</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/07/20</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#介绍>介绍</a></li>
+<li><a href=#reference>reference</a></li>
+</ul>
+</nav>
+<main>
+<p>中心插值或质心插值介绍</p>
+<h2 id=介绍>介绍</h2>
+<p>正常光栅化流程都是使用像素中心来进行光栅化的插值着色计算；</p>
+<p>在msaa中，在同一个像素会使用多采样点来进行是否在图元内的判断，使用像素中心点来进行插值着色计算（center interpolation）；这样就会遇到在同一像素内，有采样点被图元覆盖，但是像素中心点在图元外部的情况；如下图所示：</p>
+<p><img src=msaa.jpg alt=msaa></p>
+<p>在这种情况下，使用像素中心点计算得到的属性插值可能会有较大问题，从而使得光照结果出现很大波动；</p>
+<p>centroid interpolation就是为了解决这个问题而采用的方案；其采用图元与像素交集的质心来进行插值计算，实际工程中，会使用图元所覆盖采样点的平均位置来进行插值计算；如下图所示：</p>
+<p><img src=centroid.jpg alt=centroid></p>
+<p>使用centroid可以解决插值的问题；但是由于centroid采样位置并不是均匀分布的，从而使得ddx、ddy的计算无法得到数值精确值，进而会引入mipmap计算有误差的问题；如下图所示：</p>
+<p><img src=ddxddy.jpg alt=ddxddy></p>
+<h2 id=reference>reference</h2>
+<ol>
+<li><a href=https://www.opengl.org/pipeline/article/vol003_6/>GLSL: Center or Centroid? (Or When Shaders Attack!)</a></li>
+<li><a href=https://developer.amd.com/wordpress/media/2012/10/ShadingCourse_HLSL.pdf>ShadingCourse_HLSL</a></li>
+</ol>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
