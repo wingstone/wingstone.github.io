@@ -32,7 +32,12 @@
 <li><a href=#surface-curvature>Surface Curvature</a></li>
 <li><a href=#small-surface-bumps>Small Surface Bumps</a></li>
 <li><a href=#shadows-scattering>Shadows Scattering</a></li>
-<li><a href=#extended-preintegrated-subsurface-scattering>extended preintegrated subsurface scattering</a></li>
+<li><a href=#extended-preintegrated-subsurface-scattering>extended preintegrated subsurface scattering</a>
+<ul>
+<li><a href=#directional-curvature>directional curvature</a></li>
+<li><a href=#indirect-light-lut>indirect light lut</a></li>
+</ul>
+</li>
 <li><a href=#appendix>Appendix</a>
 <ul>
 <li><a href=#lookup-textures-shader>Lookup Textures Shader</a></li>
@@ -53,10 +58,10 @@
 <h2 id=surface-curvature>Surface Curvature</h2>
 <p>单纯的wrap并不符合物理<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>，需要通过diffusion profile积分才能获取正确的wrap；
 预积分贴图是在球形假设下进行计算的，因此该方法最大的缺陷是模拟表面拓扑复杂的结构时，有很大不合理之处；
-幸运的是，当今模型表面大都是平滑的，而不平滑的小的部分都用法线贴图进行假设计算；
-积分方程为：</p>
+幸运的是，当今模型表面大都是平滑的，而不平滑的小的部分都用法线贴图进行假设计算；</p>
+<p>理论上来说，积分应该在球面上进行积分；这里介绍的是在ring上面进行积分的过程，作者有说基于ring积分与基于球面积分差别不大；积分方程为：</p>
 <p>$$
-D(\theta, r) = \frac{\int_{-\pi/2}^{\pi/2} {cos(\theta+x)*R(2rsin(x/2))} ,{\rm d}x}{\int_{-\pi/2}^{\pi/2} {R(2rsin(x/2))} ,{\rm d}x}
+D(\theta, r) = \frac{\int_{-\pi}^{\pi} {cos(\theta+x)*R(2rsin(x/2))} ,{\rm d}x}{\int_{-\pi}^{\pi} {R(2rsin(x/2))} ,{\rm d}x}
 $$</p>
 <p>式中R(d)表示Diffusion profile，表示相应距离下的辐射度，d表示距离。该式表示在曲率半径为r的半球下，对应$\theta$角度下，其它所有角度在该角度下的散射强度；对应模型如下图所示：</p>
 <p><img src=model.jpg alt="Diffusion profile，Integrated model"></p>
@@ -89,7 +94,7 @@ float3 dp <span style=color:#f92672>=</span> fwidth(P);
 <p>对于小的凸起以及皱纹，不能使用预积分来进行计算，但是由于可以多采样，因此可以使用预滤波的方式处理法线贴图；</p>
 <p>对于specular使用正常的normalmap，对于diffuse的rgb分别使用针对不同Diffusion profile处理后的normalmap，因此需要4张normalmap；</p>
 <p>为了效率考虑，可以使用一种高精度无滤波的normalmap，一张低精度预滤波的normalmap，针对rgb使用不同参数调制两者之间的插值来近似diffusion profile处理的结果；</p>
-<p>可以将低精度预滤波的normalmap省略，使用高精度normalmap的低mip来作为低精度预滤波的结果，更近一步可以直接使用模型法线来代替；具体的选择需要在效果与性能之间权衡；</p>
+<p>可以将低精度预滤波的normalmap省略，使用高精度normalmap的低mip来作为或者存储低精度预滤波的结果，更近一步可以直接使用模型法线来代替；具体的选择需要在效果与性能之间权衡；</p>
 <p>由于针对rgb调制过后的法线有三个，因此要采样三次前面的preintegrated map；针对不同的性能要求，可以选择性的省略这一环节；</p>
 <h2 id=shadows-scattering>Shadows Scattering</h2>
 <p>皮肤出的散射特性在投影边缘会体现出来，具体模拟此现象是很困难的一件事情，但是我们可以通过一些trick来实现；</p>
@@ -108,12 +113,14 @@ $$
 <center>预积分渲染结果</center>
 <h2 id=extended-preintegrated-subsurface-scattering>extended preintegrated subsurface scattering</h2>
 <p>在原文中，作者在展望中写到，未来会将预积分应用于环境光，以及考虑多个主轴区域对结果的影响；然后在游戏<strong>Ghost of Tsushima</strong>中就实装了这些展望<sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup>;</p>
-<p>扩展最重要的假设，就是不再认为预积分贴图的计算是在球面积分得到的，而是在柱面上；此时计算预积分贴图使用不再是前面的redial diffusion profile，而应该linear diffusion profile（通过对redial积分获得）；此时使用的曲率也不再是平均曲率，而是方向曲率；</p>
+<h3 id=directional-curvature>directional curvature</h3>
+<p>扩展最重要的假设，就是不再认为预积分贴图的计算是在ring上面积分得到的，而是在柱面上；此时计算预积分贴图使用不再是前面的redial diffusion profile，而应该linear diffusion profile（通过对redial积分获得，可认为是一排激光照射后产生的散射数值）；此时使用的曲率也不再是平均曲率，而是方向曲率；</p>
 <p><img src=direction_model.jpg alt=direction_model></p>
 <center>柱状模型</center>
-<blockquote>
-<p>需要注意的是，对于环境光的预积分计算仍需要使用球面假设；因为原文积分使用的zonal harmonics，只能使用redial diffusion profile；</p>
-</blockquote>
+<p>linear diffusion profile的计算公式为(推导参考<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>)：</p>
+<p>$$
+R_{linear}(x) = \int_{-\infty}^{\infty} {R_{radial}(\sqrt{x^2+y^2})},{\rm d}y
+$$</p>
 <p>不同光照方向下的方向曲率可以通过曲率向量变换来计算，如下所示：</p>
 <p>$$
 K_I = I^T·II·I
@@ -127,7 +134,7 @@ k_1 & 0 \\
 $$</p>
 <p>其中<code>$[d_1,d_2]$</code>即为主方向坐标系的方向向量，<code>$k_1、k_2$</code>为主方向下的方向曲率；</p>
 <blockquote>
-<p>关于曲率张量的计算方法，详细细节需要参考论文<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>；更详细细节可以参考后面所提出来的开源代码；</p>
+<p>关于曲率张量的计算方法，详细细节需要参考论文<sup id=fnref:7><a href=#fn:7 class=footnote-ref role=doc-noteref>7</a></sup>；更详细细节可以参考后面所提出来的开源代码；</p>
 </blockquote>
 <p>由于曲率张量为轴对称的，因此只需要记录三个参数，加上用来计算环境光需要的平均曲率，四个参数刚好可以存储到顶点的一个4byte属性中；</p>
 <p>方向曲率的转换代码如下：</p>
@@ -172,6 +179,13 @@ $$</p>
 </div><p>最终得到的运行时方向曲率计算结果为：</p>
 <p><img src=direction_curve.jpg alt=方向曲率结果></p>
 <center>方向曲率结果</center>
+<h3 id=indirect-light-lut>indirect light lut</h3>
+<p>针对环境光其实也可以非常简单的计算其lut；正常环境光会以球谐函数进行存储，然后与cos probe的球谐系数相乘来计算光照，其实就相当于indirect radiance与cos probe的卷积；考虑次表面散射的作用，只需要使用diffusion profile对cos probe进行调制，形成新的卷积核即可；新的卷积核的计算公式可参考Crafting a Next-Gen Material Pipeline for The Order: 1886<sup id=fnref:8><a href=#fn:8 class=footnote-ref role=doc-noteref>8</a></sup>；</p>
+<p>最终得到的是新的卷积核的球谐系数随曲率变化的lut，在运行时，使用此lut参与环境光照的球谐系数计算即可；</p>
+<p>与direct light的下lut的拟合类似，间接光下得到的lut也可以使用函数进行拟合<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup><sup id=fnref:9><a href=#fn:9 class=footnote-ref role=doc-noteref>9</a></sup>；</p>
+<blockquote>
+<p>需要注意的是，对于环境光的预积分计算仍需要使用球面假设；因为此时的光照环境并不是punctual light；</p>
+</blockquote>
 <h2 id=appendix>Appendix</h2>
 <h3 id=lookup-textures-shader>Lookup Textures Shader</h3>
 <div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
@@ -478,7 +492,16 @@ float3 diffuse <span style=color:#f92672>=</span> SkinDiffuse(curvature, NdotL) 
 <p><a href=https://blog.selfshadow.com/publications/s2020-shading-course/patry/slides/index.html>Ghost of Tsushima</a>&#160;<a href=#fnref:5 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
 </li>
 <li id=fn:6 role=doc-endnote>
-<p><a href=https://geometry.stanford.edu/papers/ng-test1/ng-test1.pdf>Estimating Curvatures and Their Derivatives on Triangle Meshes</a>&#160;<a href=#fnref:6 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+<p><a href=https://zhuanlan.zhihu.com/p/509057464>预积分皮肤渲染—次表面散射与高光反射</a>&#160;<a href=#fnref:6 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:7 role=doc-endnote>
+<p><a href=https://geometry.stanford.edu/papers/ng-test1/ng-test1.pdf>Estimating Curvatures and Their Derivatives on Triangle Meshes</a>&#160;<a href=#fnref:7 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:8 role=doc-endnote>
+<p><a href=http://blog.selfshadow.com/publications/s2013-shading-course/rad/s2013_pbs_rad_notes.pdf>Crafting a Next-Gen Material Pipeline for The Order: 1886</a>&#160;<a href=#fnref:8 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:9 role=doc-endnote>
+<p><a href=https://dennisruan171085578.wordpress.com/2020/09/06/pre-integrated-skin-shading-under-spherical-harmonic-indirect-lighting/>Pre-integrated Skin Shading Under Spherical Harmonic Indirect Lighting</a>&#160;<a href=#fnref:9 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
 </li>
 </ol>
 </section>
