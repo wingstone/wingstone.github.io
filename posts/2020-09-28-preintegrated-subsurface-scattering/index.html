@@ -38,13 +38,7 @@
 <li><a href=#indirect-light-lut>indirect light lut</a></li>
 </ul>
 </li>
-<li><a href=#appendix>Appendix</a>
-<ul>
-<li><a href=#lookup-textures-shader>Lookup Textures Shader</a></li>
-<li><a href=#simplified-skin-shader>Simplified Skin Shader</a></li>
 <li><a href=#calculate-directional-curvature>Calculate Directional Curvature</a></li>
-</ul>
-</li>
 <li><a href=#reference>Reference</a></li>
 </ul>
 </nav>
@@ -66,7 +60,11 @@ $$</p>
 <p>式中R(d)表示Diffusion profile，表示相应距离下的辐射度，d表示距离。该式表示在曲率半径为r的半球下，对应$\theta$角度下，其它所有角度在该角度下的散射强度；对应模型如下图所示：</p>
 <p><img src=model.jpg alt="Diffusion profile，Integrated model"></p>
 <center>Integrated model</center>
-<p>**图中的$\theta$应该全部用x来表示！**从图中的右侧的模型能够看出，N为我们要求的散射角度，L与N之间的角度为$\theta$，L在$N+x$处的光照强度为$cos(\theta+x)$；N距N+x的距离为2rsin(x/2)，即弦长；N+x在N处的散射可由R(d)计算得出；</p>
+<p>**图中的$\theta$应该全部用x来表示！**从图中的右侧的模型能够看出，N为我们要求的散射角度，L与N之间的角度为$\theta$，积分位置在$N+x$处的光照强度为$cos(\theta+x)$；N距N+x的距离为2rsin(x/2)，即弦长；N+x在N处的散射可由R(d)计算得出；</p>
+<blockquote>
+<p>需要注意profile的积分单位为毫米，因此计算模型的曲率时，也需要转换到毫米下的曲率；
+而且profile的选择有很大的影响，目前来看，使用下图所示的gaussion拟合的profile，在prifile的中心有蓝色的成分，从而在后续的计算过程中可能会经过积分放大产生偏蓝的现象；比较推荐使用<a href=https://graphics.pixar.com/library/ApproxBSSRDF/approxbssrdfslides.pdf>Burley’s normalized diffusion model</a>，并且此profile已经在unity的hdrp管线集成<a href=http://advances.realtimerendering.com/s2018/Efficient%20screen%20space%20subsurface%20scattering%20Siggraph%202018.pdf>subsurface scattering in Unity’s High Definition Render Pipeline</a>。</p>
+</blockquote>
 <p>图中的Diffusion profile一般使用高斯核叠加进行表示，对于rgb各成分的高斯核表示为：</p>
 <p><img src=gaussian.jpg alt="A Sum-of-Gaussians Fit for Skin"></p>
 <center>gaussian拟合</center>
@@ -180,297 +178,16 @@ $$</p>
 <p><img src=direction_curve.jpg alt=方向曲率结果></p>
 <center>方向曲率结果</center>
 <h3 id=indirect-light-lut>indirect light lut</h3>
-<p>针对环境光其实也可以非常简单的计算其lut；正常环境光会以球谐函数进行存储，然后与cos probe的球谐系数相乘来计算光照，其实就相当于indirect radiance与cos probe的卷积；考虑次表面散射的作用，只需要使用diffusion profile对cos probe进行调制，形成新的卷积核即可；新的卷积核的计算公式可参考Crafting a Next-Gen Material Pipeline for The Order: 1886<sup id=fnref:8><a href=#fn:8 class=footnote-ref role=doc-noteref>8</a></sup>；</p>
-<p>最终得到的是新的卷积核的球谐系数随曲率变化的lut，在运行时，使用此lut参与环境光照的球谐系数计算即可；</p>
+<p>针对环境光其实也可以非常简单的计算其lut；正常环境光会以球谐函数进行存储，然后与cos probe的球谐系数相乘来计算光照，其实就相当于indirect radiance与cos probe的卷积；考虑次表面散射的作用，只需要使用前面预积分得到的lut来代替cos probe作为新的卷积核即可；新的卷积核的计算公式可参考Crafting a Next-Gen Material Pipeline for The Order: 1886<sup id=fnref:8><a href=#fn:8 class=footnote-ref role=doc-noteref>8</a></sup>；</p>
+<p>最终得到的是新的卷积核的球谐系数随曲率变化的lut，由于调制后的卷积核与cos probe卷积核一样，都是轴对称的，因此只需要存储Zonal Harmonics即可；lut需要存储rgb三个通道下不同曲率的ZH0、ZH1、ZH2数值；</p>
+<p>最终的lut，<strong>维度为3xn，格式为rgb</strong>；其中n为曲率的查找范围，3代表ZH0、ZH1、ZH2；在运行时，使用此lut参与环境光照的球谐系数计算即可；</p>
 <p>与direct light的下lut的拟合类似，间接光下得到的lut也可以使用函数进行拟合<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup><sup id=fnref:9><a href=#fn:9 class=footnote-ref role=doc-noteref>9</a></sup>；</p>
 <blockquote>
-<p>需要注意的是，对于环境光的预积分计算仍需要使用球面假设；因为此时的光照环境并不是punctual light；</p>
+<p>需要注意的是，对于环境光的预积分计算仍需要使用球面假设；因为此时的光照环境并不是punctual light；
+另外一个注意点是，ZH的计算应该从0到pi进行积分，而不是0到pi/2，应该要考虑到散射的影响，不能只进行半球积分；</p>
 </blockquote>
-<h2 id=appendix>Appendix</h2>
-<h3 id=lookup-textures-shader>Lookup Textures Shader</h3>
-<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>float</span> <span style=color:#a6e22e>Gaussian</span> (<span style=color:#66d9ef>float</span> v, <span style=color:#66d9ef>float</span> r)
-{
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1.0</span><span style=color:#f92672>/</span>sqrt(<span style=color:#ae81ff>2.0</span><span style=color:#f92672>*</span>UNITY_PI<span style=color:#f92672>*</span>v)<span style=color:#f92672>*</span>exp(<span style=color:#f92672>-</span>(r<span style=color:#f92672>*</span>r)<span style=color:#f92672>/</span>(<span style=color:#ae81ff>2</span><span style=color:#f92672>*</span>v));
-}
-
-float3 <span style=color:#a6e22e>Scatter</span>(<span style=color:#66d9ef>float</span> r)
-{
-    <span style=color:#66d9ef>return</span> Gaussian(<span style=color:#ae81ff>0.0064</span><span style=color:#f92672>*</span><span style=color:#ae81ff>1.414</span>, r)<span style=color:#f92672>*</span>float3(<span style=color:#ae81ff>0.233</span>,<span style=color:#ae81ff>0.455</span>,<span style=color:#ae81ff>0.649</span>)<span style=color:#f92672>+</span>
-    Gaussian(<span style=color:#ae81ff>0.0484</span><span style=color:#f92672>*</span><span style=color:#ae81ff>1.414</span>, r)<span style=color:#f92672>*</span>float3(<span style=color:#ae81ff>0.100</span>,<span style=color:#ae81ff>0.336</span>,<span style=color:#ae81ff>0.344</span>)<span style=color:#f92672>+</span>
-    Gaussian(<span style=color:#ae81ff>0.1870</span><span style=color:#f92672>*</span><span style=color:#ae81ff>1.414</span>, r)<span style=color:#f92672>*</span>float3(<span style=color:#ae81ff>0.118</span>,<span style=color:#ae81ff>0.198</span>,<span style=color:#ae81ff>0.000</span>)<span style=color:#f92672>+</span>
-    Gaussian(<span style=color:#ae81ff>0.5670</span><span style=color:#f92672>*</span><span style=color:#ae81ff>1.414</span>, r)<span style=color:#f92672>*</span>float3(<span style=color:#ae81ff>0.113</span>,<span style=color:#ae81ff>0.007</span>,<span style=color:#ae81ff>0.007</span>)<span style=color:#f92672>+</span>
-    Gaussian(<span style=color:#ae81ff>1.9900</span><span style=color:#f92672>*</span><span style=color:#ae81ff>1.414</span>, r)<span style=color:#f92672>*</span>float3(<span style=color:#ae81ff>0.358</span>,<span style=color:#ae81ff>0.004</span>,<span style=color:#ae81ff>0.000</span>)<span style=color:#f92672>+</span>
-    Gaussian(<span style=color:#ae81ff>7.4100</span><span style=color:#f92672>*</span><span style=color:#ae81ff>1.414</span>, r)<span style=color:#f92672>*</span>float3(<span style=color:#ae81ff>0.078</span>,<span style=color:#ae81ff>0.000</span>,<span style=color:#ae81ff>0.000</span>);
-}
-
-float3 <span style=color:#a6e22e>integrateDiffuseScatteringOnRing</span>(<span style=color:#66d9ef>float</span> cosTheta , <span style=color:#66d9ef>float</span> skinRadius)
-{
-    <span style=color:#75715e>// Angle from lighting direction.
-</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> theta <span style=color:#f92672>=</span> acos(cosTheta);
-    float3 totalWeights <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-    float3 totalLight <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-    <span style=color:#66d9ef>float</span> a<span style=color:#f92672>=</span> <span style=color:#f92672>-</span>UNITY_PI<span style=color:#f92672>/</span><span style=color:#ae81ff>2</span>;
-    <span style=color:#66d9ef>float</span> inc <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.001</span>;
-
-    <span style=color:#66d9ef>while</span>(a <span style=color:#f92672>&lt;=</span> UNITY_PI<span style=color:#f92672>/</span><span style=color:#ae81ff>2</span>)
-    {
-        <span style=color:#66d9ef>float</span> sampleAngle <span style=color:#f92672>=</span> theta <span style=color:#f92672>+</span> a;
-        <span style=color:#66d9ef>float</span> diffuse<span style=color:#f92672>=</span> saturate(cos(sampleAngle));
-        <span style=color:#66d9ef>float</span> sampleDist <span style=color:#f92672>=</span> abs(<span style=color:#ae81ff>2.0</span><span style=color:#f92672>*</span>skinRadius<span style=color:#f92672>*</span>sin(a<span style=color:#f92672>*</span><span style=color:#ae81ff>0.5</span>));
-        <span style=color:#75715e>// Distance.
-</span><span style=color:#75715e></span>        float3 weights <span style=color:#f92672>=</span> Scatter(sampleDist);
-        <span style=color:#75715e>// Profile Weight.
-</span><span style=color:#75715e></span>        totalWeights <span style=color:#f92672>+=</span> weights;
-        totalLight <span style=color:#f92672>+=</span> diffuse<span style=color:#f92672>*</span>weights;
-        a<span style=color:#f92672>+=</span>inc;
-    }
-    <span style=color:#66d9ef>return</span> totalLight<span style=color:#f92672>/</span>totalWeights;
-}
-
-<span style=color:#66d9ef>float</span> <span style=color:#a6e22e>newPenumbra</span>(<span style=color:#66d9ef>float</span> pos)
-{
-    <span style=color:#66d9ef>return</span> saturate(pos<span style=color:#f92672>*</span><span style=color:#ae81ff>2</span><span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>);
-}
-
-<span style=color:#75715e>//penumbraLocation为归一化后的在半影区域内的位置；
-</span><span style=color:#75715e></span>float3 <span style=color:#a6e22e>integrateShadowScattering</span>(<span style=color:#66d9ef>float</span> penumbraLocation, <span style=color:#66d9ef>float</span> penumbraWidth)
-{
-    float3 totalWeights <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-    float3 totalLight <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-    <span style=color:#66d9ef>float</span> PROFILE_WIDTH <span style=color:#f92672>=</span> UNITY_PI<span style=color:#f92672>*</span><span style=color:#ae81ff>4</span>;   <span style=color:#75715e>//应该为测量数据，没找到资料，这里取个差不多的数值，在保证运行效率下尽量大
-</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> inc <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.001</span>;
-
-    <span style=color:#66d9ef>float</span> a <span style=color:#f92672>=</span> <span style=color:#f92672>-</span>PROFILE_WIDTH;
-    <span style=color:#66d9ef>while</span>(a <span style=color:#f92672>&lt;=</span> PROFILE_WIDTH)
-    {
-        <span style=color:#66d9ef>float</span> light <span style=color:#f92672>=</span> newPenumbra(penumbraLocation<span style=color:#f92672>+</span>a<span style=color:#f92672>/</span>penumbraWidth);
-        <span style=color:#66d9ef>float</span> sampleDist <span style=color:#f92672>=</span> abs(a);
-        float3 weights <span style=color:#f92672>=</span> Scatter(sampleDist);
-        totalWeights <span style=color:#f92672>+=</span> weights;
-        totalLight <span style=color:#f92672>+=</span> light<span style=color:#f92672>*</span>weights;
-        a<span style=color:#f92672>+=</span>inc;
-    }
-
-    <span style=color:#66d9ef>return</span> totalLight<span style=color:#f92672>/</span>totalWeights;
-}
-</code></pre></td></tr></table>
-</div>
-</div><h3 id=simplified-skin-shader>Simplified Skin Shader</h3>
-<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">68
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">69
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>//wrapndl:0-1
-</span><span style=color:#75715e>//curvature:曲率
-</span><span style=color:#75715e>//http://simonstechblog.blogspot.com/2015/02/pre-integrated-skin-shading.html
-</span><span style=color:#75715e></span>float3 <span style=color:#a6e22e>SimonInterpolate</span>(float3 wrapndl, <span style=color:#66d9ef>float</span> curvature)
-{
-    float3 NdotL <span style=color:#f92672>=</span> wrapndl;
-    <span style=color:#66d9ef>float</span> curva <span style=color:#f92672>=</span> (<span style=color:#ae81ff>1.0</span><span style=color:#f92672>/</span>mad(curvature, <span style=color:#ae81ff>0.5</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>0.0625</span>, <span style=color:#ae81ff>0.0625</span>) <span style=color:#f92672>-</span> <span style=color:#ae81ff>2.0</span>) <span style=color:#f92672>/</span> (<span style=color:#ae81ff>16.0</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>2.0</span>); <span style=color:#75715e>// curvature is within [0, 1] remap to normalized r from 2 to 16
-</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> oneMinusCurva <span style=color:#f92672>=</span> <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>-</span> curva;
-    float3 curve0;
-    {
-        float3 rangeMin <span style=color:#f92672>=</span> float3(<span style=color:#ae81ff>0.0</span>, <span style=color:#ae81ff>0.3</span>, <span style=color:#ae81ff>0.3</span>);
-        float3 rangeMax <span style=color:#f92672>=</span> float3(<span style=color:#ae81ff>1.0</span>, <span style=color:#ae81ff>0.7</span>, <span style=color:#ae81ff>0.7</span>);
-        float3 offset <span style=color:#f92672>=</span> float3(<span style=color:#ae81ff>0.0</span>, <span style=color:#ae81ff>0.06</span>, <span style=color:#ae81ff>0.06</span>);
-        float3 t <span style=color:#f92672>=</span> saturate( mad(NdotL, <span style=color:#ae81ff>1.0</span> <span style=color:#f92672>/</span> (rangeMax <span style=color:#f92672>-</span> rangeMin), (offset <span style=color:#f92672>+</span> rangeMin) <span style=color:#f92672>/</span> (rangeMin <span style=color:#f92672>-</span> rangeMax)  ) );
-        float3 lowerLine <span style=color:#f92672>=</span> (t <span style=color:#f92672>*</span> t) <span style=color:#f92672>*</span> float3(<span style=color:#ae81ff>0.65</span>, <span style=color:#ae81ff>0.5</span>, <span style=color:#ae81ff>0.9</span>);
-        lowerLine.r <span style=color:#f92672>+=</span> <span style=color:#ae81ff>0.045</span>;
-        lowerLine.b <span style=color:#f92672>*=</span> t.b;
-        float3 m <span style=color:#f92672>=</span> float3(<span style=color:#ae81ff>1.75</span>, <span style=color:#ae81ff>2.0</span>, <span style=color:#ae81ff>1.97</span>);
-        float3 upperLine <span style=color:#f92672>=</span> mad(NdotL, m, float3(<span style=color:#ae81ff>0.99</span>, <span style=color:#ae81ff>0.99</span>, <span style=color:#ae81ff>0.99</span>) <span style=color:#f92672>-</span>m );
-        upperLine <span style=color:#f92672>=</span> saturate(upperLine);
-        float3 lerpMin <span style=color:#f92672>=</span> float3(<span style=color:#ae81ff>0.0</span>, <span style=color:#ae81ff>0.35</span>, <span style=color:#ae81ff>0.35</span>);
-        float3 lerpMax <span style=color:#f92672>=</span> float3(<span style=color:#ae81ff>1.0</span>, <span style=color:#ae81ff>0.7</span> , <span style=color:#ae81ff>0.6</span> );
-        float3 lerpT <span style=color:#f92672>=</span> saturate( mad(NdotL, <span style=color:#ae81ff>1.0</span><span style=color:#f92672>/</span>(lerpMax<span style=color:#f92672>-</span>lerpMin), lerpMin<span style=color:#f92672>/</span> (lerpMin <span style=color:#f92672>-</span> lerpMax) ));
-        curve0 <span style=color:#f92672>=</span> lerp(lowerLine, upperLine, lerpT <span style=color:#f92672>*</span> lerpT);
-    }
-    float3 curve1;
-    {
-        float3 m <span style=color:#f92672>=</span> float3(<span style=color:#ae81ff>1.95</span>, <span style=color:#ae81ff>2.0</span>, <span style=color:#ae81ff>2.0</span>);
-        float3 upperLine <span style=color:#f92672>=</span> mad( NdotL, m, float3(<span style=color:#ae81ff>0.99</span>, <span style=color:#ae81ff>0.99</span>, <span style=color:#ae81ff>1.0</span>) <span style=color:#f92672>-</span> m);
-        curve1 <span style=color:#f92672>=</span> saturate(upperLine);
-    }
-    <span style=color:#66d9ef>float</span> oneMinusCurva2 <span style=color:#f92672>=</span> oneMinusCurva <span style=color:#f92672>*</span> oneMinusCurva;
-    float3 brdf <span style=color:#f92672>=</span> lerp(curve0, curve1, mad(oneMinusCurva2, <span style=color:#f92672>-</span><span style=color:#ae81ff>1.0</span> <span style=color:#f92672>*</span> oneMinusCurva2, <span style=color:#ae81ff>1.0</span>) );
-    <span style=color:#66d9ef>return</span> brdf;
-}
-
-float3 <span style=color:#a6e22e>SkinDiffuse</span>(float3 ndl, <span style=color:#66d9ef>float</span> curvature)
-{
-    float3 lookup <span style=color:#f92672>=</span> ndl<span style=color:#f92672>*</span><span style=color:#ae81ff>0.5</span><span style=color:#f92672>+</span><span style=color:#ae81ff>0.5</span>;
-    float3 diffuse;
-    diffuse.r <span style=color:#f92672>=</span> tex2D(_PreIntegratedSkinTex, float2(lookup.r, curvature)).r;
-    diffuse.g <span style=color:#f92672>=</span> tex2D(_PreIntegratedSkinTex, float2(lookup.g, curvature)).g;
-    diffuse.b <span style=color:#f92672>=</span> tex2D(_PreIntegratedSkinTex, float2(lookup.b, curvature)).b;
-    <span style=color:#66d9ef>return</span> diffuse;
-}
-
-float3 <span style=color:#a6e22e>SkinShadow</span>(<span style=color:#66d9ef>float</span> atten, <span style=color:#66d9ef>float</span> width)
-{
-    <span style=color:#66d9ef>return</span> tex2D(_PreIntegratedShadowTex, float2(atten, width)).rgb;
-}
-
-<span style=color:#75715e>// Simple curvature calculation.
-</span><span style=color:#75715e></span><span style=color:#66d9ef>float</span> dn <span style=color:#f92672>=</span> length(fwidth(oldN));
-<span style=color:#66d9ef>float</span> dp <span style=color:#f92672>=</span> length(fwidth(i.worldPos));
-<span style=color:#66d9ef>float</span> curvature <span style=color:#f92672>=</span> saturate(dn<span style=color:#f92672>/</span>dp<span style=color:#f92672>*</span>_TuneCurvature);
-
-<span style=color:#75715e>// Specular / Diffuse Normals.
-</span><span style=color:#75715e></span>float4 normMapHigh <span style=color:#f92672>=</span> tex2D(NormalSamplerHigh, Uv)<span style=color:#f92672>*</span><span style=color:#ae81ff>2.0</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.0</span>;
-float4 normMapLow <span style=color:#f92672>=</span> tex2D(NormalSamplerLow, Uv)<span style=color:#f92672>*</span><span style=color:#ae81ff>2.0</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1.0</span>;
-float3 Nhigh <span style=color:#f92672>=</span> mul(normMapHigh.xyz, TangentToWorld);
-float3 Nlow <span style=color:#f92672>=</span> mul(normMapLow.xyz, TangentToWorld );
-float3 rS <span style=color:#f92672>=</span> Nhigh ;
-float3 rN <span style=color:#f92672>=</span> lerp(Nhigh, Nlow, tuneNormalBlur.r);
-float3 gN <span style=color:#f92672>=</span> lerp(Nhigh, Nlow, tuneNormalBlur.g);
-float3 bN <span style=color:#f92672>=</span> lerp(Nhigh, Nlow, tuneNormalBlur.b);
-
-<span style=color:#75715e>// Diffuselighting
-</span><span style=color:#75715e></span>float3 NdotL <span style=color:#f92672>=</span> float3(dot(rN,L), dot(gN,L), dot(bN,L));
-float3 diffuse <span style=color:#f92672>=</span> SkinDiffuse(curvature, NdotL) <span style=color:#f92672>*</span> LightColor <span style=color:#f92672>*</span> SkinShadow(atten, _TunePenumbraWidth);
-</code></pre></td></tr></table>
-</div>
-</div><h3 id=calculate-directional-curvature>Calculate Directional Curvature</h3>
-<p>代码量偏大，详细细节可参考论文作者的开源库<a href=https://gfx.cs.princeton.edu/proj/trimesh2/>origin trimesh2</a>以及<a href=https://github.com/Forceflow/trimesh2>github trimesh2</a>;</p>
+<h2 id=calculate-directional-curvature>Calculate Directional Curvature</h2>
+<p>方向曲率的计算，详细细节可参考论文作者的开源库<a href=https://gfx.cs.princeton.edu/proj/trimesh2/>origin trimesh2</a>以及<a href=https://github.com/Forceflow/trimesh2>github trimesh2</a>;</p>
 <p>其中github trimesh2提供了编译好的lib文件，便于开发人员直接使用；与引擎比较好的一种结合方式（特别是Unity这种C#作为开发语言的引擎），是将其封装成dll文件，直接在引擎中调用来处理已有资产；</p>
 <h2 id=reference>Reference</h2>
 <section class=footnotes role=doc-endnotes>
