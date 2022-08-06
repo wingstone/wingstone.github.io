@@ -89,11 +89,13 @@ float3 dp <span style=color:#f92672>=</span> fwidth(P);
 </div><p>不过，更好的做法是把曲率进行预计算，然后将计算结果存储到顶点色或者贴图里，因为在shader中计算得来的曲率很容易产生不连续及其他瑕疵问题；</p>
 <p>Simon对得到的积分贴图进行了公式拟合<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>，不过拟合公式的计算量仍然比较大，是否能得到性能上的优化，需要进行进一步测试;</p>
 <h2 id=small-surface-bumps>Small Surface Bumps</h2>
-<p>对于小的凸起以及皱纹，不能使用预积分来进行计算，但是由于可以多采样，因此可以使用预滤波的方式处理法线贴图；</p>
+<p>对于小的凸起以及皱纹，很难在考虑光照的情况下使用预积分来进行计算，但是由于可以多采样，因此可以使用预滤波的方式处理法线贴图；</p>
 <p>对于specular使用正常的normalmap，对于diffuse的rgb分别使用针对不同Diffusion profile处理后的normalmap，因此需要4张normalmap；</p>
 <p>为了效率考虑，可以使用一种高精度无滤波的normalmap，一张低精度预滤波的normalmap，针对rgb使用不同参数调制两者之间的插值来近似diffusion profile处理的结果；</p>
+<p>实际上，由于normapmap所对应的实际物体尺寸，针对不同物体是不同的，因此调制的环节无论如何都是少不了的；</p>
 <p>可以将低精度预滤波的normalmap省略，使用高精度normalmap的低mip来作为或者存储低精度预滤波的结果，更近一步可以直接使用模型法线来代替；具体的选择需要在效果与性能之间权衡；</p>
-<p>由于针对rgb调制过后的法线有三个，因此要采样三次前面的preintegrated map；针对不同的性能要求，可以选择性的省略这一环节；</p>
+<p>另外由于，g通道与b通道的散射程度位于r通道散射与无散射情况之间，因此可采用的额外优化方式为，采样r通道使用的mip法线，以及无散射的非mip法线，g通道与b通道使用两者之间的插值来作为对应的法线，从而整体只需要两次采样；</p>
+<p>由于针对rgb调制过后的法线有三个，因此要采样三次前面的preintegrated map；</p>
 <h2 id=shadows-scattering>Shadows Scattering</h2>
 <p>皮肤出的散射特性在投影边缘会体现出来，具体模拟此现象是很困难的一件事情，但是我们可以通过一些trick来实现；</p>
 <p>首先，阴影强度为0或1，表示被遮挡，或不被遮挡；位于两者之间的值，及表示半影区域，及发生散射的区域（前提是使用软阴影）；因此我们可以针对这一点，利用Diffusion profile进行积分，来得到阴影值与散射强度的关系；</p>
@@ -104,10 +106,18 @@ $$
 针对box blur软阴影（PCF）方法，其过程如下：</p>
 <p><img src=shadow_model.jpg alt=投影预积分></p>
 <center>投影预积分</center>
-<p>需要注意的是，半影区域的一部分（宽度到没提及）作为正常的软阴影计算插值，剩下的一部分作为这些软阴影散射产生的影响；P'()即表示新的半影函数分布；</p>
+<blockquote>
+<p>注意： 半影区域的一部分作为正常的软阴影计算插值（0-1范围），剩下的一部分作为这些软阴影散射产生的影响（scattering range）；P'()即表示新的半影函数分布；</p>
+</blockquote>
+<blockquote>
+<p>这里还引入了另外一个假设，即penumbra width大于profile width，否则以上假设是不成立的；半影区域里散射的范围的设定，相关演讲里只说了尽可能大，来囊括更多的散射范围。个人建议直接使用profile里最大gaussian分布方差的3倍值，由此来涵盖超越99%的散射范围，即8.166mm；</p>
+</blockquote>
+<blockquote>
+<p>在实际使用过程中半影宽度的计算，以及半影宽度能否满足以上假设是非常容易被忽视的细节；而且，只有当半影宽度接近profile width时，才能更加明显的看到次表面散射现象；</p>
+</blockquote>
 <p>最终得到一张投影的预积分图；其散射强度为阴影值s、以及半影宽度w（世界空间）的函数；</p>
 <p>最终的渲染结果为：</p>
-<p><img src=result.jpg alt=预积分渲染结果></p>
+<p><img src=result.png alt=预积分渲染结果></p>
 <center>预积分渲染结果</center>
 <h2 id=extended-preintegrated-subsurface-scattering>extended preintegrated subsurface scattering</h2>
 <p>在原文中，作者在展望中写到，未来会将预积分应用于环境光，以及考虑多个主轴区域对结果的影响；然后在游戏<strong>Ghost of Tsushima</strong>中就实装了这些展望<sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup>;</p>
@@ -175,7 +185,7 @@ $$</p>
 </code></pre></td></tr></table>
 </div>
 </div><p>最终得到的运行时方向曲率计算结果为：</p>
-<p><img src=direction_curve.jpg alt=方向曲率结果></p>
+<p><img src=direction_curve.png alt=方向曲率结果></p>
 <center>方向曲率结果</center>
 <h3 id=indirect-light-lut>indirect light lut</h3>
 <p>针对环境光其实也可以非常简单的计算其lut；正常环境光会以球谐函数进行存储，然后与cos probe的球谐系数相乘来计算光照，其实就相当于indirect radiance与cos probe的卷积；考虑次表面散射的作用，只需要使用前面预积分得到的lut来代替cos probe作为新的卷积核即可；新的卷积核的计算公式可参考Crafting a Next-Gen Material Pipeline for The Order: 1886<sup id=fnref:8><a href=#fn:8 class=footnote-ref role=doc-noteref>8</a></sup>；</p>
