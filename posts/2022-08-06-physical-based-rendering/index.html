@@ -1,0 +1,204 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>physical based rendering | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>physical based rendering</span></h2>
+<h3 class=date>2022/08/06</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#物理现象>物理现象</a></li>
+<li><a href=#数学理论描述>数学理论描述</a>
+<ul>
+<li><a href=#brdf>BRDF</a></li>
+<li><a href=#diffuse-item>Diffuse item</a></li>
+<li><a href=#specular-item>Specular item</a></li>
+</ul>
+</li>
+<li><a href=#reference>Reference</a></li>
+</ul>
+</nav>
+<main>
+<p>本篇文章将针对pbr相关的物理及理论介绍进行深入的学习探讨；</p>
+<p>在之前<a href=../2022-01-01-real-shading-in-unreal-engine-4.md>unreal的pbr实现</a>介绍中，着重介绍了pbr在应用中的实践，但其实对pbr的物理及理论介绍较少，本篇文章将针对pbr相关的物理及理论介绍进行深入的学习探讨；</p>
+<h2 id=物理现象>物理现象</h2>
+<p>光沿介质传播是光照中最基础的物理现象；介质的变化，导致了光在传播过程，产生了复杂的变化；</p>
+<p>光沿介质传播时主要有三种现象：</p>
+<ol>
+<li><em>absorption</em>，介质不影响光传播的方向，但会吸收传播的能量，针对不同波长，有不同吸收反应；</li>
+<li><em>scattering</em>，折射率的变化会导致光照方向的变化，如果介质中，存在尺寸与波长相当的微观粒子，由于其折射率的突变，导致光照方向发生变化；此外，如果介质本身的折射率发生了变化（如密度不同引起），那么光的长波方向也会发生变化；</li>
+<li><em>emission</em>，在介质中，由于其他形式的能量转换为光能，就会有光照的产生，一般发生在光源部位；</li>
+</ol>
+<blockquote>
+<p>需要注意的是，<em>absorption</em>与<em>scattering</em>现象，是与观察尺度有关的；例如，近距离观察物体，空气的影响则可以忽略，如果隔着几公里去观察物体，那么空气的<em>absorption</em>与<em>scattering</em>现象是必要需要考虑的；</p>
+</blockquote>
+<blockquote>
+<p>光在介质中传播的属性可以用refractive index（折射率，有时也称Index of Refraction，简写IOR）来表示，折射率实际上是一个复数，其实数部分表示介质如何影响光传播速度，虚数部分表示介质对光的能量的吸收，并且折射率与光的波长有关；</p>
+</blockquote>
+<p><img src=absorption_and_scattering.png alt=absorption_and_scattering></p>
+<p>Maxwell方程可以用来计算介质折射率发生变化时的光线传播行为，但是在大多数情况下都是没有解析解的；但是有一特殊情况可以得到解析解，就是当两个介质之间有一完美的平面边界（例如水面），这种情况下有解析解，且该解就是Fresnel方程；</p>
+<p><img src=refractive_index_change.png alt=refractive_index_change></p>
+<blockquote>
+<p>这里能够看出，反射的本质仍然是散射，只不过由于介质折射率的突变，散射结果分为了完美反射与完美折射；</p>
+</blockquote>
+<p>但是实际生活中很少有这种完美平面边界的情况，更多的情况是，视觉上或者渲染级别上（pixel or sampling）边界是不规则的，但是相对于光的波长，这些边界仍然可以认为是完美的平面边界；于是在微观上，光的传播仍然可以使用Fresnel来计算，光的反射在微观上仍然是完美反射；</p>
+<p><img src=roughness_difference.png alt=roughness_difference></p>
+<p>微观上的完美反射，在宏观上，则会呈现出完美反射混合后的结果，即产生一个范围性的反射，同理折射也如此；</p>
+<p><img src=roughness_reflect_refract.png alt=roughness_reflect_refract></p>
+<p>光线折射后的行为根据折射介质的不同，其行为也会有很大的不同；</p>
+<ol>
+<li>针对于金属，光在金属内会被理解吸收，从而无法传播，对外就表现出金属对光只有反射效应；</li>
+</ol>
+<p><img src=metal.png alt=metal></p>
+<ol start=2>
+<li>针对于非金属，光在介质内会发生正常的散射与吸收效应；并且部分光经过多次散射后，会沿着介质表面射出（这些散射称之为subsurface scattering）；</li>
+</ol>
+<p><img src=non-metal.png alt=non-metal></p>
+<p>沿着介质界面散射出来的光，根据其出射位置的不同，可以归为两类模型；</p>
+<ul>
+<li>若沿界面散射出来的发射点，在入射点周围一个像素或者采用范围内，那么我们就可以忽略这些偏移，认为入射点与出射点在同一个位置（即常见的漫反射）；</li>
+</ul>
+<p><img src=in_out_same.png alt=in_out_same></p>
+<ul>
+<li>若沿界面散射出来的发射点，在入射点周围一个像素外，那么这些偏移就不能够被忽略，必须要在计算时进行考虑（即常见的次表面散射）；</li>
+</ul>
+<p><img src=in_out_diff.png alt=in_out_diff></p>
+<blockquote>
+<p>根据观察尺度的不同，非金属介质的散射计算模型会发生改变，比如一些入射点与出射点在不同像素位置的散射行为，随着观察距离变远，入射点与出射点会变为在一个像素内；反之亦如此；</p>
+</blockquote>
+<h2 id=数学理论描述>数学理论描述</h2>
+<p>这里主要针对surface模型（即IOR发生突变的行为）进行数学描述，并且只针对入射点与出射点在同一位置的情况；</p>
+<h3 id=brdf>BRDF</h3>
+<p>首先使用BRDF来描述入射方向<em>L</em>与出射方向<em>R</em>确定时的光照反应；</p>
+<p><img src=BRDF.png alt=BRDF></p>
+<p>关于BRDF的关键特征如下：</p>
+<ul>
+<li>入射方向有两个自由度，出射方向有两个自由度，因此BRDF为四自由度函数；</li>
+<li>针对各项同性介质，在入射方向<em>L</em>与出射方向<em>R</em>绕中心轴旋转时，BRDF应该是不变的，因此各项同性约束损失一个自由度，BRDF退化为为三自由度函数；</li>
+<li>相反，针对各项异性介质，在入射方向<em>L</em>与出射方向<em>R</em>绕中心轴旋转时，BRDF会发生改变，一般使用tangent来指向各项异性介质所偏向的方向；</li>
+<li>BRDF描述的是表面以上反射行为，因此<strong>nol</strong>与<strong>nor</strong>都应该为正值，在实现中由于几何插值或法线贴图计算，会产生负值的情况，因此编码中要使用clamp或者绝对值来进行约束；</li>
+</ul>
+<p>在认知上，brdf有两种解释，一种是入射方向固定的情况下，相对入射方向，出射光线的分布情况；另外一种是固定出射方向的情况下，相对出射方向，在各个入射方向上的影响权重分布；</p>
+<p><img src=BRDF_two_means.png alt=BRDF_two_means></p>
+<p>brdf实际上是一个光谱量度，波长应该也在输入输出时进行考虑，从而大大增加了计算维度；不过由于大部分brdf不涉及到跨波长效应（波长的输入与输出并不会产生交叉），因此brdf维度与光的波长维度是一致的，且计算方式与矢量的乘法一致，即brdf(r,g,b)*light(r,g,b) = (brdf.r*light.r, brdf.g*light.g, brdf.b*light.b)；</p>
+<p>BRDF物理上还需要满足两种约束：</p>
+<ol>
+<li>可逆性约束，即，当入射方向与出射方向交换时，brdf的值应该是相同的；</li>
+</ol>
+<p>$$
+f(l, v) = f(v, l)
+$$</p>
+<ol start=2>
+<li>能量守恒约束，即，出射能量的总和不应该大于入射的能量；</li>
+</ol>
+<p>$$
+\forall l, \int _{\Omega} f(1,v) (n \cdot v) d \omega _{0} \leqslant 1
+$$</p>
+<p>以上函数实际上有一个专有名词，directional-hemispherical reflectance函数，即<em>R(l)</em>；*R(l)*与brdf类似，也不考虑跨波长效应，其值应该位于0-1的范围；针对不同的波长或通道，各个分量也位于0-1范围；</p>
+<p>BRDF的建模一般会将前面所描述的反射与散射分开建模，并且将两者分别称之为specular item与diffuse item；</p>
+<p><img src=specular_diffuse.png alt=specular_diffuse></p>
+<blockquote>
+<p>实际上，在渲染中会使用到只有diffuse或者只有specular的情况，因此常用的能量守恒条件为：diffuse的*R(l)<em>位于0-1范围（以Lambert模型为例，需要除以pi来归一化，满足能量守恒），specular的</em>R(l)*也位于0-1范围，diffuse与specular所占的比例的和同样位于0-1范围；</p>
+</blockquote>
+<h3 id=diffuse-item>Diffuse item</h3>
+<p>最常见的diffuse模型为Lambert模型，其假设散射部分沿各个出射方向都是均匀的，其brdf如下：</p>
+<p>$$
+f <em>{Lambert} (l,v)= \frac {c</em>{diff}} {\pi}
+$$</p>
+<p>其中，分子部分为常数值，代表Lambert模型均匀散射特性；分母部分使得Lambert模型的能量守恒，当不考虑<code>$c_{diff}$</code>时，*R(l)*的值为1（nol沿半球积分的结果为pi，pi除以pi为1）；</p>
+<p>Lambert模型的缺陷也是很明显的，首先，fresnel方程就决定了scattering的量是会随着入射角变化的，那么diffuse brdf的值在掠射角理论上应该小于在法线方向上的diffuse brdf值；</p>
+<blockquote>
+<p>修复方法也有多种，一种是简单地乘上（1-Fresnel factor），另外一种是去建立更复杂的diffuse brdf；</p>
+</blockquote>
+<p>另外前面的提到的微表面模型，明显也会对scattering产生影响；<a href=https://www1.cs.columbia.edu/CAVE/publications/pdfs/Oren_SIGGRAPH94.pdf>Oren–Nayar Diffuse Model</a>除了假设diffuse部分会受到微表面假设的影响（即，受到粗糙度的影响），还假设每个微表面都是一个完美的lambert模型，最终考虑微表面的shadow mask，以及一系列假设下，建立了Oren–Nayar brdf，可以很好的模拟月球表面那种沿着光照方向能反射更多能量的情况，以及很多现实中的材质；</p>
+<p>以上两种diffuse改进模型，代表了两种diffuse的优化方向，针对这两种情况，<a href=http://advances.realtimerendering.com/s2018/MaterialAdvancesInWWII.pdf>Material Advances in Call of Duty: WWII</a>对diffuse的建模做出来进一步的讨论；</p>
+<blockquote>
+<p>个人觉得<a href=http://advances.realtimerendering.com/s2018/MaterialAdvancesInWWII.pdf>Material Advances in Call of Duty: WWII</a>对diffuse的讨论感觉算是目前最好的工程应用；在实践上，其用拟合的方法来满足论文复杂的diffuse模型；最中的结果是，在roughness为1时偏向Oren–Nayar所带来的的flattening，在roughness为0时偏向fresnel方程所带来的rounding；</p>
+</blockquote>
+<h3 id=specular-item>Specular item</h3>
+<h4 id=微表面理论specular-brdf>微表面理论&Specular brdf</h4>
+<p>Specular brdf完全建立在微表面理论上，整个公式都是基于微表面理论来进行推导的；微表面理论的大体内容为：</p>
+<ul>
+<li>微表面的尺度小于肉眼可观察尺度（符合视觉认知，其几何假设无法在宏观测到），大于可见光波长尺度（不引入光学复杂性，比如衍射、干涉等）；</li>
+<li>微表面为理想平滑表面，每个微表面都是绝对平滑的，微表面的法线（简称微法线）决定了该微表面的反射特性；</li>
+<li>在光线的入射与出射时，微表面假设会引入shadow、mask、interreflection三种响应；这里暂时不考虑interreflection响应；</li>
+</ul>
+<p><img src=shadow_mask.png alt=shadow_mask></p>
+<ul>
+<li>当入射方向与出射方向确定时，只有恰好微法线m与半角向量h（l与v的角平分线）一致的微平面才对反射结果有贡献，因此h可认为微表面理论下的真正反射平面的法线；</li>
+</ul>
+<p><img src=micronormal.png alt=micronormal></p>
+<p>基于以上假设，推导出来的Specular brdf框架为：</p>
+<p>$$
+f _{ufacet} (l,v) = \frac {F(l,h)G(l,v,h)D(h)} {4(n \cdot l)(n \cdot v)}
+$$</p>
+<ul>
+<li>其中D项为mcrogeometry normal distribution function (NDF，微表面法线密度分布函数)，表示微法线m在n方向上的分布情况，<code>$D(h)$</code>表示在h方向上的概率密度数值；实际上由n与h共同确定，h与n的夹角决定了具体的概率密度数值；很明显，此项还与roughness有关；</li>
+<li>G项由shadow、mask效应产生，<code>$G(l,v,h)$</code>表示分别在l方向以及v方向没有被shadow、mask遮住的比例，虽然参数中含有h，但是h可以由l与v求出，与h的关系到不大；另外，l方向以及v方向分别与n的夹角才具体决定了shadow、mask效应；很明显，此项还与roughness有关；</li>
+<li>F项为Fresnel方程，其代表了介质本身特性所带来的的反射效应，即为前面所提maxwell方程在平面反射时的精确解；<code>$F(l,h)$</code>表示了从l方向入射，沿h微法线平面所产生反射的结果；实际上l方向以及h方向的夹角才具体决定了Fresnel方程的结果(有些地方用v与h夹角，大小是一样的)；</li>
+<li>分母<code>$4(n \cdot l)(n \cdot v)$</code>为矫正因子，是在推导Specular brdf框架时，radiance在n方向的投影所带来的factor，具体推导可以查看<a href=https://dl.acm.org/doi/pdf/10.1145/344779.344814>A Microfacet-based BRDF Generator</a>;</li>
+</ul>
+<h4 id=fresnel-item>Fresnel item</h4>
+<p>fresnel方程是maxwell方程的在平面反射时的精确解；其值只与入射角、介质的折射率有关；同时由于折射率会随着波长产生变化，因此Fresnel item也是一个光谱量度（一般由rgb组成）；同时由于其代表反射所占能量的比例，因此其值范围为0-1；</p>
+<p>Fresnel方程是及其复杂的，其所使用的材质参数（光谱上的复数折射率）对艺术家也非常不友好，因此在工程上会使用方程的简化版就显得很有必要；在得到简化版方程之前，先对常见介质的fresnel值进行观察；</p>
+<p><img src=fresnel.png alt=fresnel></p>
+<p>可以看到入射角在0-45°以前，fresnel几乎没有发生变化，在45-90°，fresnel开始从逐步上升到急促上升，然后在90°时，值达到1；</p>
+<p>还能看到，针对copper、aluminum，其fresnel值的rgb明明显是不一样的，说明这些材质（金属）对波长的敏感性会更强一些；这也是金属Specular带颜色的原因；另外，金属的fresnel值普遍比非金属要高一些；</p>
+<p>由于在入射角为0°时，各材质的差异性最大，因此0°的fresnel常称之为<strong>F0（Specular Color、characteristic specular reflectance）</strong>，使用F0可以更容易来构建fresnel方程简化版；Schlick的文章<a href=https://dept-info.labri.u-bordeaux.fr/~schlick/DOC/eur2.html>An Inexpensive BDRF Model for Physically based Rendering</a>给出了fresnel函数的简化版：</p>
+<p>$$
+F_ {Schick} ( F_ {0} ,l,h)= F_ {0} +(1- F_ {0} ) (1-(l\cdot h))^ {5}
+$$</p>
+<p>由于微表面模型的假设，h的角度由v与l共同确定，因此在某一视角下的<code>$l\cdot h$</code>是不确定的，对应的fresnel值也是不一定的；</p>
+<p>常见介质的F0如下表所示；</p>
+<p><img src=fresnel_table.png alt=fresnel_table></p>
+<p>由于常见非金属的F0范围为2%-5%，因此在工程中，经常去0.04来作为非金属的F0；</p>
+<h2 id=reference>Reference</h2>
+<ol>
+<li><a href=https://blog.selfshadow.com/publications/s2013-shading-course/hoffman/s2013_pbs_physics_math_notes.pdf>Background: Physics and Math of Shading</a></li>
+<li><a href=https://zhuanlan.zhihu.com/p/53086060>基于物理的渲染（PBR）白皮书</a></li>
+</ol>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
