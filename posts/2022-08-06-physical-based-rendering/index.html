@@ -37,6 +37,7 @@
 <li><a href=#specular-item>Specular item</a></li>
 </ul>
 </li>
+<li><a href=#理论与应用>理论与应用</a></li>
 <li><a href=#reference>Reference</a></li>
 </ul>
 </nav>
@@ -105,13 +106,13 @@
 <p>brdf实际上是一个光谱量度，波长应该也在输入输出时进行考虑，从而大大增加了计算维度；不过由于大部分brdf不涉及到跨波长效应（波长的输入与输出并不会产生交叉），因此brdf维度与光的波长维度是一致的，且计算方式与矢量的乘法一致，即brdf(r,g,b)*light(r,g,b) = (brdf.r*light.r, brdf.g*light.g, brdf.b*light.b)；</p>
 <p>BRDF物理上还需要满足两种约束：</p>
 <ol>
-<li>可逆性约束，即，当入射方向与出射方向交换时，brdf的值应该是相同的；</li>
+<li><strong>可逆性约束</strong>，即，当入射方向与出射方向交换时，brdf的值应该是相同的；</li>
 </ol>
 <p>$$
 f(l, v) = f(v, l)
 $$</p>
 <ol start=2>
-<li>能量守恒约束，即，出射能量的总和不应该大于入射的能量；</li>
+<li><strong>能量守恒约束</strong>，即，出射能量的总和不应该大于入射的能量；</li>
 </ol>
 <p>$$
 \forall l, \int _{\Omega} f(1,v) (n \cdot v) d \omega _{0} \leqslant 1
@@ -120,8 +121,17 @@ $$</p>
 <p>BRDF的建模一般会将前面所描述的反射与散射分开建模，并且将两者分别称之为specular item与diffuse item；</p>
 <p><img src=specular_diffuse.png alt=specular_diffuse></p>
 <blockquote>
-<p>实际上，在渲染中会使用到只有diffuse或者只有specular的情况，因此常用的能量守恒条件为：diffuse的*R(l)<em>位于0-1范围（以Lambert模型为例，需要除以pi来归一化，满足能量守恒），specular的</em>R(l)*也位于0-1范围，diffuse与specular所占的比例的和同样位于0-1范围；</p>
+<p>实际上，在渲染中会使用到只有diffuse或者只有specular的情况，因此常用的能量守恒条件为：</p>
+<ol>
+<li>diffuse的*R(l)*位于0-1范围（以Lambert模型为例，需要除以pi来归一化，满足能量守恒）;</li>
+<li>specular的*R(l)*也位于0-1范围；</li>
+<li><strong>diffuse与specular的R(l)和同样位于0-1范围</strong>，这个条件在应用中，通过使用金属粗糙度流程来使得diffuse color与specular color和不超过1，从而使得能量守恒；
+PS: 第三条有个问题就是，specular的BRDF的分布不随specular color（F0）线性变化，随F项才是线性变化的，所以diffuse color与specular color和不超过1也不太能保证能量守恒；正因为如此，才有下方的diffuse的brdf应该考虑到fresnel效应的说法；</li>
+</ol>
 </blockquote>
+<ol start=3>
+<li><strong>非负性</strong>，即brdf的值永远大于等于0；这是符合常理的，否则与定义相悖，射出的能量最小只能为0；</li>
+</ol>
 <h3 id=diffuse-item>Diffuse item</h3>
 <p>最常见的diffuse模型为Lambert模型，其假设散射部分沿各个出射方向都是均匀的，其brdf如下：</p>
 <p>$$
@@ -145,6 +155,9 @@ $$</p>
 <li>微表面为理想平滑表面，每个微表面都是绝对平滑的，微表面的法线（简称微法线）决定了该微表面的反射特性；</li>
 <li>在光线的入射与出射时，微表面假设会引入shadow、mask、interreflection三种响应；这里暂时不考虑interreflection响应；</li>
 </ul>
+<blockquote>
+<p>由于没有考虑第三种情况，specular brdf会出现能量丢失的问题，特别针对于粗糙度偏大的情况，因此有新的brdf模型来考虑到第三种情况；</p>
+</blockquote>
 <p><img src=shadow_mask.png alt=shadow_mask></p>
 <ul>
 <li>当入射方向与出射方向确定时，只有恰好微法线m与半角向量h（l与v的角平分线）一致的微平面才对反射结果有贡献，因此h可认为微表面理论下的真正反射平面的法线；</li>
@@ -174,20 +187,28 @@ $$</p>
 <p>常见介质的F0如下表所示；</p>
 <p><img src=fresnel_table.png alt=fresnel_table></p>
 <p>由于常见非金属的F0范围为2%-5%，因此在工程中，经常去0.04来作为非金属的F0；</p>
+<p>关于F项更全面的讨论可参考<a href=https://blog.selfshadow.com/publications/s2020-shading-course/hoffman/s2020_pbs_hoffman_slides.pdf>Some Thoughts on the Fresnel Term</a>，并且<a href=https://belcour.github.io/blog/research/publication/2020/08/26/brdf-fresnel-decompo.html>Bringing an Accurate Fresnel to Real-Time Rendering: a Preintegrable Decomposition</a>提供了更为精确且实时的F项计算方法；</p>
 <h4 id=normal-distribution-function>Normal Distribution Function</h4>
 <p>NDF定义了微表面法线m在几何平面上的统计概率密度分布；基于微表面模型的NDF是有一定约束标准的，具体可参考<a href=https://hal.inria.fr/hal-00942452v1/document>understanding_masking_shadowing</a>以及<a href=https://blog.selfshadow.com/publications/s2014-shading-course/heitz/s2014_pbs_masking_shadowing_slides.pdf>masking_shadowing_slides</a>，标准为：</p>
 <p>$$
 \int( \omega _ {m} \cdot \omega g)D( \omega _ {m} )d \omega _ {m} = 1
 $$</p>
 <p>这里的积分范围为整个球部方向（以球部法线代替所有微法线可能范围）；公式所代表的含义为，所以角度的微表面在几何平面所投影的面积为单位面积1；D的单位为1/steradians，因此<code>$( \omega _ {m} \cdot \omega g)D( \omega _ {m} )d \omega _ {m}$</code>是无量纲的量，具体参考<a href=http://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html>Microfacet Models for Refraction through Rough Surfaces</a></p>
-<p>满足归一化条件的NDF有normalized blin phong、ggx、beckmann；blin-phong与beckmann分布比较接近，但是blin-phong是由经验模型演化而来，且其roughness的取值并不位于0-1范围，虽然可以通过其他手段来使其归一化；
-ggx与另外两者相比，其lobe更加窄，且可以提供更加长的tail，除了可以应用于反射，还可用于折射计算，另外Desney<a href=https://blog.selfshadow.com/publications/s2012-shading-course/burley/s2012_pbs_disney_brdf_notes_v3.pdf>pbs_disney_brdf</a>还引入了perceptional roughness来更好体现参数与表现之间的关系；</p>
+<p>满足归一化条件的NDF有normalized blin phong、ggx、beckmann；</p>
+<p>blin-phong与beckmann分布比较接近，特别是在roughness较低时；另外blin-phong是由经验模型演化而来，且其roughness parameter的取值并不位于0-1范围，使得其具有较大局限性；blin-phong的roughness不在0-1范围的问题，各个引擎会通过使用<code>$\alpha _ p = m ^ s$</code>公式来限制roughness可取范围为0-m；</p>
+<p>ggx与另外两者相比，其lobe更加窄，且可以提供更加长的tail，除了可以应用于反射，还可用于折射计算，另外Desney<a href=https://blog.selfshadow.com/publications/s2012-shading-course/burley/s2012_pbs_disney_brdf_notes_v3.pdf>pbs_disney_brdf</a>还引入了perceptional roughness来更好体现参数与表现之间的关系；</p>
+<p>另外一个比较重要的特性为形状不变性，具有形状不变性的NDF才能推导出相应的各向异性表达式，ggx与beckmann具有这种性质，blin-phong不具有此性质；</p>
+<p>关于NDF更全面的介绍，可参考毛神的文章<a href=https://zhuanlan.zhihu.com/p/69380665>法线分布函数相关总结</a></p>
 <h4 id=shadow-mask-function>shadow mask function</h4>
 <p>与NDF一样，基于微表面模型的G函数也是有约束标准的；标准如下：</p>
 <p>$$
 \int G_ {1} ( \omega _ {o} , \omega _ {m} )( \omega _ {0} \cdot \omega _ {m} ) D( \omega _ {m} )d \omega _ {m} = \cos \theta _ {o}
 $$</p>
-<p>其代表微表面在o方向的投影面积应该为<code>$\cos \theta _ {o}$</code>；实时上除了上述约束标准，还有其他的约束标准需要去遵守；目前只有smith与v-cavity两个函数可以满足标准，且从实际试验数据来看，smith函数更接近真实数据；</p>
+<p>其代表微表面在o方向的投影面积应该为<code>$\cos \theta _ {o}$</code>；实时上除了上述约束标准，还有其他的约束标准需要去遵守；目前只有smith与v-cavity两个函数可以满足标准，且从实际试验数据来看，smith函数更接近真实数据；另外smith函数是唯一在其假设下（微平面朝向与遮蔽无关），具有精确解的，需要根据对应NDF来准确获取相应的G函数；</p>
+<p>另外除了在o方向的mask问题，还要考虑l方向的shadow问题；如何考虑两者之间的关系，针对smith函数提出了不同假设下的smith joint shadow mask函数，具体可参考<a href=https://hal.inria.fr/hal-00942452v1/document>understanding_masking_shadowing</a>；</p>
+<p>关于G项更全面的介绍，可参考毛神的文章<a href=https://zhuanlan.zhihu.com/p/81708753>几何函数相关总结</a></p>
+<h2 id=理论与应用>理论与应用</h2>
+<p>关于BRDF最重要的一项就是</p>
 <h2 id=reference>Reference</h2>
 <ol>
 <li><a href=https://blog.selfshadow.com/publications/s2013-shading-course/hoffman/s2013_pbs_physics_math_notes.pdf>Background: Physics and Math of Shading</a></li>
