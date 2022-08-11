@@ -1,0 +1,101 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>基于srp开发csm心得 | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>基于srp开发csm心得</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/08/11</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#开发过程中的注意点>开发过程中的注意点</a></li>
+<li><a href=#pcf-filter的使用>PCF filter的使用</a></li>
+</ul>
+</nav>
+<main>
+<p>基于unity srp开发csm过程中的心得记录</p>
+<p>总体来说，基于srp来开发csm还是比较方便的；总体的实现思路可以参考urp的实现或者这篇文章<a href=https://catlikecoding.com/unity/tutorials/custom-srp/directional-shadows/>Directional Shadows Cascaded Shadow Maps</a>；</p>
+<h2 id=开发过程中的注意点>开发过程中的注意点</h2>
+<ol>
+<li>
+<p>Shadow matrix的计算，这一点，unity有提供对应的api来过去对应的值；但是unity基本是以相机为中心的球形范围来构建各个cascade的view frustum，以及对应的matrix的；相比传统的csm，unity的做法对shadow map的利用率会更低些，不过unity的做法更稳定，matrix计算效率会高些，同时也便于去做不同cascade的优化。另外，在获取project matrix后，需要注意不同平台下reverse-z的处理；</p>
+</li>
+<li>
+<p>Shadow map atalas的使用，使的csm的shadow map只有一张（这种做法没有平台要求）。在实现过程中，只需要设置对应的不同cascade的viewport，view project matrix，让后重新渲染即可。</p>
+</li>
+<li>
+<p>Uniform buffer的管理需要额外去注意，unity srp对shader中使用uniform buffer有了额外的要求，自己去传递参数时要注意做好管理优化；</p>
+</li>
+<li>
+<p>在利用硬件pcf的情况下，Tent filter的实现远比box filter要复杂；</p>
+</li>
+<li>
+<p>Shadow bias的处理放在shadow caster pass的vs来处理，是一种效率比较高的做法；</p>
+</li>
+<li>
+<p>不同cascade shadow衔接的处理，有三种处理方法：不处理；采样两个cascade，然后进行插值；使用dither扰动两个cascade之间的边界；</p>
+</li>
+</ol>
+<h2 id=pcf-filter的使用>PCF filter的使用</h2>
+<p>基于pcf的filter多种多样，如<a href=http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/>Poisson Sampling</a>，以及<a href=https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing>gpugems</a>所提到的uniform filter与对应的优化版本，以及书籍<strong>gpu-pro-360-guide-to-shadows_compress</strong>中所提到的硬件pcf下的uniform filter优化版，以及unity引擎中所集成的硬件pcf下的tent filter优化版；对比下来，硬件pcf下的uniform filter以及tent filter具有更好的性能与表现效果；因此这里着重分析一下unity中硬件pcf下的tent filter的实现方式；</p>
+<p>首先3x3的tent filter，可以对应4x4的pixel区域；如下图所示：</p>
+<p><img src=tentfilter.png alt=tentfilter></p>
+<center>tent range</center>
+<blockquote>
+<p>示意图来自<a href=https://www.geogebra.org/geometry>geogebra</a></p>
+</blockquote>
+<p>单个pixel所对应tent权重，需要根据各像素对应条形面积在三角形总面积的占比来求取；由于当前的阴影计算点，并非一定位于shadowmap像素中心，因此在各像素所对应权重时，需要根据阴影计算点取整后位置的偏移来计算各个像素权重；</p>
+<p><img src=area.png alt=area></p>
+<center>triangle area</center>
+<p>各像素对应条形面积在三角形总面积的占比，可以分解为两个一维下像素面积占比的计算，相乘后来获取二维下的像素权重；面积的计算可参考<a href=https://tajourney.games/5482/>Unity PCF 采样优化算法</a>；之所以可以这样做，是因为这个是tent filter本身的特性，在xy各自方向成线性分布，在整体上呈现非线性，<a href=https://en.wikipedia.org/wiki/Bilinear_interpolation>bilinear插值</a>也是如此性质；</p>
+<p><img src=tent.png alt=tent></p>
+<center>tent filter</center>
+<p>在不利用硬件pcf的情况下，需要采样4x4=16的采样数量，然后使用各个pixel所对应tent权重来求加权和，最终得到tent filter下的结果；在利用硬件pcf的情况下，只需要要采样2x2=4的采样数量，每个采样对应2x2像素采样的bilinear插值；</p>
+<p><img src=pcf.png alt=pcf></p>
+<center>pcf sample</center>
+<p>上图的采样结果并不符合tent filter，如果需要各个采样的加权和和仍然符合tent filter，那么每个采样所对应权重，应该为插值对应的2x2pixel的总权重；同时采样所对应的位置，应该由插值所对应2x2pixel中，各个pixel所对应权重的比值来决定；</p>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
