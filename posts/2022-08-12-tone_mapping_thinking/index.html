@@ -1,0 +1,83 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>tone mapping thinking | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>tone mapping thinking</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/08/12</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents></nav>
+<main>
+<p>关于tonemapping的一些思考</p>
+<p>一般认为tonemapping是为了能让颜色从HDR空间更好的映射到LDR空间；主要体现在两个方面：</p>
+<ol>
+<li>让暗部变亮；</li>
+<li>让亮部变暗；</li>
+</ol>
+<p>通过这两种操作来让映射后的画面拥有更多的细节；</p>
+<p>但是我们可以观察实际使用的tonemapping曲线来做一些更深入的分析；</p>
+<p><img src=tonemapping.png alt=tonemapping></p>
+<center>aces tonemapping</center>
+<p>上图tonemapping曲线使用公式来自<a href=https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/>ACES Filmic Tone Mapping Curve</a>，公式为$(x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14)$；曲线绘制工具为<a href=https://www.geogebra.org/geometry>geogebra</a>；蓝色为我们的tonemapping曲线，绿色曲线为$y=x$；</p>
+<p>能从曲线分布上看出，点E、F将曲线的功能分为三段；EF段曲线值大于$y=x$，也就是我们常说的暗部提亮过程；F点之后曲线值小于$y=x$，也就是我们常说的亮部压暗过程；</p>
+<p>比较奇怪的是E点之前的曲线，这段曲线值小于$y=x$，也就是会将暗部压得更暗；</p>
+<p>实际上E点的坐标约为(0.062186,0.062186)，之前对应的区域非常的暗；</p>
+<p>下图为tonemapping前0-1颜色</p>
+<p><img src=01.png alt=01></p>
+<p>tonemapping后颜色，及曲线上E、F点划分后的区域为：</p>
+<p><img src=mask.png alt=mask></p>
+<p>红色为亮度增加区域，绿色为亮度减小区域；可以看到左侧绿色对应tonemapping区域会更暗，使得画面暗部区域的对比度更强；</p>
+<p>我们可以平移曲线，来移除E点之前的区域，平移后曲线公式为$((x + 0.062186)<em>(2.51</em>(x + 0.062186) + 0.03))/((x + 0.062186)<em>(2.43</em>(x + 0.062186) + 0.59) + 0.14)-0.062186$，得到曲线为</p>
+<p><img src=move.png alt=move></p>
+<p>tonemapping后的颜色为:</p>
+<p><img src=new.png alt=new></p>
+<p>修改之后tonemapping的暗部区域与修改之前的对比，可以感受到暗部没有那么殷实，对比度没有那么强；</p>
+<p>将两者放到一块对比：</p>
+<p><img src=diff.png alt=diff></p>
+<p>实际上E点之前这一部分区域常被称之为Toe，在<a href=https://docs.unrealengine.com/4.27/en-US/RenderingAndGraphics/PostProcessEffects/ColorGrading/>unreal</a>以及<a href=http://filmicworlds.com/blog/filmic-tonemapping-with-piecewise-power-curves/>Hable curve</a>都会使用一个单独的参数来控制区域的范围，从而使得暗部区域的对比度有更好的控制；该范围越大，暗部越实，暗部对比度越高；</p>
+<p>总结；前面所提的到的暗部提亮过程，实际上只是tonemapping所提供功能的一小部分，不能涵盖tonemapping对暗部的所有控制；在曲线E点之前，tonemapping甚至会压暗本来就比较暗的区域；</p>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
