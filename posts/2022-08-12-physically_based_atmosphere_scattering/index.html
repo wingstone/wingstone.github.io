@@ -1,0 +1,324 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>physically based atmosphere scattering | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>physically based atmosphere scattering</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/08/12</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#volume-scattering-theory>Volume Scattering Theory</a>
+<ul>
+<li><a href=#absorption>Absorption</a></li>
+<li><a href=#emission>Emission</a></li>
+<li><a href=#out-scattering>Out-Scattering</a></li>
+<li><a href=#attenuationabsorption--out-scattering>Attenuation（Absorption + Out-Scattering）</a></li>
+<li><a href=#in-scattering--phase-functions>In-scattering && Phase Functions</a></li>
+</ul>
+</li>
+<li><a href=#atmospheric-scattering>Atmospheric Scattering</a>
+<ul>
+<li><a href=#atmospheric-model>Atmospheric model</a></li>
+<li><a href=#rayleigh-scattering>Rayleigh scattering</a></li>
+<li><a href=#mie-scattering>Mie scattering</a></li>
+<li><a href=#single-scattering>Single scattering</a></li>
+<li><a href=#aerial-perspective>Aerial Perspective</a></li>
+</ul>
+</li>
+<li><a href=#rendering-methoad>Rendering Methoad</a>
+<ul>
+<li><a href=#precomputed-atmospheric-scattering>Precomputed Atmospheric Scattering</a></li>
+<li><a href=#a-scalable-and-production-ready-sky-and-atmosphere-rendering-technique>A Scalable and Production Ready Sky and Atmosphere Rendering Technique</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+<main>
+<p>记录基于物理的大气散射背后理论知识及方法，首先是大气散射所基于的体渲染相关理论，然后介绍大气散射相关理论，随后介绍渲染大气散射现象所实际采用的方法；</p>
+<h2 id=volume-scattering-theory>Volume Scattering Theory</h2>
+<p>体渲染理论包含了一些可穿透介质与光交互时的一些物理现象，这里总结总体参考<a href=https://pbr-book.org/3ed-2018/Volume_Scattering/Volume_Scattering_Processes>PBRT 11.1</a>以及RTR4 14.1;</p>
+<h3 id=absorption>Absorption</h3>
+<p>描述吸收现象，表示光线穿透介质时，会被介质吸收能量；采用<code>$\sigma _ a$</code>来表示，其单位为$m ^ {-1}$；其含义表达式如下：</p>
+<p>$$
+L_o(p,w) - L_i(p, -w) = dL_o(p,w) = -\sigma_a (p, w) L_i (p, -w) dt
+$$</p>
+<p>表示光线穿透1m时所被吸收的能量与输入能量的比值，使用时需要对长度积分来计算总体被吸收的能量；</p>
+<blockquote>
+<p>注意，这里字母的下标a，代表absorption的意思，下同；</p>
+</blockquote>
+<p>若光线朝w方向移动距离为d，则输出能量与输入能量的比值为：</p>
+<p>$$
+e^ {-\int _ 0 ^d {\sigma_a (p+tw, w)} dt}
+$$</p>
+<p><img src=absorption.png alt=absorption></p>
+<h3 id=emission>Emission</h3>
+<p>描述发光现象，表示光线穿透介质时，所增加的能量（由其他形式转化而来，比如化学能）；直接使用单位下的能量增量<code>$L_e(p,w)$</code>来表示，单位大致为 radiance/m；其含义表达式如下：</p>
+<p>$$
+dL_o(p,w) = L_e (p, w) dt
+$$</p>
+<p><img src=emission.png alt=emission></p>
+<h3 id=out-scattering>Out-Scattering</h3>
+<p>描述外散射现象，表示光线穿透介质时，介质会朝其他方向散射能量，造成能量减少；采用<code>$\sigma _ s$</code>来表示，其单位为$m ^ {-1}$，常称之为scattering coefficient；其含义表达式如下：</p>
+<p>$$
+L_o(p,w) - L_i(p, -w) = dL_o(p,w) = -\sigma_s (p, w) L_i (p, -w) dt
+$$</p>
+<p>表示光线穿透1m时所被散射的能量与输入能量的比值，使用时需要对长度积分来计算总体被散射的能量；</p>
+<p>若光线朝w方向移动距离为d，则输出能量与输入能量的比值为：</p>
+<p>$$
+e^ {-\int _ 0 ^d {\sigma_s (p+tw, w)} dt}
+$$</p>
+<p><img src=out_scattering.png alt=out_scattering></p>
+<h3 id=attenuationabsorption--out-scattering>Attenuation（Absorption + Out-Scattering）</h3>
+<p>Absorption与Out-Scattering都会产生能量丢失，切能量丢失的表达方式都是一样的，使用光线穿透1m时所减少的能量与输入能量的比值来表示，因此可以使用<strong>attenuation</strong>或<strong>extinction</strong>（能量损失）来方便使用，使用的符号为<code>$\sigma_t (p, w)= \sigma_a (p, w) + \sigma_s (p, w) $</code>来表示；其单位为<code>$m ^ {-1}$</code>，表示光线穿透1m时所减少的能量与输入能量的比值；</p>
+<p>若光线朝w方向移动距离为d，则输出能量与输入能量的比值为：</p>
+<p>$$
+T_r(p \rightarrow p') = e^ {-\int _ 0 ^d {\sigma_t (p+tw, w)} dt}
+$$</p>
+<p>该比值常被称之为<strong>transmittance</strong>, 在计算的过程中经常会使用到这个概念；其中的指数部分常被称之为<strong>optical thickness</strong>，一般使用符号<code>$\tau$</code>来表示，即：</p>
+<p>$$
+\tau(p \rightarrow p') = \int _ 0 ^d {\sigma_t (p+tw, w)} dt
+$$</p>
+<p>$$
+T_r(p \rightarrow p') = e^ {-\tau(p \rightarrow p')}
+$$</p>
+<h3 id=in-scattering--phase-functions>In-scattering && Phase Functions</h3>
+<p>Out-Scattering表示光线延当前方向w穿透介质时，会延其他方向散射能量；那么相反，其他方向的光线在延其他方向穿透介质时，也会延当前方向w散射能量；这种现象就叫In-Scattering；</p>
+<p><img src=in_scattering.png alt=in_scattering></p>
+<p>不同方向延当前方向散射的量是不同的，描述介质延不同方向散射量不同的性质使用phase function <code>$P(w,w')$</code>来描述；相函数为球形方向的概率密度函数，需满足归一化条件，即：</p>
+<p>$$
+\int _ {S^2} P(w,w') dw' = 1
+$$</p>
+<p>且其单位为<code>$sr^{-1}$</code>，即角度的倒数，因此使用过程中需要对角度进行积分；相函数本身不涉及散射所带来的能量变化，只描述各方向能量比值关系；</p>
+<p>emission与in-scattering现象都会导致能量的增加；若光线朝w方向移动距离为d，emission与in-scattering都考虑的话，所增加的能量为：</p>
+<p>$$
+dL_o(p,w) = L_s (p, w) dt
+$$</p>
+<p>$$
+L_s (p, w) = L_e (p, w) + \sigma_s (p, w) \int _ {S^2} {P(p,w_i,w)L_i(p,w_i)} dw_i
+$$</p>
+<p>in-scattering本质上还是由out-scattering所引起的，因此这里实际上为，<code>$w_i$</code>方向的<code>$L_i(p,w_i)$</code>在当前位置损失的能量<code>$\sigma_s (p, w)L_i(p,w_i)$</code>，再乘以当前方向的相函数，即为<code>$w_i$</code>方向沿当前方向<code>$w$</code>的in-scattering，即 <code>$\sigma_s (p, w) {P(p,w_i,w)L_i(p,w_i)}$</code>；之后再沿球面方向进行积分即为上式；</p>
+<h2 id=atmospheric-scattering>Atmospheric Scattering</h2>
+<p>这里关于大气散射理论的总结，主要参考</p>
+<ol>
+<li><a href=https://www.alanzucconi.com/2017/10/10/atmospheric-scattering-1/>Volumetric Atmospheric Scattering</a></li>
+<li><a href=https://www.scratchapixel.com/lessons/procedural-generation-virtual-worlds/simulating-sky/simulating-colors-of-the-sky>Simulating the Colors of the Sky</a></li>
+<li><a href=https://zhuanlan.zhihu.com/p/36498679>基于物理的大气渲染</a></li>
+</ol>
+<p>大气散射主要包含两种散射模型，分别是Rayleigh scattering，Mie scattering；</p>
+<h3 id=atmospheric-model>Atmospheric model</h3>
+<p>大气模型中，还要一个比较重要的点就是大气密度；密度会导致大气散射行为发生明显的变化，很多大气散射的模型里面都会有密度相关的身影；常用的大气密度模型为指数模型，表达形式为：</p>
+<p>$$
+density(h)=density(0) e^{-\frac{h}{H}}
+$$</p>
+<p>其中dansity(0)表示海平面处的密度；H常称之为scale height，意思为海拔变化为H的时候，密度变化为e；</p>
+<p>指数衰减实际上是一个比较粗略的假设，在一些论文中会使用更为精确的分层密度模型，如下图所示，以地球为球心会将大气进行分层；每层有不同的密度与厚度数值；</p>
+<p><img src=density_model.png alt></p>
+<h3 id=rayleigh-scattering>Rayleigh scattering</h3>
+<p>Rayleigh scattering主要有空气分子对光线的散射作用，空气分子有很强的波长相关性，其更容易散射短波长的光（blue light），而不容易散射长波长的光（red、green light）；Rayleigh scattering是导致白天天空偏蓝，晚上和造成天空偏红的主要原因；</p>
+<p><img src=rayleigh.png alt=rayleigh></p>
+<p>如上图所示，白天光线从地球上方照射，由于路径过短，蓝光更容易被散射，从而进入人眼，导致天空呈现蓝色；早晨或傍晚，光线从地球侧方照射，由于路径过长，蓝光过早被散射消耗掉，只有红光与绿光保留，经过散射后进入人眼，导致天空呈现红色（特别是太阳附近的天空）；</p>
+<p>其scattering coefficient为：</p>
+<p>$$
+\beta_R^s (h, \lambda) = \frac{8\pi^3(n^2-1)^2}{3N\lambda^4} e^{-\frac{h}{H_R}}
+$$</p>
+<p>其中，h为海拔；HR为Rayleigh所使用的scale height，常为8km；<code>$\lambda$</code>为波长；N为分子密度；n为空气折射率；公式<code>$e^{-\frac{h}{H_R}}$</code>表示此模型与密度相关；Rayleigh scattering一般不考虑除了scattering现象之外的其他响应（比如absorption）；由于在计算过程中，分子密度、空气折射率通常按照常数来处理，因此，scattering coefficient也可写为：</p>
+<p>$$
+\beta_R^s(h,\lambda)=\beta_R^s(0,\lambda) e^{-\frac{h}{H_R}}
+$$</p>
+<p>其中的<code>$\beta_R^s(0,\lambda)$</code>表示海平面处的散射系数，在一些论文的实现中，会将前半部分称之为散射系数，将后半部分称之为散射密度；</p>
+<p>其Phase Functions为：</p>
+<p>$$
+P_R(\mu)=\frac{3}{16\pi}(1+\mu^2)
+$$</p>
+<p>其中，<code>$\mu$</code>为入射方向与初设方向之间的夹角；</p>
+<h3 id=mie-scattering>Mie scattering</h3>
+<p>Mie scattering与Rayleigh scattering的性质比较类似，只是Mie scattering是由空气中的粒子引起的散射，粒子半径远大于波长；Mie scattering是城市中经常看到的灰色雾霾现象的主要原因，太阳周围的halo也是由Mie scattering引起的；</p>
+<p><img src=mie.png alt=mie></p>
+<p>其scattering coefficient为：</p>
+<p>$$
+\beta_M^s(h,\lambda)=\beta_M^s(0,\lambda) e^{-\frac{h}{H_M}}
+$$</p>
+<p>其中，h为海拔；HM为Mie所使用的scale height，常为1.2km；<code>$\lambda$</code>为波长；其中的<code>$\beta_M^s(0,\lambda)$</code>表示海平面出的散射系数，常用<code>$\beta_S = 210 \mathrm{e^{-5}} \mathrm{m^{-1}}$</code>来表示；右出的<code>$e^{-\frac{h}{H_M}}$</code>表示此模型与大气密度相关；Mie scattering的extinction coefficient一般为1.1倍的scattering coefficient，多出来的0.1由absorption引起；即：</p>
+<p>$$
+\beta_M^e(h,\lambda)=\beta_M^s(h,\lambda)
+$$</p>
+<p>其Phase Functions为：</p>
+<p>$$
+P_M(\mu)=\frac{3}{8\pi}\frac{(1-g^2)(1+\mu^2)}{(2+g^2)(1+g^2-2g\mu)^{\frac{3}{2}}}
+$$</p>
+<p>其中，<code>$\mu$</code>为入射方向与初设方向之间的夹角；g表示该介质的各项异性程度，常用g=0.76来表示；由于Mie是各向异性的，是的Mie scattering具有很强的方向性；这里的相函数跟HG模型比较类似，具体可参考<a href=https://pbr-book.org/3ed-2018/Volume_Scattering/Phase_Functions>Phase Functions</a>；</p>
+<h3 id=single-scattering>Single scattering</h3>
+<p>Single scattring描述的并不是某种大气散射现象，而是计算大气散射时所使用的一种假设；如下图所示：</p>
+<p><img src=single_scattering.png alt=single_scattering></p>
+<p>Pc为观察点，Pa为视线与大气边界的交点，X为视线上的采样点，Ps为采样点在光线方向上与大气边界的交点；single scattering所计算的光线路径为眼睛->视线采样点->光线与大气的交点；single scattering所没有计算的情况为为multi scattering，如下图所示：</p>
+<p><img src=multi_scattering.png alt=multi_scattering></p>
+<p>整个single scattering过程需要考虑的现象有：</p>
+<ol>
+<li>在Ps至X段，由Rayleigh与Mie引起的out scattering与absorption；</li>
+<li>在X至Pc段，由Rayleigh与Mie引起的out scattering与absorption；</li>
+<li>在Ps之外的真空，不考虑大气散射现象；</li>
+<li>在X点（实际上为ray matching的步进段，应该说是线），光照从L方向散射进V方向的in scattering；</li>
+<li>在Pa至Pc段，每一个ray mathing段，都需要考虑来自L方向的光照贡献；</li>
+</ol>
+<p>在前面介绍体渲染的时候，有说道transmittance概念，并给出来其积分形式；在使用ray matching的过程中需要使用其微分形式，即：</p>
+<p>$$
+T(P_a,P_b)=\frac{L_a}{L_b}=exp(-\sum_{P_a}^{P_b} \beta_e(h)ds)
+$$</p>
+<p>由于Rayleigh与Mie都可以写成从海平面开始衰减的指数形式，因此，transmittance也可改写成：</p>
+<p>$$
+T(P_a, P_b)=exp(-\beta_e(0) \sum_{P_a}^{P_b} exp(-\frac{h}{H})ds)
+$$</p>
+<p>从Ps点到X因大气散射，而导致X处的能量为：</p>
+<p>$$
+SkyColor_L(x)=T(P_a,P_b)*SunIntensity
+$$</p>
+<p>在X点（ray matching的步进段）考虑in scattering，X点在V方向的能量为：</p>
+<p>$$
+SkyColor_V(x)=T(P_a,P_b)<em>SunIntensity</em>P(V,L)*\beta_S(h)*ds
+$$</p>
+<p>其中<code>$P(V,L)$</code>为相函数，<code>$\beta_S(h)$</code>为X点的scattering coefficient，<code>$ds$</code>为raymatching的长度；</p>
+<p>最终X处ray matching段在Pc处的能量为：</p>
+<p>$$
+SkyColor(P_c) = T(P_c, X) * Sun : Intensity * P(V,L) * T(X,P_s)*\beta_s(h)ds
+$$</p>
+<p>考虑到在整个视线上的ray matching段，最终的能量为：</p>
+<p>$$
+SkyColor(P_c) = \sum_{P_c}^{P_a} T(P_c, X) * Sun : Intensity * P(V,L) * T(X,P_s)*\beta_s(h)ds
+$$</p>
+<p>以上就是未优化情况下，最终的积分公式；</p>
+<p>其中的<code>$T(P_c, X) * T(X,P_s)$</code>由于是指数函数相乘，因此这里可以进行合并，合并后的结果为：</p>
+<p>$$
+T(P_c, P_s)=exp(-\beta_e(0) \left( \sum_{P_c}^{X} exp(-\frac{h}{H})ds + \sum_{X}^{P_s} exp(-\frac{h}{H})ds \right) )
+$$</p>
+<p>另外，由于要分别考虑Rayleigh scattering与Mie scattering，但是针对in-scattering与attention，两者的结合方式是不同的，这前面介绍in-scattering与attention所建立的模型有关；直接说结论，针对in-scattering，两种散射的贡献是相加的关系，即</p>
+<p>$$
+SkyColor(P_c) = SkyColor_R(P_c) + SkyColor_M(P_c)
+$$</p>
+<p>针对attention（out-scattering与absorption），两者散射的贡献是相乘的，即</p>
+<p>$$
+T(P_a,P_b)=T_R(P_a,P_b)*T_M(P_a,P_b)
+$$</p>
+<p>将上面两式带入前面的积分公式，就能得到考虑Rayleigh scattering与Mie scattering时，应该真正计算的过程；</p>
+<h3 id=aerial-perspective>Aerial Perspective</h3>
+<p>如果视线与地面相交，那么上图中Pa点就不在是真空，而是变成了地面的颜色；也就是物体表面的颜色会收到大气散射的影响，这种现象被称之为Aerial Perspective；在渲染中经常使用的Fog就是此现象；如下图所示：</p>
+<p><img src=aerial.png alt=aerial></p>
+<p>可以看出在Pc至Pa段所要考虑的大气散射现象与前面的Single scattering是一致的，即前面所提到<code>$SkyColor(P_c)$</code>;</p>
+<p>除此之外，还要考虑大气散射对地面颜色的影响，即空气的out scattering与absorption现象；最终所得到的公式为：</p>
+<p>$$
+RayColor(P_c) = SkyColor(P_c) + T(P_c, P_a) * ObjectColor
+$$</p>
+<h2 id=rendering-methoad>Rendering Methoad</h2>
+<p>有了上面的公式就可以直接使用raymatching进行single scattering下的光照积分了，积分代码可参考<a href=https://www.scratchapixel.com/lessons/procedural-generation-virtual-worlds/simulating-sky/simulating-colors-of-the-sky>Simulating the Colors of the Sky</a>;</p>
+<p>但是在实际游戏中是很难直接使用积分的算法来达到实时性要求的，因此这里介绍两个改进的算法来更好的将大气散射应用到实际应用中，分别是：</p>
+<ol>
+<li><a href=https://hal.inria.fr/inria-00288758/document>Precomputed Atmospheric Scattering</a></li>
+<li><a href=https://sebh.github.io/publications/egsr2020.pdf>A Scalable and Production Ready Sky and Atmosphere Rendering Technique</a></li>
+</ol>
+<p>对应的开源代码仓库为：</p>
+<ol>
+<li><a href=https://github.com/ebruneton/precomputed_atmospheric_scattering>precomputed_atmospheric_scattering</a></li>
+<li><a href=https://github.com/sebh/UnrealEngineSkyAtmosphere>UnrealEngineSkyAtmosphere</a></li>
+</ol>
+<h3 id=precomputed-atmospheric-scattering>Precomputed Atmospheric Scattering</h3>
+<p>该算法采用预计算的方式来离线计算所有的光照效果，同时提出基于迭代的算法来计算multi-scattering；</p>
+<h4 id=trsansmittance-lut>trsansmittance lut</h4>
+<p>在计算single scattering时，要分别计算ray matching步进段到相机的transmittance（v方向）以及ray matching步进段到大气层边缘的transmittance（l方向）；</p>
+<p>实际上transmittance是可以预计算为lut，然后实时查找的。在地球是球形的假设下，lut只需要根据当前点高度<code>$r$</code>，视线与当前点法线的cos夹角<code>$\mu$</code>即可唯一确定，因此使用二维lut即可存储；</p>
+<h4 id=irradiance-lut>irradiance lut</h4>
+<p>对于地面来说其收到的光照也是会收到大气散射影响的，地球上点的irradiance也可以提前进行预计算；在使用lut进行模型光照计算时，模型上点的海拔肯定是会变化的，因此需要进行整个大气层的irradiance的预计算；</p>
+<p>在地球的球形假设下，lut只需要根据当前点高度<code>$r$</code>，光照方向与当前点法线的cos夹角<code>$\mu_s$</code>即可唯一确定，因此使用二维lut即可存储；</p>
+<h4 id=radiance-lut>radiance lut</h4>
+<p>大气散射的最终结果（在不同点不同方向观察到的天空颜色）存储为radiance lut；同样在球形假设下，radiance结果与当前点高度<code>$r$</code>、视线与当前点法线的cos夹角<code>$\mu$</code>、光照方向与当前点法线的cos夹角<code>$\mu_s$</code>、光照方向与视线的cos夹角<code>$\mu_v$</code>有关，是一个四维的lut；</p>
+<h4 id=multi-scattering>multi scattering</h4>
+<p>对于single scattering，在讲大气散射时已经进行了介绍，那么multi scattering该如何进行计算；</p>
+<p>方法与计算GI的方法是一样的，single scattering的结果作为second scattering的输入进行计算；second scattering的输出作为third scattering的输入进行计算；经过几次迭代，就能将结果进行过收敛；</p>
+<h3 id=a-scalable-and-production-ready-sky-and-atmosphere-rendering-technique>A Scalable and Production Ready Sky and Atmosphere Rendering Technique</h3>
+<p>这是unreal所提出的新的lut计算方式，相比上面那种做法，灵活性更高，性能更好，支持实时更新lut；</p>
+<h4 id=transmittance-lut>Transmittance LUT</h4>
+<p>与上一方法一致；</p>
+<p><img src=transmittance.png alt></p>
+<h4 id=multiple-scattering-lut>Multiple scattering LUT</h4>
+<p>对multi scattering进行了大量假设，总结如下：</p>
+<ol>
+<li>2阶及2阶以上的散射都使用各项同性的项函数；</li>
+<li>着色点及附近的所有点光照计算时使用同样量的二阶散射光（这里的附近，针对的是着色点积分所需要的积分点）；</li>
+<li>二阶散射光的贡献<code>$L_{2^{nd}order}$</code>以及传递函数<code>$f_{ms}$</code>（考虑沿介质传递时transimittance的影响）从我们的着色点以及周围所通过的介质来分别计算这两者；</li>
+<li>最终的multi scattering<code>$\Psi_{ms}$</code>由以上两个参数进行计算，计算二阶散射贡献下的无限阶的散射结果；</li>
+</ol>
+<p>所提到的<code>$L_{2^{nd}order}$</code>为：</p>
+<p>$$
+L_{2^{nd}order} = \int _ {4\pi} L'(x_s, -\omega)p_ud\omega
+$$</p>
+<p>$$
+L'(x, v) = T(x,p)L_0(p,v) + \int _ {t=0} ^{||p-x||} \sigma _s(x)T(x,x-tv) S(x_s, -\omega)p_u E_t dt
+$$</p>
+<p>其中的项函数<code>$p_u$</code>为均匀项函数<code>$1/4\pi$</code>；</p>
+<p>所提到的<code>$f_{ms}$</code>为：</p>
+<p>$$
+f_{ms} = \int _ {4\pi} L_f(x_s, -\omega)p_ud\omega
+$$</p>
+<p>$$
+L_f(x, v) = T(x,p)L_0(p,v) + \int _ {t=0} ^{||p-x||} \sigma _s(x)T(x,x-tv) 1 dt
+$$</p>
+<p>无限阶下的能量传递函数为：</p>
+<p>$$
+F_{ms} = 1+f_{ms}+f_{ms}^2+f_{ms}^3+···=\frac{1}{1-f_{ms}}
+$$</p>
+<p>最终得到的multi scattering为：
+$$
+\Psi_{ms}=L_{2^{nd}order} F_{ms}
+$$</p>
+<p>同样在球形假设下，lut只需要根据当前点高度<code>$r$</code>，光照方向与当前点法线的cos夹角<code>$\mu_s$</code>即可唯一确定，因此使用二维lut即可存储；
+<img src=multi_lut.png alt></p>
+<h4 id=sky-view-lut>Sky-View LUT</h4>
+<p>以柱状图的方式存储当前视角下的single scattering + multi scattering结果；
+<img src=skyview.png alt></p>
+<h4 id=aerial-perspective-lut>Aerial Perspective LUT</h4>
+<p>针对场景部分，以view aligned volume来存储散射数据，rgb通道用来存储single scattering + multi scattering，a通道用来存储transmittance；
+<img src=pers_lut.png alt></p>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
