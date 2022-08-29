@@ -24,6 +24,41 @@
 <hr>
 <div style=height:.5em></div>
 <article class=element>
+<a href=/posts/2021-06-26-light-and-color-gamma/>gamma</a>
+<div class=summary>
+<p>在图形开发中，总绕不开的一个名词，gamma，这里会对gamma进行一个粗暴但是通俗的讲解，便于理清图形开发中关于gamma的一切；</p>
+</div>
+</article>
+<article class=element>
+<a href=/posts/2021-06-10-uv-in-postprocess/>PostProcess关于UV的思考</a>
+<div class=summary>
+<p>以前一直以为屏幕空间下的UV应该是0-1的范围内的；</p>
+</div>
+</article>
+<article class=element>
+<a href=/posts/2021-03-01-fxaa/>FXAA(Fast approximate anti-aliasing)</a>
+<div class=summary>
+<p>FXAA是非常方便且高效的抗拒齿方法，本文主要依据FXAA白皮书进行理论介绍<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，然后针对一些实现方法进行探讨<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>；</p>
+</div>
+</article>
+<article class=element>
+<a href=/posts/2020-09-30-parallax-mapping/>Parallax Mapping（视差贴图）</a>
+<div class=summary>
+<p>视差贴图属于位移贴图(Displacement Mapping)技术的一种，它对根据储存在纹理中的几何信息对顶点进行位移或偏移。一般使用位移贴图之前，需要对模型进行细分（细分着色器），然后进行顶点位移；</p>
+</div>
+</article>
+<article class=element>
+<a href=/posts/2020-09-28-preintegrated-subsurface-scattering/>Preintegrated Subsurface Scattering</a>
+<div class=summary>
+<p>预积分皮肤散射主要解决三种皮肤散射情况<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup><sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>：</p>
+<ol>
+<li>表面弯曲引起的散射（Surface Curvature）；</li>
+<li>表面小凸起引起的散射（Small Surface Bumps）；</li>
+<li>投影边缘引起的散射（Shadows）；</li>
+</ol>
+</div>
+</article>
+<article class=element>
 <a href=/posts/2020-09-17-mobile-gpu-architecture/>移动GPU架构</a>
 <div class=summary>
 <p>移动GPU架构经常被称之为TBR（Tiled Based Rendering），我们这里也以TBR代称，有时也会称之为TBDR；</p>
@@ -45,36 +80,6 @@
 <a href=/posts/2020-09-14-rendering-path/>Pipeline——Rendering Path（渲染路径）</a>
 <div class=summary>
 <p>Rendering Path主要用来指光照计算上的处理方式等；常见的有Forward/Deferred Rendering；以及其改版Forward+、Tiled Based Deferred Rendering、Clustered Shading；</p>
-</div>
-</article>
-<article class=element>
-<a href=/posts/2020-09-13-gpu-graphic-pipeline/>Pipeline——GPU Graphic Pipeline（图形管线）</a>
-<div class=summary>
-<p>所谓管线就是一个流程，针对硬件来说，处理一个图元有一个硬件渲染流程<strong>Graphic Pipeline（图形管线）</strong>；Graphic Pipeline位于非常低级的渲染层次，是渲染一个物体必走的渲染流程；</p>
-</div>
-</article>
-<article class=element>
-<a href=/posts/2020-09-10-opengl-vertex-interpolation/>Opengl Vertex Interpolation</a>
-<div class=summary>
-<p>OpenGL中关于插值问题</p>
-</div>
-</article>
-<article class=element>
-<a href=/posts/2020-09-07-c-static-usage/>C++ Static Usage</a>
-<div class=summary>
-<p>C++中的static关键字的一些使用细节问题</p>
-</div>
-</article>
-<article class=element>
-<a href=/posts/2020-09-07-combination-and-permutation/>Combination and Permutation（排列与组合）</a>
-<div class=summary>
-<p>关于排列与组合的算法问题</p>
-</div>
-</article>
-<article class=element>
-<a href=/posts/2020-09-06-monte-carlo-integration/>Monte Carlo Integration</a>
-<div class=summary>
-<p>蒙特卡洛积分的简短介绍，以及PBRT中常用的函数分布；</p>
 </div>
 </article>
 <div class=menu>

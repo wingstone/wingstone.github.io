@@ -1,0 +1,67 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>GPU底层运行机制 | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>GPU底层运行机制</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/08/29</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents></nav>
+<main>
+<p>GPU底层运行机制记录</p>
+<p><strong>latency</strong>是所有处理器必须要关心的事情，可以认为数据离处理器越远，等待的时间就越长。从内存上读取数据花费的时间将远大于从寄存器读取数据的时间。读取数据时，处理器将进行等待，从而产生<strong>stall</strong>，进而影响性能。</p>
+<p>大部分CPU为了减小latency的影响，采用local cache的机制，使得下一步可以读取的数据尽可能在cache中。CPU还会采用其他的机制来避免stall，比如branch prediction、instruction reordering、register renaming、cache prefetching。</p>
+<p>而GPU为了吞吐量（即可以处理的数据的量）而优化，因此GPU大部分的芯片区域都被用来放置处理器（也称shader core）了，只有很少的区域用做cache memory以及control logical，因而每个shader core的latency相比cpu来说要高很多，是尤其需要注意的问题。</p>
+<p>对于shader来说，texture实际上属于另外的资源，并不属于可执行程序的local memory的一部分。一次texture memory fetch要花掉成百上千的时钟周期，在此期间，shader processer将导致stall。其他的非local memory fetch也会导致stall？比如structure buffer等？</p>
+<p>GPU通过两种重要的机制来优化性能。</p>
+<p>一种机制是simd，simd只需要花费少量的silicon以及power即可完成大量并行数据的处理，而gpu也是通过thread wrap的形式来一次处理大量线程，当遇到stall时，整个wrap都会stall，从而减少stall情况的发生。</p>
+<p>另外一种机制是thread wrap switch，当整个wrap发生stall时，gpu会进行wrap switch切换到其他wrap，从而继续运行。当其他wrap stall时，继续切换到下一个wrap，以此来隐藏stall，从而提升gpu运行效率。warp-swapping是重要的gpu所使用的非常重要的latency-hiding机制。</p>
+<p>Gpu thread与cpu thread不同，其包含了一部分memory用来存储shader的输入值，还包含了一部分寄存器空间，用来存储shader运行时的中间值。而gpu的寄存器数量是有限的，寄存器资源与waro是绑定的在shader运行时，因此shader使用的寄存器数量越多，gpu可切换的warp数量就越少，从而导致latency隐藏机制更容易失效，从而产生真正的stall。而可切换的warp数量被称之为<strong>occupancy</strong>。对于compute shader，使用的shared memory越多，同样也会造成occupancy的减少。并且在有分支的情况下，gpu是按最坏的情况来计算寄存器与memory资源的。可参考<a href=https://www.ea.com/seed/news/seed-siggraph2017-compute-for-graphics>Future Directions for Compute-for-Graphics</a></p>
+<p>还有一个会影响gpu效率的情况是动态分支的使用（比如if、for的使用），由于gpu以warp形式运行，如果同一warp内不用thread运行了不同的分支，会导致没使用此分支的thread空闲，从而影响效率。</p>
+<p>整个gpu基本上都是基于以上的idea进行运作，虽然在系统上有一些限制，但可以提供大量的算力。</p>
+<p>以上总结主要参考rtr4的第3章节，而基于以上机制的优化方案，可参考rtr4上所附加的参考链接。</p>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>

@@ -1,0 +1,118 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>metric in pbr | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>metric in pbr</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/08/22</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#radiometry辐射度学>Radiometry（辐射度学）</a>
+<ul>
+<li><a href=#irradiance-vs-radiance>Irradiance vs Radiance</a></li>
+<li><a href=#bidirectional-reflectance-distribution-functionbrdf>Bidirectional Reflectance Distribution Function(BRDF)</a></li>
+<li><a href=#camera>Camera</a></li>
+</ul>
+</li>
+<li><a href=#photometry光度学>Photometry（光度学）</a></li>
+</ul>
+</nav>
+<main>
+<p>pbr渲染中涉及到的单位问题，参考GAMES101课程；</p>
+<h2 id=radiometry辐射度学>Radiometry（辐射度学）</h2>
+<p>辐射度量学是基于物理渲染的理论基础，它将渲染使用物理下的单位及公式进行表达，使得PBR能够站住脚跟；</p>
+<ul>
+<li>Energy（能量）：单位J焦耳；</li>
+<li>Flux（通量）：定义为单位时间内通过的能量，单位W瓦特（lm流明，光度学，两者等价）；</li>
+<li>Intensity（强度）：定义为单位立体角下单位时间内通过的能量，单位cd坎德拉；</li>
+<li>Irradiance（辐照度）：定义为单位投影面积下单位时间内通过的能量，单位lux拉克丝；由于是投影面积，因而伴随着Lambert定律；对于点光源，存着辐照度随着半径平方衰减定律；</li>
+<li>Radiance（辐射率）：定义为单位投影面积下单位体积角下单位时间内通过的能量，单位nit尼特；用来描述光线的单位，渲染整个过程都是在进行Radiance的计算；</li>
+</ul>
+<p>Radiance是与距离无关的，不考虑fog或其他体积介质的话；
+Radiance的物理实质应该是有相应的SPD来表示，但是常用RGB来进行表示；使用RGB来表示的原因可以参考文章<a href=https://blog.csdn.net/qq_35817700/article/details/117934398>Color and Perception</a></p>
+<h3 id=irradiance-vs-radiance>Irradiance vs Radiance</h3>
+<p>Irradiance指单位面积下单位时间内接收的的辐射能量；
+Radiance指单位面积下某个单位角度下单位时间内接收的的辐射能量；</p>
+<h3 id=bidirectional-reflectance-distribution-functionbrdf>Bidirectional Reflectance Distribution Function(BRDF)</h3>
+<p>BRDF代表的为反射点某个出射角度下Radiance与某个入射角度下Irradiance的比值（即BRDF函数是有物理单位的）；由于入射Irradiance表示单位面积下的辐射通量，为了递归光线追踪，常需要将其表示为入射Radiance的微分形式；
+BRDF的单位应为radiance/irridiance，即1/sr，表示方向的度量；</p>
+<h3 id=camera>Camera</h3>
+<p>一般相机模型下渲染积分得到的结果为<strong>Radiance</strong>，我们得到的是单位面积下某个方向上的单位立体角下的辐射通量；
+对于真实的相机，得到结果为<strong>Irradiance</strong>，因为真实的传感器需要累积单位面积下各个方向上的辐射通量（比如整个光圈所对应的在该传感器点的体积角）；可能真实的相机也会进行角度的平均，来得到Radiance；</p>
+<h2 id=photometry光度学>Photometry（光度学）</h2>
+<p>辐射度学使用的是完全基于物理的度量，但是实际上人眼对不同波长的光强敏感性是不一样的（眼睛中杆细胞的存在，同样可参考后面的文章<a href=https://blog.csdn.net/qq_35817700/article/details/117934398>Color and Perception</a>）；
+光度学与辐射度学类似，除了它对于所有的东西都使用了人眼的强度敏感函数进行了加权；
+因此，辐射度学所计算出来的结果，需要考虑眼睛对波长的敏感性，转之后的结果就属于光度学下的度量；
+Photometry与Radiometry唯一的不同在于转换曲线以及使用单位；单位差异如下：</p>
+<table>
+<thead>
+<tr>
+<th>Radiometry Units</th>
+<th>Photometry Units</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>radiant flux: watt(W)</td>
+<td>Luminous flux: lumen(lm)</td>
+</tr>
+<tr>
+<td>irradiance: W/m^2</td>
+<td>illuminance: lux(lx)</td>
+</tr>
+<tr>
+<td>radiant intensity: W/sr</td>
+<td>luminous intensity: candela (cd)</td>
+</tr>
+<tr>
+<td>radiance: W/(m^2sr)</td>
+<td>luminance: cd/m^2 = nit</td>
+</tr>
+</tbody>
+</table>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
