@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>Computer shader介绍 | wingstone's blog</title>
+<title>why sdf is better | wingstone's blog</title>
 <link rel=stylesheet href=/css/style.css>
 <link rel=stylesheet href=/css/fonts.css>
 <link rel=icon href=/icons/16.png>
@@ -21,28 +21,22 @@
 <hr>
 </nav>
 <div class=article-meta>
-<h2><span class=title>Computer shader介绍</span></h2>
+<h2><span class=title>why sdf is better</span></h2>
 <h3 class=author>wingstone</h3>
-<h3 class=date>2022/08/29</h3>
+<h3 class=date>2022/09/12</h3>
 <div>
 <span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
 </div>
 </div><h2>目录</h2>
 <nav id=TableOfContents></nav>
 <main>
-<p>Computer shader介绍</p>
-<p>Compute shader的优势，</p>
-<ul>
-<li>可以不执行完整的graphic管线，只运行compute units。</li>
-<li>可以利用更快速的shared memory进行一些运算。</li>
-<li>可以利用async机制，充分利用gpu效率。</li>
-</ul>
-<h1 id=关于async机制>关于async机制</h1>
-<p>Gpu在做线程组切换时，涉及到状态的更新，会导致Compute unit空闲，从而导致gpu运算能力的浪费，额外增加latency。
-async cs提供异步执行Compute shader的能力，可以在线程组切换的时候插入其他的线程的能力。从而提高gpu的利用率。
-一般来说，在任务比较重的graphic queue中插入轻量的compute queue与copy queue能更好地减小gpu latency。
-相关文章可参考<a href=https://developer.amd.com/wordpress/media/2012/10/Asynchronous-Shaders-White-Paper-FINAL.pdf>Async shader</a></p>
-<p>另外shadowmap pass与predepth pass是两个很好的执行async compute shader的时机，因为这两隔pass都是属于compute unit消耗很少的pass，大部分的运行瓶颈在rop操作上，因此使用async compute shader可以充分利用compute unit；</p>
+<p>SDF简短心得</p>
+<p>为什么会有sdf字体比普通的字体质量高很多，哪怕是在同样的贴图分辨率下；</p>
+<p>根本原因在于sdf存储的信息量比普通的字体贴图要大得多；</p>
+<p>sdf存储的是整个场的信息，每个像素的信息都是有意义的，用来重建整个距离场；特别是在双线性采样（整体非线性，各个维度线性）的加持下，可以使得整个场的重建并不需要很高的分辨率（高频信息除外）；</p>
+<p>而普通字体容易出现依赖分辨率的问题；原因在于普通字体贴图的信息之存在于边界上，边界内外的纯白与纯黑色都属于浪费掉的贴图信息；</p>
+<p>更近一步，普通字体相当于使用一个bit的存储位来存储的距离场；自然不如使用多个bit位存储的sdf质量高；</p>
+<p>至于SDF所带来的Blend优势，属于距离场定义所天然带来的优势，可以更好的处理sdf blend所带来的边界变化；</p>
 </main>
 <div id=gitalk-container></div>
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
