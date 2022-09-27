@@ -153,7 +153,7 @@ $$</p>
 <p>$$
 P_R(\mu)=\frac{3}{16\pi}(1+\mu^2)
 $$</p>
-<p>其中，<code>$\mu$</code>为入射方向与初设方向之间的夹角；</p>
+<p>其中，<code>$\mu$</code>为入射方向与出射方向之间的夹角；</p>
 <h3 id=mie-scattering>Mie scattering</h3>
 <p>Mie scattering与Rayleigh scattering的性质比较类似，只是Mie scattering是由空气中的粒子引起的散射，粒子半径远大于波长；Mie scattering是城市中经常看到的灰色雾霾现象的主要原因，太阳周围的halo也是由Mie scattering引起的；</p>
 <p><img src=mie.png alt=mie></p>
@@ -197,7 +197,7 @@ SkyColor_L(x)=T(P_a,P_b)*SunIntensity
 $$</p>
 <p>在X点（ray matching的步进段）考虑in scattering，X点在V方向的能量为：</p>
 <p>$$
-SkyColor_V(x)=T(P_a,P_b)<em>SunIntensity</em>P(V,L)*\beta_S(h)*ds
+SkyColor_V(x) = T(P_a,P_b) * SunIntensity * P(V,L) * \beta_S(h) ds
 $$</p>
 <p>其中<code>$P(V,L)$</code>为相函数，<code>$\beta_S(h)$</code>为X点的scattering coefficient，<code>$ds$</code>为raymatching的长度；</p>
 <p>最终X处ray matching段在Pc处的能量为：</p>
