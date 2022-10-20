@@ -28,9 +28,15 @@
 <span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
 </div>
 </div><h2>目录</h2>
-<nav id=TableOfContents></nav>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#tonemapping曲线>tonemapping曲线</a></li>
+<li><a href=#hue-shift>hue shift</a></li>
+</ul>
+</nav>
 <main>
 <p>关于tonemapping的一些思考</p>
+<h2 id=tonemapping曲线>tonemapping曲线</h2>
 <p>一般认为tonemapping是为了能让颜色从HDR空间更好的映射到LDR空间；主要体现在两个方面：</p>
 <ol>
 <li>让暗部变亮；</li>
@@ -58,9 +64,19 @@
 <p><img src=diff.png alt=diff></p>
 <p>实际上E点之前这一部分区域常被称之为Toe，在<a href=https://docs.unrealengine.com/4.27/en-US/RenderingAndGraphics/PostProcessEffects/ColorGrading/>unreal</a>以及<a href=http://filmicworlds.com/blog/filmic-tonemapping-with-piecewise-power-curves/>Hable curve</a>都会使用一个单独的参数来控制区域的范围，从而使得暗部区域的对比度有更好的控制；该范围越大，暗部越实，暗部对比度越高；</p>
 <p>总结；前面所提的到的暗部提亮过程，实际上只是tonemapping所提供功能的一小部分，不能涵盖tonemapping对暗部的所有控制；在曲线E点之前，tonemapping甚至会压暗本来就比较暗的区域；</p>
-<hr>
-<p>分割线</p>
+<h2 id=hue-shift>hue shift</h2>
 <p><a href=https://zhuanlan.zhihu.com/p/356435019>hue shift</a>也是tonemapping分常重要的一个特征，能很好的体现高亮度的区域的颜色对比；</p>
+<p>下图为经过bloom后，未进行tonemapping的结果：</p>
+<p><img src=bloom.png alt></p>
+<p>其对应的hue为：</p>
+<p><img src=hue_untone.png alt></p>
+<p>经过aces tonemapping后的结果为：</p>
+<p><img src=bloom_tone.png alt></p>
+<p>其对应的hue为：</p>
+<p><img src=hue_tone.png alt></p>
+<p>可以很明显的看到，对于亮度较高的颜色值，tonemapping后，对应的hue会发生更大的偏移；</p>
+<p>当输出设备是hdr设备时，所使用的tonemapping（scene hdr -> screen hdr）会导致hue shift效果丢失，如amd所提供的<a href=https://github.com/GPUOpen-Effects/FidelityFX-LPM>LPM</a>就不会对hue产生影响；</p>
+<p>原神所采用的做法，参考了这篇文章<a href=https://www.ea.com/frostbite/news/high-dynamic-range-color-grading-and-display-in-frostbite>HDR color grading and display in Frostbite</a>，将调整放在了color grading的shader计算中去了；HDR设备下的输出可参考的案例有unity的<a href=https://docs.unity.cn/Packages/com.unity.render-pipelines.high-definition@14.0/manual/HDR-Output.html>High Dynamic Range (HDR) Output</a>以及unreal的<a href=https://docs.unrealengine.com/5.0/en-US/high-dynamic-range-display-output-in-unreal-engine/>High Dynamic Range Display Output</a></p>
 <p>关于tonemapping的更全面介绍，可参考<a href=https://www.cl.cam.ac.uk/~rkm38/pdfs/tone_mapping.pdf>Tone Mapping</a>(待阅读)</p>
 </main>
 <div id=gitalk-container></div>
