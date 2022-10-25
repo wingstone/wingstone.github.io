@@ -40,7 +40,7 @@
 <li><a href=#smoothstep>smoothstep</a></li>
 <li><a href=#reflect>reflect</a></li>
 <li><a href=#refract>refract</a></li>
-<li><a href=#refract-1>refract</a></li>
+<li><a href=#normalize>normalize</a></li>
 </ul>
 </li>
 </ul>
@@ -123,7 +123,7 @@
 </code></pre></td></tr></table>
 </div>
 </div><h3 id=asin>asin</h3>
-<p>atan会转化为泰勒级数展开的拟合形式，在unity查看编译后的源码能发现实现确实如此；</p>
+<p>asin会转化为泰勒级数展开的拟合形式，在unity查看编译后的源码能发现实现确实如此；</p>
 <div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
 <table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
 <pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
@@ -269,7 +269,7 @@
 </code></pre></td></tr></table>
 </div>
 </div><h3 id=pow>pow</h3>
-<p>底层会采用exp2与log2来实现；</p>
+<p>底层会采用exp2与log2来实现，而exp2与log2都会以native的硬件形式来支持，硬件的实现实际上是通过位操作来计算得出（比如对于整数，直接通过位的左移与右移操作来实现）；</p>
 <div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
 <table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
 <pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
@@ -340,8 +340,8 @@
 }
 </code></pre></td></tr></table>
 </div>
-</div><h3 id=refract-1>refract</h3>
-<p>refract根据折射原理来实现；</p>
+</div><h3 id=normalize>normalize</h3>
+<p>normalize会使用resqrt来实现，而resqrt的实现可能为native instruction，也可能使用pow函数实现；</p>
 <div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
 <table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
 <pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
