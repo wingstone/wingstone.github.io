@@ -1,0 +1,80 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>hardware clipping | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>hardware clipping</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/10/30</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#guard-band-clipping>guard-band clipping</a></li>
+</ul>
+</nav>
+<main>
+<p>记录gpu graphic pipeline中clipping的处理</p>
+<p>参考资料<a href=https://developer.download.nvidia.cn/assets/gamedev/docs/Guard_Band_Clipping.pdf>Guard Band Clipping in Direct3D</a>、<a href>RTR4 23.1章节</a>；</p>
+<p>首先，clipping是在光栅化之前进行的；因为clipping会生成新的三角形，而光栅化的triangle setup阶段需要用到三角形的信息；</p>
+<p>clip space下进行视锥体的clipping是一个昂贵的操作，因此GPU不在必要情况下，不会进行clipping，以下是需要进行的clipping的情况：</p>
+<ul>
+<li>near plane会一直进行clipping，cliping后有可能会生成两个三角形；</li>
+<li>在屏幕的四边上会使用guard-band clipping的clipping方案，用来减少clipping操纵的处理；</li>
+</ul>
+<h2 id=guard-band-clipping>guard-band clipping</h2>
+<p>首先 guard-band是viewport外一个更大的矩形空间，具体要看硬件，如下图所示；</p>
+<p><img src=guardband.png alt></p>
+<p>guard-band外的三角形直接剔除，不需要进行处理；</p>
+<p>而其它的三角形与view-port、guard-band的相交情况有以下几种：</p>
+<p><img src=triangle.png alt></p>
+<p><strong>A</strong>：view-port以外，guard-band以内的三角形，可能被cull掉，也可能送到硬件执行后续指令，然后被scissored掉；若送到硬件执行后续指令，会占用额外的bus以及process bandwidth；这种类型不会执行clipping；</p>
+<p><strong>B</strong>：与view-port相交，guard-band以内的三角形，直接送到硬件执行后续指令，然后view-port外的像素会被scissored掉；被scissored掉像素会占用额外的bus以及process bandwidth；这种类型不会执行clipping；</p>
+<p><strong>C</strong>：与view-port相交，同时也与guard-band相交，会执行clipping（可能与view-port进行clip，也可能与guard-band进行）；执行cliping后，在执行后续操作；</p>
+<p><strong>D</strong>：view-port以外，与guard-band相交的三角形，可能直接被cull掉，也可能与guard-band执行clipping，随后送到硬件执行后续指令；</p>
+<blockquote>
+<p>这里clipping的方案在nvidia的文章与rtr4中并不一致，若nvidia中的方案是以view-port进行clipping，结果就与rtr4描述一致了；不过nvidia的文章说，有可能会与guard-band进行clipping；</p>
+</blockquote>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
