@@ -1,0 +1,189 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>volume path tracing | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>volume path tracing</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/12/07</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#前置知识>前置知识</a></li>
+<li><a href=#介质表示>介质表示</a></li>
+<li><a href=#介质采样>介质采样</a></li>
+<li><a href=#均匀材质>均匀材质</a></li>
+<li><a href=#非均匀介质>非均匀介质</a></li>
+<li><a href=#采样项函数>采样项函数</a></li>
+</ul>
+</nav>
+<main>
+<p>这篇文章主要记录学习离线渲染中体渲染时，所学到的一些坑点以及总结，这里的体渲染暂时不包括次表面散射部分；</p>
+<h2 id=前置知识>前置知识</h2>
+<p>体渲染理论可参考之前总结大气散射时的<a href=/content/posts/2022-08-12-physically_based_atmosphere_scattering/>文章</a>以及<a href=https://pbr-book.org/3ed-2018/Light_Transport_II_Volume_Rendering/The_Equation_of_Transfer>pbrt 15.1</a>，里面介绍了体渲染中基础的in scattering、out scattering、absorption、emission现象；</p>
+<p>p点光照来源有自发光，以及内散射：</p>
+<p>$$
+L_ {s} (p, \omega )= L_ {e} (p, \omega )+ \sigma _ {s} (p, \omega ) \int _ {_ {S^2}} p(p, \omega &lsquo;, \omega ) L_ {i} (p, \omega &lsquo;)d \omega &lsquo;.
+$$</p>
+<p>微分上光照损失有外散射，吸收：</p>
+<p>$$
+dL_ {o} (p, \omega )= - \sigma _ {t} (p, \omega ) L_ {i} (p, -\omega)dt.
+$$</p>
+<p>总的微分方程为：</p>
+<p>$$
+\frac {\partial}{\partial t} L_ {o} (p&rsquo;, \omega )=- \sigma _ {t} (p&rsquo;, \omega ) L_ {i} (p&rsquo;,- \omega )+ L_ {s} (p', \omega ).
+$$</p>
+<p>假设光线最终相交于平面上一点p0，最终的积分方程为：</p>
+<p>$$
+L_ {i} (p, \omega )= T_ {r} (p_0 \to p)L_{o}(p_0, - \omega )+ \int <em>0 ^t T_r(p' \to p) L</em> {s} (p', -\omega)dt'.
+$$</p>
+<p>示意图为：</p>
+<p><img src=light_trans.png alt=light_trans></p>
+<p>其中Lo表示物体表面p0点沿当前方向的反射结果（这里就需要使用平面反射相关理论进行计算了，不如brdf之类的），最终的体渲染结果就是对上式进行积分；</p>
+<h2 id=介质表示>介质表示</h2>
+<p>主要参考<a href=https://pbr-book.org/3ed-2018/Volume_Scattering/Media#>pbrt 11.3 Media</a>，要点有以下部分：</p>
+<ol>
+<li><code>Medium</code>类表示介质的通用功能，比如介质的采样功能等，由子类来定义介质属性冰实现接口；</li>
+<li><code>MediumInterface</code>类表示介质之间的接口，有两个Medium指针，分别表示内介质、外介质；此类会被模型所引用，模型本身来表示介质的边界，也即实际的interface；</li>
+<li><code>MediumInteraction</code>表示射线与介质相交时，相交点的一些属性，与平面反射时所用到的<code>SurfaceInteraction</code>类似；</li>
+<li><code>HomogeneousMedium</code>表示均匀介质，介质内所有位置的属性都是统一的，注意均匀并不表示各项同性；其边界可以使用任意的闭合模型表示；</li>
+<li><code>GridDensityMedium</code>表示网格化介质，介质内存储了离散化的介质属性；其边界应该使用aabb对齐的模型表示；</li>
+</ol>
+<h2 id=介质采样>介质采样</h2>
+<p>前面总结出了最终的积分方程，我们先忽略掉emission项，并假设为均匀介质，则最终的积分方程为：</p>
+<p>$$
+L_ {s} (p, \omega )= \sigma _ {s} (p, \omega ) \int _ {_ {S^2}} p(p, \omega &lsquo;, \omega ) L_ {i} (p, \omega &lsquo;)d \omega &lsquo;.
+$$</p>
+<p>$$
+L_ {i} (p, \omega )= T_ {r} (p_0 \to p)L_{o}(p_0, - \omega )+ \int <em>0 ^{t</em>{max}} T_r(p+t\omega \to p) L_ {s} (p+t\omega, -\omega)dt.
+$$</p>
+<p>要想计算积分方程，需要对光照路径进行采样，除了对路径上的介质进行采样，还需要对路径末端的表面反射进行采样；相关采样理论可参考<a href=https://pbr-book.org/3ed-2018/Light_Transport_II_Volume_Rendering/Sampling_Volume_Scattering>pbrt 15.2</a></p>
+<p>假设介质内路径的概率密度分布为：</p>
+<p>$$
+p_t(t)
+$$</p>
+<p>那么对路径末端的表面进行采样的概率为：</p>
+<p>$$
+p_{surf} = 1 - \int <em>0 ^{t</em>{max}} p_t(t) dt
+$$</p>
+<p>如果采样到表面，返回的throughout为：</p>
+<p>$$
+\beta <em>{surf} = \frac {T_r(p \to p+t\omega)} {p</em>{surf}}
+$$</p>
+<p>如果采样到介质，返回的throughout为：</p>
+<p>$$
+\beta <em>{med} = \frac {\sigma _ {s} (p+t\omega ) T_r(p \to p+t\omega)} {p</em>{t}(t)}
+$$</p>
+<p>到此为止，只需要确定介质路径上的pdf，即可判断采样点；</p>
+<p>而采样方向的选择，针对介质直接采样项函数即可，针对物体表面，则变为了普通的平面反射的方向采样；</p>
+<p>另外一个需要处理的是 transmission的计算，即公式中Tr的计算；</p>
+<h2 id=均匀材质>均匀材质</h2>
+<p>针对均匀材质，由于光照沿路径呈指数衰减的，因此，可以使用指数衰减的pdf，即：</p>
+<p>$$
+p_t(t) = \sigma _t e^{-\sigma _t t}.
+$$</p>
+<p>采样到平面的概率为：</p>
+<p>$$
+p_{surf} = 1 - \int <em>0 ^{t</em>{max}} p_t(t) dt = e^{-\sigma_t t_{max}}
+$$</p>
+<p>对应的均匀采样变换的warp为：</p>
+<p>$$
+t = - \frac {ln(1-\xi)} {\sigma _t}.
+$$</p>
+<p>当t大于<code>$t_{max}$</code>时，使用平面的采样点；其中的<code>$\sigma _t$</code>为介质的衰减系数，由于衰减系数针对不同的颜色通道是不同的，因此可以首先选择一个颜色通道，随后使用改颜色通道的衰减系数进行采样；</p>
+<p>而对于均匀材质来说，Tr的计算是比较简单的，直接使用beer定律即可：</p>
+<p>$$
+T_r = e^{- \sigma _t d}.
+$$</p>
+<h2 id=非均匀介质>非均匀介质</h2>
+<p>针对非均匀介质，其pdf可以采用均匀介质pdf的泛化形式，如下：</p>
+<p>$$
+p_t(t) = \sigma _t(t) e^{-\int _0 ^t \sigma _t (t&rsquo;) dt&rsquo;}.
+$$</p>
+<p>要想求上述pdf，同样需要采样来计算积分；常用的方法有：</p>
+<ol>
+<li>regular tracking；</li>
+<li>ray marching；</li>
+<li>delta tracking；</li>
+</ol>
+<p>区别如下图：</p>
+<p><img src=inta.png alt></p>
+<p>离线渲染冲常用的方法还是dalta tracking，具体理论为：</p>
+<p><strong>其假设介质内充满了virtual particle，即上图中的红色粒子，以至于衰减系数在介质内是均匀分布的；这样就可以使用均匀介质中所使用的warp来进行采样的变换，当变换后的采样位于介质内时，就需要根据real particle与virtual particle的比例来决定是否丢弃当前采样（位于virtual，则丢弃）；这种假设的结果刚好满足泛化的pdf分布；</strong></p>
+<p>具体可参考<a href=https://pbr-book.org/3ed-2018/Light_Transport_II_Volume_Rendering/Sampling_Volume_Scattering#HeterogeneousMedium>pbrt 15.2.2</a></p>
+<p>而Tr的计算刚好与假设的泛化pdf一致，因此Tr的计算可以直接复用以上方法，即：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>Float <span style=color:#a6e22e>Tr</span>(ray, sampler) {
+    <span style=color:#66d9ef>if</span> (Sample(ray, sampler, ...) fails)
+        <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1.0</span>;
+    <span style=color:#66d9ef>else</span>
+        <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0.0</span>;
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>直接使用以上思路会带来较大消耗，pbrt源码中的<code> GridDensityMedium::Tr()</code>则结合了俄罗斯轮盘赌的思路进行了优化，具体参考自论文<a href=https://cs.dartmouth.edu/wjarosz/publications/novak14residual.html>Residual ratio tracking for estimating attenuation in participating media</a></p>
+<h2 id=采样项函数>采样项函数</h2>
+<p>常用的项函数为HG项函数，可参考<a href=https://pbr-book.org/3ed-2018/Volume_Scattering/Phase_Functions>pbrt 11.2</a>，即</p>
+<p>$$
+p_{HG}(cos\theta) = \frac{1}{4\pi} \frac{(1-g^2}{1+g^2+2g(cos\theta))^{3/2}}.
+$$</p>
+<p>由于项函数是归一化的，因此项函数即为pdf；对应的均匀分布变换的warp为：</p>
+<p>$$
+\phi = 2\pi\xi.
+$$</p>
+<p>$$
+\cos\theta = -\frac{1}{2g}(1+g^2-(\frac{1-g^2}{1+g-2g\xi})^2)
+$$</p>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>

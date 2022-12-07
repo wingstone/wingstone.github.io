@@ -49,6 +49,7 @@
 <li><a href=#direct-distribution-ray-tracing>Direct Distribution Ray Tracing</a></li>
 <li><a href=#dielectrics-material>Dielectrics material</a></li>
 <li><a href=#whitted-style-ray-tracing>Whitted-style ray tracing</a></li>
+<li><a href=#specialized-light-source-sampling>Specialized Light Source Sampling</a></li>
 </ul>
 </li>
 <li><a href=#assignment-5-path-tracing-microfacet-models-and-multiple-importance-sampling>Assignment 5: Path Tracing, Microfacet Models, and Multiple Importance Sampling</a>
@@ -294,6 +295,19 @@ nodeStack.push(root);
 <li>对于emiter，需要返回emission的值；</li>
 <li>使用Russian roulette来进行递归的终止；</li>
 </ol>
+<h3 id=specialized-light-source-sampling>Specialized Light Source Sampling</h3>
+<p>光源作为计算光照时需要经常采样的部分，好好地设计光源采样策略，可以极大的避免噪声的产生，可以设计一些参数化光源用于处理特殊情况；这里作业提供了集中改进思路用于尝试；</p>
+<ol>
+<li>避免不可见光源部分的采样，比如：球形光源的背面，在pbrt书籍中提到了使用锥形内均匀采样来提高球形光源的采样效率；（实际上如果是复杂的面光源，也可以提出光源的背面部分，感觉又牵扯到了渲染中的常见的剔除策略）；</li>
+<li>高偏差的采样，由于光源后的采样最终要转换到半球空间下进行积分，对应的变换因子为：</li>
+</ol>
+<p>$$
+\frac{dot(n_y, v_{y-x})}{||y-x||^2}
+$$</p>
+<p>考虑到重要性采样的使用，采样时应该考虑：距离平方、光源平面与光线夹角的影响；</p>
+<ol start=3>
+<li>采样本身如果是完全随机的话，会出现采样点之间过于聚集或过于分散的情况，这些情况就是噪点产生的根源；比较好的结局办法就是使用低差异序列来避免这种情况；</li>
+</ol>
 <h2 id=assignment-5-path-tracing-microfacet-models-and-multiple-importance-sampling>Assignment 5: Path Tracing, Microfacet Models, and Multiple Importance Sampling</h2>
 <h3 id=microfacet-brdf>Microfacet BRDF</h3>
 <p>在assignment4中，Direct Distribution Ray Tracing中针对diffuse材质，采样光源来进行光照的计算；而这里将针对microfacet材质，采样相应的brdf进行光照的计算，详情可参考<a href=https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Reflection_Functions>Sampling Reflection Functions</a>；</p>
@@ -310,7 +324,7 @@ nodeStack.push(root);
 <h3 id=brute-force-path-tracer>Brute force path tracer</h3>
 <p>暴力光线追踪是最容易理解、最直观的光线追踪算法，其直接体现了光照传输方程的代码化；其基本过程为：</p>
 <ol>
-<li>对于所有材质，无论是diffuse材质，还是Dielectrics、mirror材质，都针对其brdf分布采样出射光线；</li>
+<li>对于所有材质，无论是diffuse材质，microfacet材质，还是Dielectrics、mirror材质，都针对其brdf分布采样出射光线；</li>
 <li>每一次相交，光照结果都为：emission（非光源则为0）+brdf*（下一次递归结果）*cos/pdf；</li>
 <li>使用Russian roulette来进行递归的终止；</li>
 <li>使用迭代来代替递归，从而加速tracing过程；</li>
@@ -333,6 +347,14 @@ nodeStack.push(root);
 <li>使用Russian roulette来进行递归的终止；</li>
 <li>使用迭代来代替递归，从而加速tracing过程；</li>
 </ol>
+<blockquote>
+<p>这里有两种特殊的情况需要特别注意：</p>
+<ol>
+<li>对于Dielectrics、mirror材质，不需要使用next event estimation（即采样光源计算直接光照）；因为其brdf分布为delta函数，只有一个有效方向，直接不断tracing即可；</li>
+<li>对于含有粗糙度的transmission，需要计算的则为btdf；如果对ggx分布计算btdf以及对应的pdf，需要额外的计算公式，具体公式以及推倒可参考<a href=https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html>Microfacet Models for Refraction through Rough Surfaces
+</a>。</li>
+</ol>
+</blockquote>
 </main>
 <div id=gitalk-container></div>
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
