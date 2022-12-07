@@ -1,0 +1,358 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>nori path tracing | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>nori path tracing</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2022/12/05</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#assignment2-raytracing-acceleration-data-structure>assignment2: raytracing acceleration data structure</a>
+<ul>
+<li><a href=#八叉树的构建流程>八叉树的构建流程</a></li>
+<li><a href=#八叉树的遍历流程>八叉树的遍历流程</a></li>
+</ul>
+</li>
+<li><a href=#assignment3mc-sampling-and-ao>assignment3：MC sampling and AO</a>
+<ul>
+<li><a href=#mc-sampling>MC sampling</a></li>
+<li><a href=#ao>AO</a></li>
+<li><a href=#hierarchical-sample-warping>Hierarchical Sample Warping</a></li>
+</ul>
+</li>
+<li><a href=#assignment4white-style-ray-tracing>assignment4：white style ray tracing</a>
+<ul>
+<li><a href=#area-light-sampling>area light sampling</a></li>
+<li><a href=#direct-distribution-ray-tracing>Direct Distribution Ray Tracing</a></li>
+<li><a href=#dielectrics-material>Dielectrics material</a></li>
+<li><a href=#whitted-style-ray-tracing>Whitted-style ray tracing</a></li>
+</ul>
+</li>
+<li><a href=#assignment-5-path-tracing-microfacet-models-and-multiple-importance-sampling>Assignment 5: Path Tracing, Microfacet Models, and Multiple Importance Sampling</a>
+<ul>
+<li><a href=#microfacet-brdf>Microfacet BRDF</a></li>
+<li><a href=#brute-force-path-tracer>Brute force path tracer</a></li>
+<li><a href=#path-tracer-with-next-event-estimation>Path tracer with next event estimation</a></li>
+<li><a href=#path-tracer-with-multiple-importance-sampling>Path tracer with Multiple Importance Sampling</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+<main>
+<p>这篇文章主要记录学习<a href=https://github.com/wjakob/nori>nori</a>完成离线渲染时，所学到的一些坑点以及总结；</p>
+<h2 id=assignment2-raytracing-acceleration-data-structure>assignment2: raytracing acceleration data structure</h2>
+<p>加速结构是光线追踪算法的基础，对于拥有大量三角形的场景，使用加速结构可以显著提升渲染效率；</p>
+<p>作业使用了八叉树作为空间加速结构；</p>
+<p>单个mesh的八叉树化：八叉树的叶子节点存储该节点所覆盖的三角形的索引；</p>
+<p>多个mesh的八叉树化，需要在叶子节点中存储该节点所覆盖的mesh的索引，以及各个mesh下该节点所覆盖的三角形的索引；（这里是一个比较开放的做法，我为了图方便，在物体不多的情况下，采用将每个物体八叉树化的方法来加速）</p>
+<h3 id=八叉树的构建流程>八叉树的构建流程</h3>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>Node <span style=color:#f92672>*</span><span style=color:#a6e22e>build</span>(bounding box, triangles) {
+    <span style=color:#66d9ef>if</span> (no triangles)
+        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nullptr</span>;
+
+    <span style=color:#66d9ef>if</span> (only few triangles)
+        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>new</span> leaf node with triangles;
+
+    triangle_list list[<span style=color:#ae81ff>8</span>];
+
+    <span style=color:#66d9ef>for</span> (every triangle) {
+        <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>8</span>; <span style=color:#f92672>++</span>i) {
+            <span style=color:#66d9ef>if</span> (triangle overlaps sub<span style=color:#f92672>-</span>node i)
+                add to list[i];
+        }
+    }
+
+    Node <span style=color:#f92672>*</span>node <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Node();
+    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>8</span>; <span style=color:#f92672>++</span>i)
+        node.child[i] <span style=color:#f92672>=</span> build(bounding box of sub<span style=color:#f92672>-</span>node i, list[i]);
+    <span style=color:#66d9ef>return</span> node;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=八叉树的遍历流程>八叉树的遍历流程</h3>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 使用栈来完成深度优先的节点遍历
+</span><span style=color:#75715e></span>stack nodeStack;
+nodeStack.push(root);
+
+<span style=color:#66d9ef>bool</span> haveIntersect <span style=color:#f92672>=</span> false;
+<span style=color:#66d9ef>while</span> (<span style=color:#f92672>!</span>nodeStack.empty())
+{
+    Node <span style=color:#f92672>*</span>node <span style=color:#f92672>=</span> nodeStack.top();
+    nodeStack.pop();
+
+    <span style=color:#66d9ef>float</span> boxNear <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.0f</span>;
+    <span style=color:#66d9ef>float</span> boxFar <span style=color:#f92672>=</span> <span style=color:#ae81ff>0.0f</span>;
+    <span style=color:#66d9ef>if</span> (node<span style=color:#f92672>-&gt;</span>m_bbox.rayIntersect(ray, boxNear, boxFar))
+    {
+        <span style=color:#75715e>// 丢弃被遮挡的节点
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>if</span> (boxNear <span style=color:#f92672>&gt;</span> t <span style=color:#f92672>&amp;&amp;</span> haveIntersect)
+            <span style=color:#66d9ef>continue</span>;
+
+        <span style=color:#75715e>// 叶子节点下三角形遍历
+</span><span style=color:#75715e></span>        <span style=color:#66d9ef>if</span> (node<span style=color:#f92672>-&gt;</span>m_isLeaf)
+        {
+            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> node.faceNum; <span style=color:#f92672>++</span>idx)
+            {
+                mesh<span style=color:#f92672>-&gt;</span>rayIntersect(node<span style=color:#f92672>-&gt;</span>faces[i], t)
+            }
+        }
+        <span style=color:#66d9ef>else</span>
+        {
+            <span style=color:#75715e>// 存储八个子节点的id，以及对应射线的最近相交长度
+</span><span style=color:#75715e></span>            array<span style=color:#f92672>&lt;</span>pair<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span>, <span style=color:#66d9ef>float</span><span style=color:#f92672>&gt;</span>, <span style=color:#ae81ff>8</span><span style=color:#f92672>&gt;</span> idSorts;
+
+            <span style=color:#75715e>// 按照长度从远到近排序
+</span><span style=color:#75715e></span>            sort(idSorts.begin(), idSorts.end());
+
+            <span style=color:#75715e>// 按照之前的排序，使用排序后索引完成从远到近入栈
+</span><span style=color:#75715e></span>            <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>int</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>8</span>; i<span style=color:#f92672>++</span>)
+            {
+                <span style=color:#66d9ef>int</span> sortId <span style=color:#f92672>=</span> idSorts[i].first;
+                nodeStack.push(node<span style=color:#f92672>-&gt;</span>m_childNodes[sortId]);
+            }
+        }
+    }
+}
+</code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p>hack point中提到了使用并行化来加速octree的构建，从而可以实时完成动态场景的八叉树化</p>
+</blockquote>
+<h2 id=assignment3mc-sampling-and-ao>assignment3：MC sampling and AO</h2>
+<h3 id=mc-sampling>MC sampling</h3>
+<p>MC sampling中最重要的基础为重要性采样，针对不同的函数采用不用的采样分布；</p>
+<p>这里介绍了一维下从均匀分布采样变换到指定函数分布采样的通用方法；即：</p>
+<ol>
+<li>先计算当前函数PDF的CDF；</li>
+<li>然后再计算其反函数，即$CDF^-1(\xi)$由CDF得到原来的变量x;</li>
+<li>然后在0-1范围内进行$\xi$的均匀分布采样；</li>
+<li>由反函数计算出X即可为符合PDF的采样；</li>
+</ol>
+<p>二维下的采样变换可参考<a href=https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations>2D Sampling with Multidimensional Transformations</a></p>
+<p>根据以上步骤，需要实现的采样分布有：</p>
+<ol>
+<li>tent 分布</li>
+<li>uniform disk 分布</li>
+<li>uniform sphere 分布</li>
+<li>uniform hemisphere 分布</li>
+<li>cosine hemisphere 分布</li>
+<li>beckmann 分布</li>
+</ol>
+<blockquote>
+<p>beckmann分布、ggx分布、phong分布的采样变换可以直接参考论文<a href=https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html>Microfacet Models for Refraction through Rough Surfaces
+</a></p>
+</blockquote>
+<p>作业比较好的地方在于，其提供了假设检验功能，来验证我们变换后的采样分布是否与期望的函数分布一致，关于假设检验的介绍可以参考<a href=https://www.cnblogs.com/huzihu/p/9692828.html>假设检验（Hypothesis Testing）</a>、<a href=https://bookdown.org/hezhijian/book/test.html#section-64>第 3 章 假设检验</a></p>
+<h3 id=ao>AO</h3>
+<p>AO使用亮度为1的环境光照射albedo为1的diffuse物体，得到结果就是我们想要的AO；</p>
+<p>计算方法为：</p>
+<ol>
+<li>视线与模型相交计算，获取相交点；</li>
+<li>在相交点处，沿法线方向，使用cosine hemisphere 分布发射反射光线；</li>
+<li>反射光线被模型遮挡则返回结果0，未遮挡则返回结果1；</li>
+<li>将所有射线结果处以对应pdf后，取其平均数，即为最终结果；</li>
+</ol>
+<h3 id=hierarchical-sample-warping>Hierarchical Sample Warping</h3>
+<p>当我们使用IBL来照射场景物体时，需要采样IBL来进行光照计算，可参考<a href=https://pbr-book.org/3ed-2018/Light_Sources/Infinite_Area_Lights>Infinite Area Lights</a>；</p>
+<p>问题在于IBL上的亮度分布是不均匀的，亮度较大的像素会贡献更大的光照结果；因此根据IBL的亮度分布来进行重要性采样，能加快收敛速度，避免噪点的产生；</p>
+<p>构建步骤为：</p>
+<ol>
+<li>input：一张（mxm）的IBL图片，均匀分布的2D采样；</li>
+<li>计算IBL整个像素亮度，并进行归一化，得到normalized IBL；</li>
+<li>计算normalized IBL的mipmap；</li>
+<li>针对最高的mip（2x2px），计算上两个像素亮度和、下两个像素亮度和，以及上下亮度和的比值；</li>
+<li>根据上下亮度和比值，来warp当前采样；</li>
+<li>分别针对上下两像素的左右两边，继续warp当前采样；</li>
+<li>持续以上过程，针对每个像素的下个mip对应的（2x2px）进行warp，直到抵达最低mip；</li>
+<li>output：得到符合像素亮度分布的采样，并且复杂度为$O(log(m))$</li>
+</ol>
+<p><img src=hsw.png alt></p>
+<h2 id=assignment4white-style-ray-tracing>assignment4：white style ray tracing</h2>
+<h3 id=area-light-sampling>area light sampling</h3>
+<p>需要注意的是，这里的area light一般指的是diffuse area light，即模型上的一个点，会向半球平面上均匀发射光线，可参考<a href=https://pbr-book.org/3ed-2018/Light_Sources/Area_Lights>Area Lights</a>；</p>
+<p>模型上均匀采样的步骤：</p>
+<ol>
+<li>计算模型各个三角形面积，并进行归一化；</li>
+<li>使用1D的采样分布，根据离散pdf的采样方法，进行三角形的选取；</li>
+<li>使用2D的采样分布，在选取的三角形上进行随机采样；</li>
+</ol>
+<h3 id=direct-distribution-ray-tracing>Direct Distribution Ray Tracing</h3>
+<p>这一步主要进行diffuse材质下，直接光照的计算；</p>
+<p>需要注意的要点有两个：</p>
+<ol>
+<li>光照直接采样面光源进行计算，并不会根据材质的brdf进行采样；</li>
+<li>积分仍然是针对相交点进行半球积分，但由于我们是在面光源上进行采样计算，因此需要进行相应的微分变换，从相交点的半球积分转换为面光源上的面积分；对应的变换可参考<a href=https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources#SamplingShapes>Sampling Light Sources</a></li>
+</ol>
+<h3 id=dielectrics-material>Dielectrics material</h3>
+<p>这一类的材质包含了绝对反射与折射，其相关的采样理论课参考<a href=https://www.pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Reflection_Functions#SpecularReflectionandTransmission>SpecularReflectionandTransmission</a>；</p>
+<p>采样这类材质时，有两点要注意：</p>
+<ol>
+<li>需要根据菲涅尔方程，计算反射所占的比例，然后根据此比例来决定当前射线应该反射还是折射；</li>
+<li>需要根据相对折射率，计算反射、以及折射的方向；计算折射方向时，需要考虑入射光线与法线的夹角，判断入射光线实在介质内还是介质外；</li>
+</ol>
+<h3 id=whitted-style-ray-tracing>Whitted-style ray tracing</h3>
+<p>结合以上各种，开始进行white ray tracing；</p>
+<p>简单来讲，就是：</p>
+<ol>
+<li>对于diffuse材质，仍然只进行direct light的计算；</li>
+<li>对于Dielectrics、mirror材质，进行反射或折射的递归；</li>
+<li>对于emiter，需要返回emission的值；</li>
+<li>使用Russian roulette来进行递归的终止；</li>
+</ol>
+<h2 id=assignment-5-path-tracing-microfacet-models-and-multiple-importance-sampling>Assignment 5: Path Tracing, Microfacet Models, and Multiple Importance Sampling</h2>
+<h3 id=microfacet-brdf>Microfacet BRDF</h3>
+<p>在assignment4中，Direct Distribution Ray Tracing中针对diffuse材质，采样光源来进行光照的计算；而这里将针对microfacet材质，采样相应的brdf进行光照的计算，详情可参考<a href=https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Reflection_Functions>Sampling Reflection Functions</a>；</p>
+<p>microfacet材质分为diffuse、specular两部分；采样时的步骤有一下部分：</p>
+<ol>
+<li>首先针对diffuse与specular的占比，确定当前采样为diffuse还是specular；</li>
+<li>如果是diffuse，则采用cosine hemisphere 分布进行采样；</li>
+<li>如果是specular，则针对specular中的<strong>D项与cos vh的乘积</strong>进行vh的采样；</li>
+<li>如果vh与入射光线并不同向，需要将vh进行反向，使得vh与入射光线同向；</li>
+</ol>
+<blockquote>
+<p>值得注意的是，计算wo的pdf与计算wh的pdf是有区别的，两者之间的变换需要考虑Jacobian矩阵的影响；</p>
+</blockquote>
+<h3 id=brute-force-path-tracer>Brute force path tracer</h3>
+<p>暴力光线追踪是最容易理解、最直观的光线追踪算法，其直接体现了光照传输方程的代码化；其基本过程为：</p>
+<ol>
+<li>对于所有材质，无论是diffuse材质，还是Dielectrics、mirror材质，都针对其brdf分布采样出射光线；</li>
+<li>每一次相交，光照结果都为：emission（非光源则为0）+brdf*（下一次递归结果）*cos/pdf；</li>
+<li>使用Russian roulette来进行递归的终止；</li>
+<li>使用迭代来代替递归，从而加速tracing过程；</li>
+</ol>
+<h3 id=path-tracer-with-next-event-estimation>Path tracer with next event estimation</h3>
+<p>暴力追踪由于不容易命中光源，会导致光照结果产生大量的噪点，解决思路就是主动去采样光源来计算光照；next event estimation将光照进行了分离，将直接光照与间接光照分开进行了计算；直接光照的计算则会主动采样光源；</p>
+<p>其过程如下：</p>
+<ol>
+<li>每一次相交，会直接采样光源，从而计算当前交点下的直接光照；而间接光照才会采样交点brdf的分布，进行下一次追踪；因此每一次相交的光照结果为：直接光照结果（采样光源计算）+brdf*（下一次递归结果）*cos/pdf；</li>
+<li>如果间接光照的射线与光源相交，则不需要添加光源的emission，因为间接光照之外的直接光照已经考虑了光源的影响；</li>
+<li>使用Russian roulette来进行递归的终止；</li>
+<li>使用迭代来代替递归，从而加速tracing过程；</li>
+</ol>
+<h3 id=path-tracer-with-multiple-importance-sampling>Path tracer with Multiple Importance Sampling</h3>
+<p>next event estimation遇到的问题是，当相交点材质粗糙度偏低，光源面积偏大时，从光源上采样的点不容易落到相交点对应的lobe内，从未产生大量无效采样；</p>
+<p>Multiple Importance Sampling会综合考虑brdf采样与光源采样的影响；通过对两者的采样结果进行加权平均，来综合两者所带来的优势，具体可参考<a href=https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling#MultipleImportanceSampling>MultipleImportanceSampling</a>；总体过程如下；</p>
+<ol>
+<li>每一次相交，会直接采样光源，从而计算当前交点下的直接光照，此外还会根据pdf_light、pdf_brdf计算采样光源的权制；而间接光照才会采样交点brdf的分布，进行下一次追踪；因此每一次相交的光照结果为：直接光照结果（采样光源计算）+brdf*（下一次递归结果）*cos/pdf；</li>
+<li>如果间接光照的射线与光源相交，则需要根据pdf_light、pdf_brdf计算采样brdf的权制；</li>
+<li>使用Russian roulette来进行递归的终止；</li>
+<li>使用迭代来代替递归，从而加速tracing过程；</li>
+</ol>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
