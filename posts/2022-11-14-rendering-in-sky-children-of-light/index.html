@@ -1,0 +1,364 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Rendering in sky children of light | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>Rendering in sky children of light</span></h2>
+<h3 class=date>2022/11/14</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#copyclear-pass>Copy/Clear Pass</a></li>
+<li><a href=#pass-1-2-targets>Pass 1 (2 Targets)</a></li>
+<li><a href=#pass-2-1-targets--depth>Pass 2 (1 Targets + Depth)</a>
+<ul>
+<li><a href=#地表场景的特殊处理>地表场景的特殊处理</a></li>
+</ul>
+</li>
+<li><a href=#pass-3-1-targets>Pass 3 (1 Targets)</a></li>
+<li><a href=#pass-4-1-targets>Pass 4 (1 Targets)</a></li>
+<li><a href=#pass-5-1-targets>Pass 5 (1 Targets)</a></li>
+<li><a href=#pass-6-1-targets--depth>Pass 6 (1 Targets + Depth)</a></li>
+<li><a href=#pass-7-2-targets--depth>Pass 7 (2 Targets + Depth)</a>
+<ul>
+<li><a href=#草的绘制>草的绘制</a></li>
+</ul>
+</li>
+<li><a href=#color-pass1-target--depth>Color pass（1 target + depth）</a>
+<ul>
+<li><a href=#云的渲染>云的渲染</a></li>
+<li><a href=#水的渲染>水的渲染</a></li>
+</ul>
+</li>
+<li><a href=#color-pass2-targets--depth>Color pass（2 targets + depth）</a>
+<ul>
+<li><a href=#全屏深度合成big-triangle>全屏深度合成（big triangle）：</a></li>
+<li><a href=#草的渲染>草的渲染</a></li>
+</ul>
+</li>
+<li><a href=#color-pass1-target>Color pass（1 target）</a>
+<ul>
+<li><a href=#体积光>体积光</a></li>
+</ul>
+</li>
+<li><a href=#color-pass1-target-1>Color pass（1 target）</a>
+<ul>
+<li><a href=#合成最终图像>合成最终图像</a></li>
+</ul>
+</li>
+<li><a href=#color-pass1-target--depth-1>Color pass（1 target + depth）</a>
+<ul>
+<li><a href=#深度拷贝并计算motion-vector>深度拷贝并计算motion vector</a></li>
+<li><a href=#动态物体深度及motion-vector>动态物体深度及motion vector</a></li>
+</ul>
+</li>
+<li><a href=#color-pass1-target-2>Color pass（1 target）</a>
+<ul>
+<li><a href=#深度预处理>深度预处理</a></li>
+</ul>
+</li>
+<li><a href=#color-pass1-target-3>Color pass（1 target）</a>
+<ul>
+<li><a href=#taa>taa</a></li>
+</ul>
+</li>
+<li><a href=#color-pass1-target-4>Color pass（1 target）</a>
+<ul>
+<li><a href=#空间切换>空间切换</a></li>
+</ul>
+</li>
+<li><a href=#一系列color-pass1-target>一系列Color pass（1 target）</a></li>
+<li><a href=#最终color-pass1-target>最终Color pass（1 target）</a>
+<ul>
+<li><a href=#贴图合成>贴图合成</a></li>
+<li><a href=#ui绘制>ui绘制</a></li>
+</ul>
+</li>
+<li><a href=#color-pass1-target-5>Color pass（1 target）</a>
+<ul>
+<li><a href=#自爆光处理>自爆光处理</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+<main>
+<p>光遇渲染效果截帧分析，抓帧使用的一加手机pro7，屏幕分辨率为3120x1440 ；这里做一个粗略的渲染分析，细节上需要慢慢研究；</p>
+<h2 id=copyclear-pass>Copy/Clear Pass</h2>
+<p>一些Copy buffer to image：
+一个2d array的天空盒iamge</p>
+<p><img src=skybox.png alt></p>
+<p>两张light image，用于tiled lighting以及tiled shadow；光遇里面阴影没有使用shadowmap之类的，使用的应该是capsule shadow之类的；</p>
+<p><img src=wind0.png alt>
+<img src=wind1.png alt></p>
+<p>一张未知的image</p>
+<p><img src=unknown0.png alt></p>
+<p>一张用来最后渲染至屏幕时，控制镜头畸变的程度(中间拉伸，两边挤压)；此图的rg通道是有微弱渐变的；
+<img src=unknown1.png alt></p>
+<h2 id=pass-1-2-targets>Pass 1 (2 Targets)</h2>
+<p>rt1用于存储角色移动轨迹，用于沙地的渲染，
+rt2用于存储角色移动产生的浅波法线轨迹，用于草地与水面的渲染；
+两张rt的格式都为R16G16B16A16_FLOAT，分辨率都为256x256；</p>
+<p><img src=trail.png alt></p>
+<h2 id=pass-2-1-targets--depth>Pass 2 (1 Targets + Depth)</h2>
+<p>rt分辨率为1200x552，格式为R11G11B10_FLOAT与D32；</p>
+<p>用于不透场景以及角色的渲染，DrawIndexed指令与DrawIndexedIndirect混用，没有看到instancing的使用，像蜡烛这些应该可以使用instancing来进行优化；</p>
+<p>首先使用一个indirect draw完成predepth的绘制，绘制内容为场景大块物体；</p>
+<p><img src=predepth.png alt></p>
+<p>随后开始正常绘制，首先是角色及部分其他物体的绘制；</p>
+<p><img src=character.png alt></p>
+<p>然后是地表场景的绘制；</p>
+<p><img src=scene.png alt></p>
+<h3 id=地表场景的特殊处理>地表场景的特殊处理</h3>
+<ol>
+<li>不同材质以不同pass不同mesh来绘制</li>
+<li>材质以blend的形式去绘制，在材质重叠处进行混合处理</li>
+<li>利用前面的predepth来保证没有错误blend效果</li>
+<li>weight mask存储在mesh的顶点色中</li>
+</ol>
+<p>石头材质的绘制</p>
+<p><img src=stone.png alt></p>
+<p>贴图不多，主要是石头法线贴图的tiling</p>
+<p><img src=stonenormal.png alt></p>
+<p>沙材质的绘制</p>
+<p><img src=sand.png alt></p>
+<p>沙的模型</p>
+<p><img src=sandmesh.png alt></p>
+<p>模型里所自带的weight mask</p>
+<p><img src=weight.png alt></p>
+<p>草的绘制</p>
+<p><img src=grass.png alt></p>
+<p>地表场景基本没有手绘颜色贴图，都是一些细节noise贴图，保证了整体细节的精细度与可控性；沙的做法可以直接参考journey的分享；</p>
+<h2 id=pass-3-1-targets>Pass 3 (1 Targets)</h2>
+<p>rt分辨率为300x138，格式为R32_FLOAT；</p>
+<p>此pass使用上一个pass得到的深度图，来得到低分辨的深度图；</p>
+<p><img src=lowdepth.png alt></p>
+<h2 id=pass-4-1-targets>Pass 4 (1 Targets)</h2>
+<p>rt分辨率为150x69，格式为R32_FLOAT；</p>
+<p>此pass使用上一个pass得到的低分辨率场景深度图，以及一些云的3d sdf，来生成低分辨写云模型的深度图；</p>
+<p>此时的云模型深度图并不精确，更加靠近相机，为了提高raymatching的效率，而进行的更低分辨率的pre rematching；</p>
+<p><img src=clouddepth0.png alt></p>
+<p>使用的输入图：</p>
+<p><img src=cloud0.png alt>
+<img src=cloud1.png alt>
+<img src=cloud2.png alt>
+<img src=cloud3.png alt></p>
+<h2 id=pass-5-1-targets>Pass 5 (1 Targets)</h2>
+<p>rt分辨率为300x128，格式为R32_FLOAT；</p>
+<p>此pass使用上上一个pass得到的低分辨率场景深度图，以及上一个pass的低分辨率云层深度，还有一些云的3d sdf，来生成当前分辨率云模型的深度图；</p>
+<p>当前分辨率的深度图用于后面云渲染时使用；</p>
+<p><img src=clouddepth1.png alt></p>
+<h2 id=pass-6-1-targets--depth>Pass 6 (1 Targets + Depth)</h2>
+<p>rt分辨率为600x276，格式为R16G16B6A16_FLOAT与D32；</p>
+<p>此pass进行真正的云彩渲染；</p>
+<p>输入贴图为：</p>
+<p>角色轨迹图</p>
+<p><img src=trail.png alt></p>
+<p>云的建模及noise图</p>
+<p><img src=cloud0.png alt>
+<img src=cloud4.png alt>
+<img src=cloud5.png alt>
+<img src=cloud6.png alt>
+<img src=cloud7.png alt>
+<img src=cloud1.png alt>
+<img src=cloud2.png alt>
+<img src=cloud3.png alt></p>
+<p>场景深度图以及云深度图</p>
+<p><img src=lowdepth.png alt>
+<img src=clouddepth1.png alt></p>
+<p>最终的输出为：</p>
+<p><img src=cloudexport.png alt></p>
+<h2 id=pass-7-2-targets--depth>Pass 7 (2 Targets + Depth)</h2>
+<p>rt分辨率为1200x552，格式为R11G11B10_FLOAT、R16G16B6A16_FLOAT与D32；</p>
+<p>此pass主要进行半透物体的渲染，如草，烛火，飞行轨迹等；</p>
+<p>在渲染前，首先使用云的深度，地表场景的深度合成整个场景的深度，并写入depth；</p>
+<h3 id=草的绘制>草的绘制</h3>
+<p>草的绘制使用的是vkCmdDraw指令，但是拓扑使用的是point list；</p>
+<p><img src=grassvert0.png alt></p>
+<p>草的颜色存储在顶点色里面，有明显视锥剔除的痕迹；</p>
+<p><img src=grassvert1.png alt></p>
+<p>有点像untiy地形系统或者粒子体统的的做法，但是这个草的量也太大了；</p>
+<hr>
+<p><strong>下面为低分辨率下，遇境的抓帧分析；</strong></p>
+<h2 id=color-pass1-target--depth>Color pass（1 target + depth）</h2>
+<p>云跟水以低分辨率渲染到同一个rt上，同时会写入对应的深度信息；
+目标贴图为512*236的color与depth，格式为R16G16B16A16_FLOAT与D32</p>
+<h3 id=云的渲染>云的渲染</h3>
+<p>以全屏的方式渲染，使用的rt有3张：
+一张如下：
+<img src=image1.png alt>
+一张低分辨率深度图
+<img src=image2.png alt>
+一张低分辨率云深度图
+<img src=image3.png alt>
+其他贴图分别如下，基本上都是3d贴图，有noise贴图，有3d filed贴图：
+<img src=image4.png alt>
+<img src=image5.png alt>
+<img src=image6.png alt>
+<img src=image7.png alt>
+<img src=image8.png alt>
+<img src=image9.png alt></p>
+<p><img src=image10.png alt></p>
+<p><img src=image11.png alt></p>
+<h3 id=水的渲染>水的渲染</h3>
+<p>Mesh：27360个顶点，以视锥体对齐的方式来渲染，有两个插槽，一个是position另一个不确定；
+<img src=image12.png alt>
+<img src=image13.png alt>
+<img src=image14.png alt>
+贴图：
+纯黑透明rt，暂不确定用途（应该是用于动态的浅波方程计算）；
+<img src=image15.png alt>
+带有dither信息的cubemap贴图，用于远处水面反射；
+<img src=image16.png alt>
+两张用于forward+计算的光照信息图；
+<img src=image17.png alt>
+<img src=image18.png alt>
+法线贴图；
+<img src=image19.png alt>
+屏幕颜色rt，用于近处水面反射，使用raymatching获取；
+<img src=image20.png alt>
+两张不同分辨率与格式的深度rt；
+<img src=image21.png alt>
+<img src=image22.png alt></p>
+<h2 id=color-pass2-targets--depth>Color pass（2 targets + depth）</h2>
+<p>目标贴图为1024*472的color与depth，格式为R11G11B10_FLOAT、R16G16B16A16_FLOAT与D32;</p>
+<p>这个pass渲染都是半透的问题，第二个rt基本上都是作为mask来使用的，如下图所示，不知为何格式这么浪费；</p>
+<p><img src=image31.png alt></p>
+<h3 id=全屏深度合成big-triangle>全屏深度合成（big triangle）：</h3>
+<p>将前面云、水的深度与场景不透物体的深度进行合成写入：
+输入rt：
+<img src=image23.png alt>
+<img src=image24.png alt>
+输出rt：
+<img src=image25.png alt></p>
+<h3 id=草的渲染>草的渲染</h3>
+<p>mesh输入：
+拓扑直接使用point list，以point的形式来显示；避免使用更多的mesh；
+<img src=image26.png alt>
+草的culling肯定是做了的view culling很明显
+<img src=image27.png alt>
+总共使用三张图
+交互的波动图，vs使用
+<img src=image28.png alt>
+风吹动的噪音图，vs使用
+<img src=image29.png alt>
+草的形状贴图
+<img src=image30.png alt></p>
+<h2 id=color-pass1-target>Color pass（1 target）</h2>
+<h3 id=体积光>体积光</h3>
+<p>目标贴图为512*236，格式为R16_FLOAT，无depth；用于渲染体积光;</p>
+<p>mesh为</p>
+<p><img src=image32.png alt>
+<img src=image33.png alt></p>
+<p>输入贴图为</p>
+<p><img src=image34.png alt>
+<img src=image35.png alt></p>
+<p>输出贴图为</p>
+<p><img src=image36.png alt></p>
+<h2 id=color-pass1-target-1>Color pass（1 target）</h2>
+<h3 id=合成最终图像>合成最终图像</h3>
+<p>目标贴图为1024*472的color，格式为R16G16B16A16_FLOAT;
+输出贴图为下图，应该为了更好的利用精度，将颜色映射到了0-1范围；合成时还会考虑自爆光的影响；</p>
+<p><img src=image37.png alt></p>
+<p>输入图为：</p>
+<p>第一张图用来渲染天空时使用；</p>
+<p><img src=image38.png alt>
+<img src=image39.png alt>
+<img src=image40.png alt>
+<img src=image41.png alt>
+<img src=image42.png alt>
+<img src=image43.png alt>
+<img src=image44.png alt>
+<img src=image45.png alt></p>
+<h2 id=color-pass1-target--depth-1>Color pass（1 target + depth）</h2>
+<h3 id=深度拷贝并计算motion-vector>深度拷贝并计算motion vector</h3>
+<p>目标贴图为512*236的color与depth，格式为R16G16B16A16_FLOAT与D32;</p>
+<p>此时合成的静态场景的深度以及云、水的深度；</p>
+<p>贴图输入为：</p>
+<p>第一张贴图应该为静态场景的深度信息；
+<img src=image46.png alt>
+<img src=image47.png alt>
+<img src=image48.png alt></p>
+<p>输出贴图b通道为主，有微弱的rg通道，推测rg为motion vector，b为depth；</p>
+<p><img src=image49.png alt></p>
+<h3 id=动态物体深度及motion-vector>动态物体深度及motion vector</h3>
+<p>绘制白鸟以及角色的深度信息；角色的vs需要考虑贴图扰动的影响；</p>
+<h2 id=color-pass1-target-2>Color pass（1 target）</h2>
+<h3 id=深度预处理>深度预处理</h3>
+<p>目标贴图为512*236的color，格式为R16G16_FLOAT;</p>
+<p>此时合成的静态场景的深度以及云、水的深度；</p>
+<p>贴图输入为上一pass的输出；</p>
+<p>贴图输出为深度预处理后的motion vector，用于taa，可参考inside的做法；如下图：</p>
+<p><img src=image51.png alt></p>
+<h2 id=color-pass1-target-3>Color pass（1 target）</h2>
+<h3 id=taa>taa</h3>
+<p>目标贴图为1024*472的color，格式为R16G16B16A16_FLOAT;</p>
+<p>与inside做法基本一致，输入贴图为：motion vector + 当前渲染图 + 上一帧taa输出；</p>
+<p><img src=image52.png alt></p>
+<p>输出为正常的taa后结果；</p>
+<h2 id=color-pass1-target-4>Color pass（1 target）</h2>
+<h3 id=空间切换>空间切换</h3>
+<p>目标贴图为512*236的color，格式为R16G16B16A16_FLOAT;</p>
+<p>将taa后的贴图转换为正常颜色空间；输出贴图为下图；输出时还会在a通道存储动态物体的深度信息（云、人、白鸟），深度有取临近像素最近距离的处理；</p>
+<p><img src=image53.png alt></p>
+<h2 id=一系列color-pass1-target>一系列Color pass（1 target）</h2>
+<p>目标贴图格式为R11G11B10_FLOAT，用于pingpong pass 进行bloom；</p>
+<h2 id=最终color-pass1-target>最终Color pass（1 target）</h2>
+<h3 id=贴图合成>贴图合成</h3>
+<p>目标贴图为3120*1440的color，格式为R8G8B8A8_SRGB;</p>
+<p>输入贴图为：前面的bloom贴图、taa后贴图，空间转换后贴图，还有一未知贴图，如下图所示：</p>
+<p><img src=image54.png alt></p>
+<p>这里分辨率有一较大的分歧，需要仔细查看如何处理的；</p>
+<h3 id=ui绘制>ui绘制</h3>
+<p>随后以全分辨率绘制ui即可；</p>
+<h2 id=color-pass1-target-5>Color pass（1 target）</h2>
+<p>目标贴图为2x2的color，格式为R8G8B8A8_UNORM;</p>
+<h3 id=自爆光处理>自爆光处理</h3>
+<p>自爆光需要统计像素的亮度信息；这里统计的是空间转换后的贴图；
+输入贴图为：</p>
+<p><img src=image55.png alt></p>
+<p>输出贴图为：</p>
+<p><img src=image56.png alt></p>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
