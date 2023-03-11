@@ -262,7 +262,20 @@ nodeStack.push(root);
 <li>持续以上过程，针对每个像素的下个mip对应的（2x2px）进行warp，直到抵达最低mip；</li>
 <li>output：得到符合像素亮度分布的采样，并且复杂度为$O(log(m))$</li>
 </ol>
+<blockquote>
+<p>实际过程中有两个注意点：</p>
+<ol>
+<li>当使用IBL的亮度进行归一化时，亮度需要乘以IBL转为方向后的sinTheta；sinTheta的计算为<code>Float sinTheta = std::sin(Pi * Float(v + 0.5f) / Float(height));</code></li>
+<li>每个像素的pdf应该是IBL的区间为0-1情况下的分布，要避免像素分辨率所带来的影响；</li>
+</ol>
+</blockquote>
 <p><img src=hsw.png alt></p>
+<p>当使用IBL来进行光照时，需要将二维的IBL采样转换到着色点上的半球面分布，这一部分，具体可参考<a href=https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources#InfiniteAreaLights>Sample Infinite Area Lights</a>；最终得到的转换公式为：</p>
+<p>$$
+p(\omega) = \frac {p(u,v)} {2\pi ^2 sin\theta }
+$$</p>
+<p>最终得到的渲染效果图如下图所示：</p>
+<p><img src=ajax-rough.png alt></p>
 <h2 id=assignment4white-style-ray-tracing>assignment4：white style ray tracing</h2>
 <h3 id=area-light-sampling>area light sampling</h3>
 <p>需要注意的是，这里的area light一般指的是diffuse area light，即模型上的一个点，会向半球平面上均匀发射光线，可参考<a href=https://pbr-book.org/3ed-2018/Light_Sources/Area_Lights>Area Lights</a>；</p>
@@ -355,6 +368,8 @@ $$</p>
 </a>。</li>
 </ol>
 </blockquote>
+<p>最终得到的渲染效果图如下图所示：</p>
+<p><img src=veach_mis.png alt></p>
 </main>
 <div id=gitalk-container></div>
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
@@ -366,7 +381,7 @@ $$</p>
 <script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 <script defer src=//yihui.org/js/center-img.js></script>
 <hr>
-© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2022 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2023 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
 <div class=small-print>
 <small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
 |
