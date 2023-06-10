@@ -1,0 +1,159 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>physical based sun | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>physical based sun</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2023/06/10</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#前置理论知识>前置理论知识</a></li>
+<li><a href=#sun-disk实现>sun disk实现</a></li>
+<li><a href=#sun-light实现>sun light实现</a></li>
+<li><a href=#reference>Reference</a></li>
+</ul>
+</nav>
+<main>
+<p>unreal中基于物理的sun light使用，主要参考材质蓝图中<code>SkyAtmosphereLightDiskLuminance</code>节点以及<code>SkyAtmosphereLightIlluminance</code>节点的实现，代码在<code>MaterialTemplate.ush</code>中；</p>
+<h2 id=前置理论知识>前置理论知识</h2>
+<p>关于体渲染相关的理论知识可参考<a href=/content/posts/2022-08-12-physically_based_atmosphere_scattering/>文章</a>；</p>
+<h2 id=sun-disk实现>sun disk实现</h2>
+<p>知道了理论知识后，可知sundisk的luminance由太空中sundisk的luminance，乘以大气产生的transmittance得到，即：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>LightDiskLuminance <span style=color:#f92672>=</span> TransmittanceToLight <span style=color:#f92672>*</span> AtmosphereLightDiscLuminance;
+</code></pre></td></tr></table>
+</div>
+</div><p>如何得到太空中sundisk的luminance，如果直接使用directional light中经常设置的6lux，3.14lux，物理上就错了，lux是<strong>illuminance</strong>的物理量，并不是我们需要的<strong>luminance</strong>物理量，属于基于物理的大乌龙；</p>
+<p>在Unreal中实现代码如下：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// SkyAtmosphereRendering.cpp
+</span><span style=color:#75715e></span><span style=color:#66d9ef>static</span> FLinearColor <span style=color:#a6e22e>GetLightDiskLuminance</span>(FLightSceneInfo<span style=color:#f92672>&amp;</span> Light)
+{
+	
+	<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>float</span> SunSolidAngle <span style=color:#f92672>=</span> <span style=color:#ae81ff>2.0f</span> <span style=color:#f92672>*</span> PI <span style=color:#f92672>*</span> (<span style=color:#ae81ff>1.0f</span> <span style=color:#f92672>-</span> FMath<span style=color:#f92672>::</span>Cos(Light.Proxy<span style=color:#f92672>-&gt;</span>GetSunLightHalfApexAngleRadian()));			<span style=color:#75715e>// Solid angle from aperture https://en.wikipedia.org/wiki/Solid_angle 
+</span><span style=color:#75715e></span>	<span style=color:#66d9ef>return</span>  Light.Proxy<span style=color:#f92672>-&gt;</span>GetAtmosphereSunDiskColorScale() <span style=color:#f92672>*</span> Light.Proxy<span style=color:#f92672>-&gt;</span>GetOuterSpaceIlluminance() <span style=color:#f92672>/</span> SunSolidAngle;	<span style=color:#75715e>// approximation
+</span><span style=color:#75715e></span>}
+
+<span style=color:#66d9ef>void</span> <span style=color:#a6e22e>PrepareSunLightProxy</span>(<span style=color:#66d9ef>const</span> FSkyAtmosphereRenderSceneInfo<span style=color:#f92672>&amp;</span> SkyAtmosphere, uint32 AtmosphereLightIndex, FLightSceneInfo<span style=color:#f92672>&amp;</span> AtmosphereLight)
+{
+	<span style=color:#75715e>// See explanation in &#34;Physically Based Sky, Atmosphere	and Cloud Rendering in Frostbite&#34; page 26
+</span><span style=color:#75715e></span>	<span style=color:#66d9ef>const</span> FSkyAtmosphereSceneProxy<span style=color:#f92672>&amp;</span> SkyAtmosphereProxy <span style=color:#f92672>=</span> SkyAtmosphere.GetSkyAtmosphereSceneProxy();
+	<span style=color:#66d9ef>const</span> FVector AtmosphereLightDirection <span style=color:#f92672>=</span> SkyAtmosphereProxy.GetAtmosphereLightDirection(AtmosphereLightIndex, <span style=color:#f92672>-</span>AtmosphereLight.Proxy<span style=color:#f92672>-&gt;</span>GetDirection());
+	<span style=color:#66d9ef>const</span> FLinearColor TransmittanceTowardSun <span style=color:#f92672>=</span> SkyAtmosphereProxy.GetAtmosphereSetup().GetTransmittanceAtGroundLevel(AtmosphereLightDirection);
+
+	<span style=color:#66d9ef>const</span> FLinearColor SunDiskOuterSpaceLuminance <span style=color:#f92672>=</span> GetLightDiskLuminance(AtmosphereLight);
+
+	AtmosphereLight.Proxy<span style=color:#f92672>-&gt;</span>SetAtmosphereRelatedProperties(TransmittanceTowardSun, SunDiskOuterSpaceLuminance);
+}
+
+</code></pre></td></tr></table>
+</div>
+</div><p>其中Light.Proxy->GetOuterSpaceIlluminance()，即在编辑器里面设置的light color与intensity的乘积；illuminance除以太阳对应的solidangle，即可得到我们需要的luminance；</p>
+<blockquote>
+<p>注意：我们所设置的light color与intensity针对的是大气层表面太空的illuminance，不是地球表面的iluminance；</p>
+</blockquote>
+<h2 id=sun-light实现>sun light实现</h2>
+<p>由于太阳的光照需要考虑整个sun disk的影响，所以一般使用illuminance来控制太阳的亮度；同样，考虑大气的影响，地球表面的illuminance为：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>LightIlluminance <span style=color:#f92672>=</span> AtmosphereLightIlluminanceOuterSpace <span style=color:#f92672>*</span> TransmittanceToLight;
+</code></pre></td></tr></table>
+</div>
+</div><p>其中，AtmosphereLightIlluminanceOuterSpace即为编辑器里面设置的light color与intensity的乘积；最终得到的LightIlluminance，即为最终渲染方程中的L；</p>
+<p>值得注意的是，渲染方程为：</p>
+<p>$$
+L_o(l) = \int_H {L_i(l)f(l,v)cos\theta_l} {\rm d}\theta
+$$</p>
+<p>其中Li与Lo皆为luminance；而我们得到的是illuminance，是不能直接带入到方程的；</p>
+<p>但是sun disk对应的角度很小，可以认为f与cos为常数，那么方程可改写为：</p>
+<p>$$
+L_o(l) = f(l,v)cos\theta_l \int_H {L_i(l)} {\rm d}\theta
+$$</p>
+<p>其中</p>
+<p>$$
+\int_H {L_i(l)} {\rm d}\theta
+$$</p>
+<p>为luminance沿角度的积分，即为我们所得到的LightIlluminance；也即我们设置时所改变的物理量；同时也简化了渲染方程的计算；</p>
+<h2 id=reference>Reference</h2>
+<ol>
+<li><a href="https://eventhelix.com/embedded/byte-alignment-and-ordering/#:~:text=General%20Byte%20Alignment%20Rules%201%20Single%20byte%20numbers,%20total%20structure%20is%204%20bytes.%20More%20items">Byte alignment and ordering</a></li>
+<li><a href=https://stackoverflow.com/questions/381244/purpose-of-memory-alignment>Purpose of memory alignment</a></li>
+<li><a href=https://developer.ibm.com/articles/pa-dalign/>Data alignment: Straighten up and fly right</a></li>
+<li><a href=http://www.catb.org/esr/structure-packing/>The Lost Art of Structure Packing</a></li>
+</ol>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2023 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
