@@ -1,0 +1,199 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Fast Fluid Dynamics Simulation on the GPU | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title>Fast Fluid Dynamics Simulation on the GPU</span></h2>
+<h3 class=author>wingstone</h3>
+<h3 class=date>2026/02/24</h3>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#前置理论知识>前置理论知识</a>
+<ul>
+<li><a href=#ns方程介绍>NS方程介绍</a></li>
+<li><a href=#改写ns方程>改写NS方程</a></li>
+<li><a href=#迭代过程逐项分析>迭代过程逐项分析</a></li>
+<li><a href=#代码实现过程>代码实现过程</a></li>
+</ul>
+</li>
+<li><a href=#reference>Reference</a></li>
+</ul>
+</nav>
+<main>
+<p>归纳总结在gpu上试下流体模拟，主要总结gpu gems1上的一篇文章，在2d平面上模拟流体实现；</p>
+<h2 id=前置理论知识>前置理论知识</h2>
+<p>通常采用笛卡尔坐标系下的速度矢量场来描述流体，并且对流体进行各向同性、不可压缩物理假设，通过求解NS流体运动方程来进行速度场的解算；</p>
+<h3 id=ns方程介绍>NS方程介绍</h3>
+<p>流体微元的运动方程仍然遵守牛顿第二定律，即：</p>
+<p>$$
+F=ma
+$$</p>
+<p>转换为流体方程则是：</p>
+<p>$$
+\rho \frac{D \mathbf{u}}{D t} = \rho \left(\frac{\partial \mathbf{u}}{\partial t} + (\mathbf{u} \cdot \nabla) \mathbf{u}\right) = -\nabla p + \mu \nabla^2 \mathbf{u} + \rho \mathbf{f}
+$$</p>
+<p>该方程称之为NS方程，其中 $\rho$ 即为牛顿公式中的 $m$ ，括号中的和即为流体微元的加速度，等号右边即为流体微元所受的外力；</p>
+<p>将该方程写为计算常用形式，即为：</p>
+<p>$$
+\frac{\partial \mathbf{u}}{\partial t} = - (\mathbf{u} \cdot \nabla) \mathbf{u} -\frac{1}{\rho}\nabla p + \mu \nabla^2 \mathbf{u} + \mathbf{f}
+$$</p>
+<p>其中左侧即为速度对时间偏导，为流体微元的当地加速度，右侧第一项为对流项，该项描述了空间对速度的影响，该项描述了流体微元延速度进行空间传递的特性，第二项为压力项，对应流体微元的表面压力，第三项为粘性项，对应流体微元的表面剪切力，针对欧拉方程该项为0，第四项为外力项，对应流体微元的体积力，如重力；</p>
+<p>同时不可压缩流体虚满足散度为0的条件，即：</p>
+<p>$$
+\nabla \cdot \mathbf{u} = 0
+$$</p>
+<p>以上公式中用到的算子符号，其物理含义、展开形式与有限微分形式表示如下：</p>
+<p><img src=image.png alt=算子定义与有限微分形式></p>
+<h3 id=改写ns方程>改写NS方程</h3>
+<p>针对2d下的NS方程，需要求解速度 $\mathbf{u_x}$ 、 $\mathbf{u_y}$ 以及压力 $p$ 三个变量；</p>
+<p>直接求解此三项并不是很直观，可以引入Helmholtz-Hodge Decomposition来帮助求解；</p>
+<p>Helmholtz-Hodge Decomposition理论证明了一个矢量场可以分解为一个无散场与一个无旋场，切两场相互正交；</p>
+<p>刚好流体速度散度为0，压力的梯度的旋度为0，因此可以用一个新的矢量场来表示，如下：</p>
+<p>$$
+\mathbf{w} = \mathbf{u} + \nabla p
+$$</p>
+<p>由于流体速度散度为0，对上式应用散度计算可得：</p>
+<p>$$
+\nabla\mathbf{w} = \nabla^2 p
+$$</p>
+<p>$\nabla^2 x = b$ 形式的方程称之为泊松方程，很明显上式是一个泊松方程；</p>
+<p>将上式中的 $\nabla^2 p$ 采用离散数值替换后，求解 $P$ 就变成了求解一个大型数组，该方程就变成了 $Ax=b$ 的形式，刚好求解该方程可以使用计算方法中的Jacobi迭代法，该方法也便于使用GPU实现。</p>
+<p>我们知道矢量是可以分解与投影的，就初中学的向量分解；</p>
+<p>对 $\mathbf{w}$ 矢量场应用投影算子，投影至$\mathbf{u}$方向，可得：</p>
+<p>$$
+\mathbb{P}\mathbf{w} = \mathbb{P}\mathbf{u} + \mathbb{P}\left(\nabla p\right)
+$$</p>
+<p>根据Helmholtz-Hodge理论， $\mathbb{P}\mathbf{w} = \mathbb{P}\mathbf{u} = \mathbf{u}$ ，因此 $\mathbb{P}\left(\nabla p\right) = 0$ 。</p>
+<p>将该投影算子应用到NS方程上，可得</p>
+<p>$$
+\mathbb{P}\frac{\partial \mathbf{u}}{\partial t} = \mathbb{P}\left(- (\mathbf{u} \cdot \nabla) \mathbf{u} -\frac{1}{\rho}\nabla p + \mu \nabla^2 \mathbf{u} + \mathbf{f}\right)
+$$</p>
+<p>根据Helmholtz-Hodge理论，可得：</p>
+<p>$$
+\frac{\partial \mathbf{u}}{\partial t} = \mathbb{P}\left(- (\mathbf{u} \cdot \nabla) \mathbf{u} + \mu \nabla^2 \mathbf{u} + \mathbf{f}\right)
+$$</p>
+<p>最终上式就是我们最终所要应用的迭代公式，将上式中的对流项、扩散项、外力项分别用符号 $\mathbb{A}$、$\mathbb{D}$、$\mathbb{F}$ 来表示，最终的迭代方程可简写为：</p>
+<p>$$
+\mathbb{S} = \mathbb{P} \circ \mathbb{F} \circ \mathbb{D} \circ \mathbb{A}
+$$</p>
+<h3 id=迭代过程逐项分析>迭代过程逐项分析</h3>
+<p>假如知道了当前时刻的速度矢量场，如何计算 $\delta t$ 时间后的速度矢量场？</p>
+<h4 id=对流项>对流项</h4>
+<p>首先计算对流项的影响，其展开形式为：</p>
+<p>$$
+\frac{\partial \mathbf{u}}{\partial t} = -(\mathbf{u} \cdot \nabla) \mathbf{u} = -\mathbf{u_x}\frac{\partial \mathbf{u}}{\partial x} - \mathbf{u_y}\frac{\partial \mathbf{u}}{\partial y}
+$$</p>
+<p>将上式中等号右侧移到左侧可得：</p>
+<p>$$
+\frac{\partial \mathbf{u}}{\partial t} + (\mathbf{u} \cdot \nabla) \mathbf{u} = \frac{D \mathbf{u}}{D t} = 0
+$$</p>
+<p>此方程即为速度对时间的全导数，即拉格朗日视角下，速度的变化量为0。</p>
+<p>因此我们可以切换到拉格朗日时间下来计算，针对每一个流体微元，我们可以根据上一时刻，流动到当前微元的微元的速度来替换，即：</p>
+<p>$$
+\mathbf{u} \left( \mathbf{x}, t + \delta t \right) = \mathbf{u} \left( \mathbf{x} - \mathbf{u} \left(\mathbf{x}, t\right) \delta t, t\right)
+$$</p>
+<blockquote>
+<p>这中做法在CFD中称之为半拉格朗日法，实际上针对其他物理量的ns方程，这里速度就可以切换为其他物理量，如密度，温度等。</p>
+</blockquote>
+<h4 id=扩散项>扩散项</h4>
+<p>$$
+\frac{\partial \mathbf{u}}{\partial t} = \mu \nabla^2 \mathbf{u}
+$$</p>
+<p>从方程的形式能看出该方程为泊松方程，针对扩散项可以使用显式差分法直接带入进行计算，但为了数值稳定性，使用Jacobi迭代法可能是一个更好的选择，对应公式如下：</p>
+<p>$$
+x^{(k+1)}<em>{i,j} = \frac{x^{(k)}</em>{i-1,j} + x^{(k)}<em>{i+1,j} + x^{(k)}</em>{i,j-1} + x^{(k)}<em>{i,j+1} + \alpha b</em>{i,j}}{\beta}
+$$</p>
+<p>这里 $x$ 与 $b$ 都表示速度，但是 $b$ 表示上一环节（对流项）计算所得到的速度，$\alpha$ 为<code>dx * dx / (Viscosity * Timestep)</code>， $\beta$ 为 $4+\alpha$。</p>
+<h4 id=外力项>外力项</h4>
+<p>由于是2维空间上的计算，因此不用考虑体积力；常作为交互输入的外力控制，为了简单计算，可以直接修改流体速度的大小；</p>
+<h4 id=投影计算>投影计算</h4>
+<p>经过以上步骤会得到一个矢量场，该场其实就是 $\omega$，将该场进行投影后，即可获取最终我们需要的速度场。</p>
+<p>如何进行投影，实际上就是将该速度场，减去无旋场，即为我们索要获取的速度场；</p>
+<p>实际上是否需要进行投影计算，可以作为一个可选择项，在战神风力场的使用中，就关闭了投影计算。实际上，如果不需要保证流体的不可压缩性，可以不进行投影计算，这样会带来更好的性能。</p>
+<p>而无旋场如何获取，需要先计算 $\omega$ 的散度，随后应用Jacobi迭代法来接泊松公式计算散度对应的压力，再计算压力的梯度即为我们需要的无旋场。</p>
+<p>首先求解下式中的压力场：</p>
+<p>$$
+\nabla\mathbf{w} = \nabla^2 p
+$$</p>
+<p>使用Jacobi迭代法可得：</p>
+<p>$$
+x^{(k+1)}<em>{i,j} = \frac{x^{(k)}</em>{i-1,j} + x^{(k)}<em>{i+1,j} + x^{(k)}</em>{i,j-1} + x^{(k)}<em>{i,j+1} + \alpha b</em>{i,j}}{\beta}
+$$</p>
+<p>这里 $x$ 表示速度， $b$ 表示 $\nabla\mathbf{w}$ ，$\alpha$ 为<code>-dx * dx</code>， $\beta$ 为4。迭代以上方程即可求得 $p$。</p>
+<p>现在 $\omega$已知， $p$ 已知，代入下式即可得到我们要求的速度场。</p>
+<p>$$
+\mathbf{u} = \mathbf{w} - \nabla p
+$$</p>
+<h3 id=代码实现过程>代码实现过程</h3>
+<p>有了以上分析，便可得到代码实现过程为：</p>
+<div class=highlight><div style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>u <span style=color:#f92672>=</span> advect(u);
+u <span style=color:#f92672>=</span> diffuse(u);
+u <span style=color:#f92672>=</span> addForces(u);
+<span style=color:#75715e>// Now apply the projection operator to the result.
+</span><span style=color:#75715e></span>p <span style=color:#f92672>=</span> computePressure(u);
+u <span style=color:#f92672>=</span> subtractPressureGradient(u, p);
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=reference>Reference</h2>
+<ol>
+<li><a href=https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu>fast fluid dynamics simulation gpu</a></li>
+<li><a href=https://meatfighter.com/fluiddynamics/GPU_Gems_Chapter_38.pdf>fluiddynamics</a></li>
+<li><a href=https://www.sohu.com/a/616386858_115565>NS推导过程</a></li>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzUxNzE2NjM0MA==&mid=2247484915&idx=1&sn=73f0190c445f7157ddfcfaf4a2a6c731&chksm=f99d0198ceea888ef47567682d8e86679c30ff07eade4e79efc9ba148403f76e967865b1b3d1&token=1966566026&lang=zh_CN#rd">迭代法求解线性方程组</a></li>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzUxNzE2NjM0MA==&mid=2247484972&idx=1&sn=1285c1115aaecc5497315dd7cf047aa4&chksm=f99d0247ceea8b51c616838b1ebf2228a84d2b758753d3e90cb246eed808a97493bdd3103a93&token=1966566026&lang=zh_CN#rd">Jacobi迭代求解二维Possion方程实践</a></li>
+</ol>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2026 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
