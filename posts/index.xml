@@ -26,6 +26,6 @@ icon:github https://github.com/wingstone
 icon:zhihu https://www.zhihu.com/people/wu-zhu-32-40
 :::
 教育经历 :::left 浙江大学 - 流体力学（硕士） ::: :::right 2016.09 - 2019.04 :::
-研究生期间系统学习实时渲染与离线渲染，独立完成多项渲染算法与引擎实践：
-实时渲染
-基于区间 Z-buffer 算法实现软光栅化渲染器，支持完整的图形管线流程； 基于 Direct3D 11 自研 mini 渲染引擎，支持全屏后处理、屏幕字符显示、Shadow Map 等核心特性； 基于 Direct3D 9 实现 CPU/GPU 蒙皮与 CPU/GPU 顶点变形，对比分析性能差异； 基于 Direct3D 11 在 Pixel Shader 中通过 Ray Marching 实现体积云渲染； 基于 Unity 编写 PBR 材质 Shader，以及垂直雾、运动模糊等屏幕空间后处理效果。 离线渲染</description></item></channel></rss>
+研究生期间系统学习实时与离线渲染，独立完成多项算法与引擎实践：
+实时渲染：基于 Z-buffer 的软光栅化渲染器；用 D3D 自研引擎（后处理、字符显示、Shadow Map 等）；CPU/GPU 蒙皮与顶点变形；基于 Ray Marching 的体积云；Unity 实现 PBR Shader 及屏幕空间高度雾与 AO。 离线渲染：基于 C++ 实现 Monte Carlo 路径追踪渲染器，支持漫反射、理想反射与折射等材质模型。 :::left 东南大学 - 工程力学（本科） ::: :::right 2012.09 - 2016.07 :::
+大二期间作为负责人主持 SRTP 分形绘制软件项目，研究迭代法、元胞自动机、牛顿迭代法等分形算法的实现与可视化。</description></item></channel></rss>
