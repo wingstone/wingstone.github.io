@@ -1,0 +1,178 @@
+<!doctype html><html lang=en-us>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title> | wingstone's blog</title>
+<link rel=stylesheet href=/css/style.css>
+<link rel=stylesheet href=/css/fonts.css>
+<link rel=icon href=/icons/16.png>
+</head>
+<script async src=//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js></script>
+<body>
+<nav>
+<ul class=menu>
+<li><a href=/ class=menu-item>Home</a></li>
+<li><a href=/categories/ class=menu-item>Categories</a></li>
+<li><a href=/tags/ class=menu-item>Tags</a></li>
+<li><a href=/archives/ class=menu-item>Archives</a></li>
+<li><a href=/about/ class=menu-item>About</a></li>
+<li><a href=/index.xml class=menu-item>Subscribe</a></li>
+</ul>
+<hr>
+</nav>
+<div class=article-meta>
+<h2><span class=title></span></h2>
+<div>
+<span id=busuanzi_container_page_pv> 阅读量 <span id=busuanzi_value_page_pv></span> 次</span>
+</div>
+</div><h2>目录</h2>
+<nav id=TableOfContents>
+<ul>
+<li><a href=#快手科技-2023年1月--至今->快手科技（ 2023年1月 ~ 至今 ）</a>
+<ul>
+<li><a href=#诡秘之主项目>诡秘之主项目</a></li>
+</ul>
+</li>
+<li><a href=#字节跳动--2020年10月--2022年11月->字节跳动 （ 2020年10月 ~ 2022年11月 ）</a>
+<ul>
+<li><a href=#pico预研项目>Pico预研项目</a></li>
+<li><a href=#dc-world-collide>DC World Collide</a></li>
+<li><a href=#wildland>Wildland</a></li>
+</ul>
+</li>
+<li><a href=#网易雷火-2019年4月2020年6月>网易雷火 （2019年4月~2020年6月）</a>
+<ul>
+<li><a href=#绝对演绎-技术美术>绝对演绎-技术美术</a></li>
+</ul>
+</li>
+</ul>
+</nav>
+<main>
+<h1 id=吴宁---图形工程师>吴宁 - 图形工程师</h1>
+<p>::: left</p>
+<p>icon:info 男/1994.10.16</p>
+<p>icon:email 1812467051</p>
+<p>icon:phone 13777889363</p>
+<p>:::</p>
+<p>::: right
+<a href=https://wingstone.github.io>icon:blog https://wingstone.github.io</a></p>
+<p><a href=https://github.com/wingstone>icon:github https://github.com/wingstone</a></p>
+<p><a href=https://www.zhihu.com/people/wu-zhu-32-40>icon:zhihu https://www.zhihu.com/people/wu-zhu-32-40</a></p>
+<p>:::</p>
+<h1 id=教育经历>教育经历</h1>
+<p>:::left
+<strong>浙江大学 - 流体力学</strong>
+:::
+:::right
+<strong>2016.09 - 2019.04</strong>
+:::</p>
+<p>实时渲染：</p>
+<ul>
+<li>使用区间Z-buffer算法实现软光栅化程序；</li>
+<li>使用Direct3D11，并编制mini渲染引擎，支持全屏后处理，屏幕字符显示，shadow map等效果。</li>
+<li>使用Direct3D9实现CPU蒙皮、GPU蒙皮，以及CPU顶点变形、GPU顶点变形；</li>
+<li>使用Direct3D11学习体渲染技术，已实现在pixel shader中使用ray matching方法渲染云彩；</li>
+<li>使用Unity编制材质shader，以及垂直雾、运动模糊等全屏后处理Shader；</li>
+</ul>
+<p>离线渲染：</p>
+<ul>
+<li>使用C++编制光线追踪程序：基于Monte Carlo积分实现，已实现漫反射、理想反射与折射材质；</li>
+</ul>
+<p>:::left
+<strong>东南大学 - 工程力学</strong>
+:::
+:::right
+<strong>2012.09 - 2016.07</strong>
+:::
+大二期间，申请了分形绘制软件SRTP项目，并担任其负责人；主要内容包括迭代法、元胞自动机、牛顿迭代法等方法的研究；</p>
+<h1 id=工作经历>工作经历</h1>
+<h2 id=快手科技-2023年1月--至今->快手科技（ 2023年1月 ~ 至今 ）</h2>
+<ul>
+<li>参与UE引擎渲染管线的搭建、调整及多平台适配，保证渲染特性在PC、移动（前向/延迟）、模拟器等多平台的兼容性与一致性；</li>
+<li>负责项目核心渲染特性的开发与落地，包括TOD（昼夜循环天气系统）、体积雾、Overlay材质系统、屏幕空间反射等；</li>
+<li>负责引擎光照功能扩展与渲染性能优化，紧跟业界标杆项目进行竞品逆向分析，沉淀技术方案于团队；</li>
+<li>作为常驻TA侧的引擎程序，为TA、美术、策划、QA提供技术支持与方案建议，并参与新人招聘培养工作；</li>
+</ul>
+<h3 id=诡秘之主项目>诡秘之主项目</h3>
+<p>项目为UE5开发的多平台MMO,负责内容为:</p>
+<ul>
+<li><strong>24小时昼夜循环 & 天气系统(TOD)</strong>:从零搭建并持续迭代一套多平台兼容的时间天气系统。基于UE大气散射、雾效、PBR流程,完成太阳/月亮/银河/2D云/体积云、雨雪雷电等天气表现;移动端实现realtime capture天空捕捉,与PC平台表现对齐;搭建天气参数编辑器,支持Sequence驱动、关键帧编辑、动态参数绑定;并完成多轮性能优化,使其在移动端达到写实方向前沿水平,PC端实装并广泛应用于各类场景;</li>
+<li><strong>引擎渲染管线调整</strong>:统一前向/延迟管线的SceneDepth与SceneColor使用,支持3D UI遮挡;梳理移动端GBuffer布局,统一前向与延迟管线的着色表现;后期管线(Bloom、SunShaft、LensFlare等)的多平台对齐与扩展;</li>
+<li><strong>引擎光照功能扩展</strong>:Skylight的diffuse/specular分离控制、平行光对天空与场景的分离影响、Decima高度雾移植至UE、主光材质节点、移动端OverlaySSR、局部光源对角色的额外控制，专门针对角色的主光补光与环境补光等;</li>
+<li><strong>Overlay材质系统</strong>:从功能开发到框架完善,支持运行时切换、Sequence K帧、溶解、逐section材质、影响投影等;完成相关专利撰写,并在项目稳定落地;</li>
+<li><strong>体积雾系统</strong>:多平台二级体积雾支持、Instance体素化Volume、LocalFogVolume集成,以及大量真机兼容性与显示Bug修复;</li>
+<li><strong>多平台性能与兼容性保证</strong>:解决大量模拟器(MuMu)、安卓真机、PC平台的渲染兼容性问题与崩溃问题,如DepthFetch、GLBinary、RHI闪退、花屏闪烁等,保障了多个里程碑版本(版署提审、TBT等)的顺利交付;</li>
+<li><strong>跨职能支持</strong>:对接TA、美术、策划、QA等多方需求,在异地协作中保证TOD、Overlay等跨地域功能的平稳落地;参与实习生招聘与新人指导工作;</li>
+</ul>
+<h2 id=字节跳动--2020年10月--2022年11月->字节跳动 （ 2020年10月 ~ 2022年11月 ）</h2>
+<ul>
+<li>负责美术渲染管线的搭建，及渲染特性支持；</li>
+<li>负责项目渲染性能优化，并辅助进行游戏包体优化，保证渲染的性能及兼容性问题；</li>
+<li>负责引擎工具编写，用于支持渲染特性、检测渲染性能、优化美术资源等；</li>
+<li>研究前沿引擎技术，并修改引擎源码跟渲染管线，将前沿引擎技术进行落地；</li>
+</ul>
+<h3 id=pico预研项目>Pico预研项目</h3>
+<p>暂无实际项目，目前主要做一些技术预研，已做内容有：</p>
+<ul>
+<li>大气散射算法研究，尝试多种大气散射方案，并将UE大气散射方案移植至unity urp管线，pc耗时约0.07ms；</li>
+<li>vt算法研究，在unity c#层提供了简易版rvt功能，可以与Unity terrain组件结合使用，pico平台下耗时可提升3~4ms；</li>
+<li>预积分算法研究，整合方向曲率与环境预积分，提供完备的皮肤预积分效果；</li>
+</ul>
+<h3 id=dc-world-collide>DC World Collide</h3>
+<p>项目为卡牌放置类游戏，负责内容为：</p>
+<ul>
+<li>在渲染管线上，基于buildin管线进行扩展，将项目切换至基于HDR的linear空间下的render pipline，并定制化整个后期功能（bloom、tonemapping、vignette等）；在投影功能上提供了多种投影方案，来满足不同场景不同配置下的需求；</li>
+<li>在渲染效果上，为角色提供多种shading model（预计分、虹彩、车漆等），为场景提供混合材质，针对场景bake功能进行调整（合并lightmap与shadowmask，半透投影烘焙等）；</li>
+<li>在引擎工具上，提供多种资源检查工具、及性能检测工具，并定制流程化工具用于规范美术流程以及保证渲染性能（角色拼接工具、billboard烘焙工具等）；</li>
+<li>在渲染性能上，保证帧率、Drawcall、Overdraw等渲染指标的合理性，并针对某些特定情况进行优化；并针对不同机型进行渲染画质分级；</li>
+</ul>
+<h3 id=wildland>Wildland</h3>
+<p>项目为大世界射击预研项目，负责内容为：</p>
+<ul>
+<li>在渲染管线上，预研了随机SSR效果（未实装），接入SMAA功能于管线，pc耗时约0.45ms；</li>
+<li>在引擎功能上，修改引擎源码，使得动画压缩模块实装了acl插件的动画压缩功能，粒子系统模块实装了裁剪粒子功能；</li>
+</ul>
+<h2 id=网易雷火-2019年4月2020年6月>网易雷火 （2019年4月~2020年6月）</h2>
+<ul>
+<li>负责游戏中各种渲染材质，及渲染效果的支持；</li>
+<li>负责规范美术资源开发的流程，并编写和维护相关文档；</li>
+<li>预研新的游戏美术效果，并及时落地于游戏中；</li>
+<li>负责与渲染相关的游戏功能支持；</li>
+</ul>
+<h3 id=绝对演绎-技术美术>绝对演绎-技术美术</h3>
+<p>项目为卡牌换装类游戏，负责内容为：</p>
+<ul>
+<li>材质的实现：皮肤、毛发、眼睛材质、各向异性、水材质、卡通向PBR材质、虹彩材质等；</li>
+<li>光影及后期效果的实现：主要包括半透阴影、软阴影等；全屏渐变、运动模糊等；</li>
+<li>游戏物理上：动态骨骼功能的扩展与测试、柔布的配置与测试；</li>
+<li>游戏功能上：负责角色的换装、捏脸、化妆，画质的分级等；</li>
+<li>特效的实现：Billboard的实现、溶解效果、扭曲效果等等；</li>
+<li>美术流程规范制定：制定美术资源生产规范，如贴图大小、贴图制作方法、⾯数限制等等；</li>
+</ul>
+<h1 id=自我评价>自我评价</h1>
+<p>喜欢学习新技术，有扎实的图形学及编程基础，熟悉多种图形算法及渲染方案；
+有很好的自驱力，会主动了解前沿图形及引擎技术； 参与过项目实战，有责任心，对自己的工作全面负责，获得了合作同事的一致认可；
+热爱计算机图形学，喜欢游戏；</p>
+</main>
+<div id=gitalk-container></div>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css>
+<script src=https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js></script>
+<script src=/js/md5.min.js></script>
+<script>const gitalk=new Gitalk({clientID:'6ac25831f8084638e036',clientSecret:'ba798581fc341f62243d29d9be3d56d58cb38b74',repo:'wingstone.github.io',owner:'wingstone',admin:['wingstone'],id:md5(location.pathname),distractionFreeMode:!1});(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('gitalk-container').innerHTML='Gitalk comments not available by default when the website is previewed locally.';return}gitalk.render('gitalk-container')})()</script>
+<footer>
+<script defer src=//yihui.org/js/math-code.js></script>
+<script defer src="//mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script defer src=//yihui.org/js/center-img.js></script>
+<hr>
+© <a href=https://wingstone.github.io>wingstone</a> 2020 &ndash; 2026 | <a href=https://github.com/wingstone>Github</a> | <a href=https://www.zhihu.com/people/wu-zhu-32-40>Zhihu</a> | <a href=https://www.shadertoy.com/user/wingstone>Shadertoy</a>
+<div class=small-print>
+<small> 访问量 <span id=busuanzi_value_site_pv></span> 次</small>
+|
+<small> 访客数 <span id=busuanzi_value_site_uv></span> 人次 </small>
+</div>
+</footer>
+</body>
+</html>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
