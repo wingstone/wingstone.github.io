@@ -42,5 +42,6 @@ icon:zhihu https://www.zhihu.com/people/wu-zhu-32-40
 :::
 教育经历 :::left 浙江大学 - 流体力学（硕士） ::: :::right 2016.09 - 2019.04 :::
 研究生期间系统学习实时与离线渲染，独立完成多项算法与引擎实践：
-实时渲染：基于 Z-buffer 的软光栅化渲染器；用 D3D 自研引擎（后处理、字符显示、Shadow Map 等）；CPU/GPU 蒙皮与顶点变形；基于 Ray Marching 的体积云；Unity 实现 PBR Shader 及屏幕空间高度雾与 AO。 离线渲染：基于 C++ 实现 Monte Carlo 路径追踪渲染器，支持漫反射、理想反射与折射等材质模型。 :::left 东南大学 - 工程力学（本科） ::: :::right 2012.09 - 2016.07 :::
-大二期间作为负责人主持 SRTP 分形绘制软件项目，研究迭代法、元胞自动机、牛顿迭代法等分形算法的实现与可视化。</description></item><item><title>Archives</title><link>/archives/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/archives/</guid><description/></item></channel></rss>
+实时渲染：基于 Z-buffer 的软光栅化渲染器；用 D3D 开发自研引擎（后处理、字符显示、Shadow Map 等）；CPU/GPU 蒙皮与顶点变形；Unity 实现 PBR Shader 及屏幕空间高度雾与 AO。 离线渲染：基于 C++ 实现 Monte Carlo 路径追踪渲染器，支持漫反射、理想反射与折射等材质模型。 :::left 东南大学 - 工程力学（本科） ::: :::right 2012.09 - 2016.07 :::
+大学负责 SRTP 分形绘制软件项目，研究迭代法、元胞自动机、牛顿迭代法等分形算法的实现与可视化。
+工作经历 快手科技 高级图形工程师（2023.</description></item><item><title>Archives</title><link>/archives/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>/archives/</guid><description/></item></channel></rss>
